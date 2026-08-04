@@ -2,10 +2,10 @@
 
 PreflightOps can run as a pull-request risk gate.
 
-The workflow bundled in this source repository is intentionally manual because
-the source repository has no application-specific service catalog or change
-request. Copy the example below into a consuming repository, or invoke the
-composite action directly, to run on pull requests.
+The workflow bundled in this source repository is intentionally manual and uses
+the LOW, HIGH and CRITICAL examples shipped under `examples/`. Mandatory source
+quality checks run independently in `ci.yml`. Copy the pull-request example
+below into a consuming repository, or invoke the composite action directly.
 
 It can:
 
