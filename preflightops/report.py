@@ -2,6 +2,7 @@
 
 import json
 
+from ._version import __version__
 from .risk_engine import SOURCE_ORDER
 
 
@@ -59,6 +60,7 @@ def generate_markdown_report(result: dict) -> str:
     lines.append(f"Change Type: {result.get('change_type', '')}")
     lines.append(f"Risk Score: {result.get('risk_score', 0)}/100")
     lines.append(f"Risk Level: {result.get('risk_level', '')}")
+    lines.append(f"PreflightOps Version: {__version__}")
     lines.append("")
     lines.append("## Recommendation")
     lines.append("")
@@ -110,6 +112,7 @@ def generate_json_report(result: dict) -> str:
     alongside the existing per-rule ``source`` field, without mutating the input.
     """
     enriched = dict(result)
+    enriched["preflightops_version"] = __version__
     breakdown = _score_breakdown(result.get("triggered_rules", []))
     enriched["score_breakdown"] = [
         {
