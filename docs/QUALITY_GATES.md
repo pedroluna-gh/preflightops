@@ -70,3 +70,12 @@ not relabel an infrastructure or parse failure as CRITICAL product risk.
 Rollback is one atomic revert of the CI workflow, quality configuration,
 lockfile, helper script and contract tests. The manual adoption workflow can be
 reverted independently because it is not a required pull-request signal.
+
+
+## Required check contract
+
+Repository protection requires the stable `CI / Required` check. This fan-in job succeeds only when the quality, compatibility, and composite-action contract jobs all succeed. Matrix labels and runner versions may evolve without changing the protected check contract.
+
+Treat required check names as a public release-management API. A rename or replacement must use a two-phase migration: publish and validate the new check first, then update the ruleset, and remove the previous requirement only after every open pull request has a reported replacement check. Never leave a ruleset waiting for a check that no active workflow emits.
+
+`tests/test_ci_contract.py` enforces the stable job name, dependencies, always-run behavior, and fan-in assertions.
