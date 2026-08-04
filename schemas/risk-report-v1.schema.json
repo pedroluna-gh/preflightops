@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pedroluna-gh/preflightops/schemas/risk-report-v1.schema.json",
+  "title": "PreflightOps JSON Risk Report v1",
+  "type": "object",
+  "required": [
+    "service",
+    "environment",
+    "change_type",
+    "risk_score",
+    "risk_level",
+    "recommendation",
+    "triggered_rules",
+    "missing_controls",
+    "business_impact",
+    "score_breakdown",
+    "preflightops_version"
+  ],
+  "properties": {
+    "service": {"type": "string"},
+    "environment": {"type": "string"},
+    "change_type": {"type": "string"},
+    "risk_score": {"type": "integer", "minimum": 0, "maximum": 100},
+    "risk_level": {"enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]},
+    "recommendation": {"type": "string"},
+    "triggered_rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "severity", "score", "source"],
+        "properties": {
+          "id": {"type": "string"},
+          "description": {"type": "string"},
+          "severity": {"enum": ["low", "medium", "high", "critical"]},
+          "score": {"type": "integer", "minimum": 0},
+          "source": {"type": "string"}
+        },
+        "additionalProperties": true
+      }
+    },
+    "missing_controls": {"type": "array", "items": {"type": "string"}},
+    "business_impact": {"type": "string"},
+    "score_breakdown": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source", "score", "share_percent", "count"],
+        "properties": {
+          "source": {"type": "string"},
+          "score": {"type": "integer", "minimum": 0},
+          "share_percent": {"type": "number", "minimum": 0, "maximum": 100},
+          "count": {"type": "integer", "minimum": 0}
+        },
+        "additionalProperties": true
+      }
+    },
+    "preflightops_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+"}
+  },
+  "additionalProperties": true
+}
