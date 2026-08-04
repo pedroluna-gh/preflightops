@@ -6,7 +6,10 @@ section), missing controls, and business impact sections all render correctly
 for both populated and empty results.
 """
 
-from preflightops.report import generate_markdown_report
+import json
+
+from preflightops import __version__
+from preflightops.report import generate_json_report, generate_markdown_report
 
 
 def _section(report, heading):
@@ -66,6 +69,7 @@ class TestPopulatedReport:
         assert "Change Type: infrastructure" in summary
         assert "Risk Score: 100/100" in summary
         assert "Risk Level: CRITICAL" in summary
+        assert f"PreflightOps Version: {__version__}" in summary
 
     def test_recommendation_renders(self):
         report = generate_markdown_report(populated_result())
@@ -157,3 +161,8 @@ def test_handles_missing_keys_gracefully():
     assert "## Score Breakdown" in report
     assert "## Missing Controls" in report
     assert "## Business Impact" in report
+
+
+def test_json_report_includes_package_version():
+    report = json.loads(generate_json_report(populated_result()))
+    assert report["preflightops_version"] == __version__
