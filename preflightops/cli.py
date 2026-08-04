@@ -21,6 +21,7 @@ import sys
 
 import yaml
 
+from ._version import __version__
 from .risk_engine import assess_risk
 from .report import generate_markdown_report, generate_json_report
 from .ticket import generate_ticket_markdown, load_template_file
@@ -86,6 +87,11 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         prog="preflightops",
         description="Pre-deployment risk assessment for SRE and Platform teams.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
     )
     parser.add_argument("--services", required=True, help="Path to the service catalog YAML file")
     parser.add_argument("--change", required=True, help="Path to the change request YAML file")
