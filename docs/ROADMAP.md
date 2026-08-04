@@ -1,9 +1,10 @@
 # PreflightOps Roadmap
 
 This roadmap describes the planned direction for PreflightOps. It is intentionally
-ambitious but constrained by the project's core principles: **no database, no
-login, no external API calls at runtime, and no AI.** Everything must keep
-running locally and remain transparent and explainable.
+ambitious but constrained by the project's core principles: **no required
+database, no required login, no external API calls on the default assessment
+path, and no AI.** Optional integrations must remain explicit and the core must
+keep running locally in a transparent and explainable way.
 
 Priorities and timing may change based on community feedback — open an issue to
 suggest or upvote an item.
@@ -14,7 +15,8 @@ suggest or upvote an item.
 - Service-control, change-type, Terraform, and Kubernetes rules.
 - Markdown + JSON reports with a per-source score breakdown.
 - Streamlit web app and `preflightops` CLI.
-- Composite GitHub Action and PR risk-gate workflow.
+- Composite GitHub Action for consumer PR risk gates and a manual smoke/demo
+  workflow in this source repository.
 
 ## v0.1.x — Change-ticket summaries & opt-in integrations (current)
 
