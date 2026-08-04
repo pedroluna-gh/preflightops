@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "preflightops"
-version = "0.1.2"
+dynamic = ["version"]
 description = "Pre-deployment risk assessment for SRE, DevOps and Platform Engineering teams."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -49,6 +49,7 @@ app = [
 # Extras needed only to run the automated test suite (`pytest`).
 test = [
     "pytest",
+    "jsonschema>=4.23,<5",
 ]
 
 [project.scripts]
@@ -56,3 +57,6 @@ preflightops = "preflightops.cli:main"
 
 [tool.setuptools]
 packages = ["preflightops"]
+
+[tool.setuptools.dynamic]
+version = { attr = "preflightops._version.__version__" }
