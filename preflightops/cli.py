@@ -22,15 +22,15 @@ import sys
 import yaml
 
 from ._version import __version__
-from .risk_engine import assess_risk
-from .report import generate_markdown_report, generate_json_report
-from .ticket import generate_ticket_markdown, load_template_file
 from .integrations import (
-    push_to_servicenow,
-    push_to_jira,
-    correlation_id,
     IntegrationError,
+    correlation_id,
+    push_to_jira,
+    push_to_servicenow,
 )
+from .report import generate_json_report, generate_markdown_report
+from .risk_engine import assess_risk
+from .ticket import generate_ticket_markdown, load_template_file
 
 
 def _confirm_push(system, target, corr, assume_yes):
@@ -72,14 +72,14 @@ def _confirm_push(system, target, corr, assume_yes):
 
 
 def _load_yaml(path):
-    with open(path, "r", encoding="utf-8") as handle:
+    with open(path, encoding="utf-8") as handle:
         return yaml.safe_load(handle)
 
 
 def _load_text(path):
     if not path:
         return ""
-    with open(path, "r", encoding="utf-8") as handle:
+    with open(path, encoding="utf-8") as handle:
         return handle.read()
 
 
@@ -95,8 +95,12 @@ def main(argv=None) -> int:
     )
     parser.add_argument("--services", required=True, help="Path to the service catalog YAML file")
     parser.add_argument("--change", required=True, help="Path to the change request YAML file")
-    parser.add_argument("--terraform", default=None, help="Optional path to a Terraform plan/diff text file")
-    parser.add_argument("--k8s", default=None, help="Optional path to a Kubernetes manifest YAML file")
+    parser.add_argument(
+        "--terraform", default=None, help="Optional path to a Terraform plan/diff text file"
+    )
+    parser.add_argument(
+        "--k8s", default=None, help="Optional path to a Kubernetes manifest YAML file"
+    )
     parser.add_argument("--output", default="report.md", help="Where to write the Markdown report")
     parser.add_argument(
         "--json-output",
@@ -202,6 +206,7 @@ def main(argv=None) -> int:
         ticket_markdown = generate_ticket_markdown(result, change, ticket_template)
 
     if args.ticket_output:
+        assert ticket_markdown is not None
         try:
             with open(args.ticket_output, "w", encoding="utf-8") as handle:
                 handle.write(ticket_markdown)
@@ -227,9 +232,7 @@ def main(argv=None) -> int:
     if args.jira:
         if _confirm_push("Jira", args.jira, corr, args.assume_yes):
             try:
-                integration_results.append(
-                    push_to_jira(args.jira, result, change, ticket_markdown)
-                )
+                integration_results.append(push_to_jira(args.jira, result, change, ticket_markdown))
             except IntegrationError as exc:
                 print(f"Jira integration error: {exc}", file=sys.stderr)
                 return 2

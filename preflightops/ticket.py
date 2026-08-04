@@ -19,6 +19,7 @@ roadmap).
 """
 
 import copy
+from typing import Any
 
 import yaml
 
@@ -37,10 +38,7 @@ APPROVAL_BY_LEVEL = {
 DEPLOYMENT_WINDOW_BY_LEVEL = {
     "LOW": "Normal deployment window is acceptable.",
     "MEDIUM": "Deploy during a monitored window with service owner availability.",
-    "HIGH": (
-        "Use a low-traffic deployment window with rollback owner and monitoring "
-        "confirmed."
-    ),
+    "HIGH": ("Use a low-traffic deployment window with rollback owner and monitoring confirmed."),
     "CRITICAL": (
         "Do not deploy until critical gaps are resolved. If deployment is "
         "unavoidable, use an approved emergency change process."
@@ -69,9 +67,7 @@ ACTION_BY_CONTROL = {
     "runbook": "Add a runbook link for the service.",
     "business_impact": "Document the business impact of this change.",
     "rollback_plan": "Provide a valid, tested rollback plan.",
-    "monitoring_plan": (
-        "Define a monitoring plan (dashboards, alerts, success criteria)."
-    ),
+    "monitoring_plan": ("Define a monitoring plan (dashboards, alerts, success criteria)."),
     "validation_plan": "Add a post-deploy validation plan.",
 }
 
@@ -207,9 +203,7 @@ def _content_risk_findings(result, change, template) -> list:
 
 
 def _content_recommended_actions(result, change, template) -> list:
-    return _render_actions(
-        result.get("missing_controls", []), result.get("recommendation", "")
-    )
+    return _render_actions(result.get("missing_controls", []), result.get("recommendation", ""))
 
 
 def _content_notes(result, change, template) -> list:
@@ -237,7 +231,7 @@ CONTENT_RENDERERS = {
 
 # The built-in template. Rendering this reproduces the original ticket output
 # exactly, so existing behavior is unchanged when no template is supplied.
-DEFAULT_TEMPLATE = {
+DEFAULT_TEMPLATE: dict[str, Any] = {
     "title": "Production Change Summary",
     "sections": [
         {"heading": "Change Title", "content": "change_title"},
@@ -345,7 +339,7 @@ def load_template_file(path) -> dict:
     The file is parsed with ``yaml.safe_load`` (which also accepts JSON) and
     passed through :func:`load_template`. No extra dependencies are required.
     """
-    with open(path, "r", encoding="utf-8") as handle:
+    with open(path, encoding="utf-8") as handle:
         data = yaml.safe_load(handle)
     return load_template(data)
 

@@ -1,124 +1,50 @@
-name: PreflightOps
+name: PreflightOps adoption example
 
-# Manual smoke/demo workflow for this source repository.
-#
-# A consuming repository can configure the composite action as a pull-request
-# gate. This source repository does not ship application-specific services.yaml
-# or change.yaml files, so this workflow is dispatch-only until paths are
-# supplied explicitly.
-#
-# Edit the file paths in `env` below to point at the inputs in your repository.
-
+# This manual workflow demonstrates product adoption with examples that are
+# shipped in this repository. The mandatory engineering gates live in ci.yml.
 on:
   workflow_dispatch:
+    inputs:
+      scenario:
+        description: Example risk scenario
+        required: true
+        default: low
+        type: choice
+        options:
+          - low
+          - high
+          - critical
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
-  risk-review:
-    name: Risk review
-    runs-on: ubuntu-latest
-
-    env:
-      # --- Edit these to match your repository ---
-      # How PreflightOps is installed. Point this at wherever the PreflightOps
-      # source lives. By default it installs straight from the PreflightOps repo.
-      # If PreflightOps ever ships to PyPI you can simply use: preflightops
-      PREFLIGHTOPS_INSTALL: "git+https://github.com/pedroluna-gh/preflightops.git@main"
-      # Required inputs.
-      PREFLIGHTOPS_SERVICES: services.yaml
-      PREFLIGHTOPS_CHANGE: change.yaml
-      # Optional inputs. Leave blank or delete the file to skip them.
-      PREFLIGHTOPS_TERRAFORM: tfplan.txt
-      PREFLIGHTOPS_K8S: k8s.yaml
-      # Where the Markdown report is written.
-      PREFLIGHTOPS_REPORT: preflightops-report.md
-
+  example:
+    name: Assess ${{ inputs.scenario }} example
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Run the local composite action
+        id: assess
+        uses: ./
         with:
-          python-version: "3.11"
+          services: examples/services-${{ inputs.scenario }}-risk.yaml
+          change: examples/change-${{ inputs.scenario }}-risk.yaml
+          output: preflightops-report.md
+          json-output: preflightops-report.json
+          fail-on: none
 
-      - name: Install PreflightOps
-        run: pip install "$PREFLIGHTOPS_INSTALL"
-
-      - name: Run PreflightOps risk assessment
-        id: preflightops
+      - name: Write job summary
+        shell: bash
         run: |
-          set -uo pipefail
-
-          args=(--services "$PREFLIGHTOPS_SERVICES" --change "$PREFLIGHTOPS_CHANGE")
-
-          if [ -n "${PREFLIGHTOPS_TERRAFORM:-}" ] && [ -f "$PREFLIGHTOPS_TERRAFORM" ]; then
-            args+=(--terraform "$PREFLIGHTOPS_TERRAFORM")
-          fi
-          if [ -n "${PREFLIGHTOPS_K8S:-}" ] && [ -f "$PREFLIGHTOPS_K8S" ]; then
-            args+=(--k8s "$PREFLIGHTOPS_K8S")
-          fi
-
-          args+=(--output "$PREFLIGHTOPS_REPORT")
-
-          # Capture the exit code so we can still upload the report and comment
-          # on the PR before failing the build on CRITICAL risk.
-          set +e
-          python -m preflightops.cli "${args[@]}"
-          exit_code=$?
-          set -e
-
-          echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
-
-      - name: Upload risk report
-        if: always() && hashFiles(env.PREFLIGHTOPS_REPORT) != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: preflightops-report
-          path: ${{ env.PREFLIGHTOPS_REPORT }}
-
-      - name: Comment risk report on pull request
-        if: always() && github.event_name == 'pull_request' && hashFiles(env.PREFLIGHTOPS_REPORT) != ''
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const marker = '<!-- preflightops-report -->';
-            const body = `${marker}\n` + fs.readFileSync(process.env.PREFLIGHTOPS_REPORT, 'utf8');
-
-            const { owner, repo } = context.repo;
-            const issue_number = context.issue.number;
-
-            const comments = await github.paginate(
-              github.rest.issues.listComments,
-              { owner, repo, issue_number },
-            );
-            const existing = comments.find((c) => c.body && c.body.includes(marker));
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner,
-                repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner,
-                repo,
-                issue_number,
-                body,
-              });
-            }
-
-      - name: Fail on CRITICAL risk
-        if: always()
-        run: |
-          if [ "${{ steps.preflightops.outputs.exit_code }}" != "0" ]; then
-            echo "PreflightOps reported CRITICAL risk (exit code ${{ steps.preflightops.outputs.exit_code }})."
-            exit 1
-          fi
-          echo "PreflightOps risk check passed."
+          {
+            echo "## PreflightOps adoption example"
+            echo
+            echo "Risk: **${{ steps.assess.outputs.risk-level }}**"
+            echo "Score: **${{ steps.assess.outputs.risk-score }}/100**"
+            echo
+            cat preflightops-report.md
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -17,7 +17,7 @@ def _section(report, heading):
     lines = report.split("\n")
     start = lines.index(f"## {heading}")
     body = []
-    for line in lines[start + 1:]:
+    for line in lines[start + 1 :]:
         if line.startswith("## "):
             break
         body.append(line)
@@ -74,20 +74,16 @@ class TestPopulatedReport:
     def test_recommendation_renders(self):
         report = generate_markdown_report(populated_result())
         recommendation = _section(report, "Recommendation")
-        assert recommendation == [
-            "Deployment should be blocked until gaps are resolved."
-        ]
+        assert recommendation == ["Deployment should be blocked until gaps are resolved."]
 
     def test_triggered_rules_render(self):
         report = generate_markdown_report(populated_result())
         rules = _section(report, "Score Breakdown")
         assert (
-            "- production-change | medium | +20 | "
-            "Change targets production environment"
+            "- production-change | medium | +20 | Change targets production environment"
         ) in rules
         assert (
-            "- missing-rollback-plan | high | +30 | "
-            "Production change has no valid rollback plan"
+            "- missing-rollback-plan | high | +30 | Production change has no valid rollback plan"
         ) in rules
 
     def test_score_breakdown_groups_by_source(self):
@@ -106,9 +102,7 @@ class TestPopulatedReport:
     def test_business_impact_renders(self):
         report = generate_markdown_report(populated_result())
         impact = _section(report, "Business Impact")
-        assert impact == [
-            "Customers cannot be charged and revenue stops immediately"
-        ]
+        assert impact == ["Customers cannot be charged and revenue stops immediately"]
 
 
 # ---------------------------------------------------------------------------

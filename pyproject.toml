@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools==80.9.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -31,7 +31,7 @@ keywords = [
     "cloud-operations",
 ]
 dependencies = [
-    "pyyaml",
+    "pyyaml>=6,<7",
 ]
 
 [project.urls]
@@ -43,13 +43,26 @@ Issues = "https://github.com/pedroluna-gh/preflightops/issues"
 [project.optional-dependencies]
 # Extras needed only to run the Streamlit web UI (`streamlit run app.py`).
 app = [
-    "streamlit",
-    "pandas",
+    "streamlit>=1.40,<2",
+    "pandas>=2.0,<3",
 ]
 # Extras needed only to run the automated test suite (`pytest`).
 test = [
-    "pytest",
+    "pytest>=8,<9",
     "jsonschema>=4.23,<5",
+]
+
+[dependency-groups]
+quality = [
+    "build>=1.3,<2",
+    "mypy>=1.15,<2",
+    "pip-audit>=2.9,<3; python_version >= '3.10'",
+    "pytest-cov>=6,<8",
+    "ruff>=0.11,<1",
+    "setuptools==80.9.0",
+    "twine>=6,<7",
+    "types-pyyaml>=6,<7",
+    "wheel>=0.45,<1",
 ]
 
 [project.scripts]
@@ -60,3 +73,29 @@ packages = ["preflightops"]
 
 [tool.setuptools.dynamic]
 version = { attr = "preflightops._version.__version__" }
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+extend-exclude = [".package-check", ".package-check-2"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B", "UP"]
+
+[tool.mypy]
+python_version = "3.9"
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+ignore_missing_imports = true
+exclude = "^(app\\.py|tests/)"
+
+[tool.coverage.run]
+branch = true
+source = ["preflightops"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 85

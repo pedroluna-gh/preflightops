@@ -3,8 +3,8 @@
 import pytest
 
 from preflightops.validators import (
-    VAGUE_ROLLBACK_PHRASES,
     MIN_ROLLBACK_LENGTH,
+    VAGUE_ROLLBACK_PHRASES,
     is_bad_rollback_plan,
     is_monitoring_plan_incomplete,
     is_validation_plan_valid,

@@ -29,9 +29,12 @@ Good contributions include:
 ```bash
 git clone https://github.com/pedroluna-gh/preflightops.git
 cd preflightops
-pip install -r requirements.txt
-pytest
+uv sync --locked --all-extras --group quality
+uv run pytest
 ```
+
+Before opening a pull request, reproduce every mandatory check in
+[`docs/QUALITY_GATES.md`](docs/QUALITY_GATES.md).
 
 Run the web app:
 
@@ -111,7 +114,11 @@ Good signals:
 
 Before opening a PR:
 
-- [ ] Tests pass with `pytest`
+- [ ] The frozen lockfile installs without drift
+- [ ] Formatting, lint and type checks pass
+- [ ] Tests pass with the coverage floor
+- [ ] Dependency audit passes without an unreviewed suppression
+- [ ] Package build, clean installation, CLI and action contract pass
 - [ ] New behavior has tests
 - [ ] Documentation updated if needed
 - [ ] Example files still work

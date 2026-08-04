@@ -3,10 +3,10 @@
 import pytest
 
 from preflightops.scanners import (
-    TERRAFORM_SIGNALS,
     KUBERNETES_SIGNALS,
-    scan_terraform,
+    TERRAFORM_SIGNALS,
     scan_kubernetes,
+    scan_terraform,
 )
 
 
@@ -29,9 +29,7 @@ class TestScanTerraform:
         assert scan_terraform("") == []
         assert scan_terraform(None) == []
 
-    @pytest.mark.parametrize(
-        "keyword, rule_id, score, severity, description", TERRAFORM_SIGNALS
-    )
+    @pytest.mark.parametrize("keyword, rule_id, score, severity, description", TERRAFORM_SIGNALS)
     def test_each_signal_triggers(self, keyword, rule_id, score, severity, description):
         findings = scan_terraform(f"resource block with {keyword} inside")
         finding = _by_id(findings, rule_id)
@@ -50,10 +48,7 @@ class TestScanTerraform:
         assert finding["score"] == 40
 
     def test_multiple_signals_in_one_plan(self):
-        text = (
-            'resource "aws_iam_role" "r" {}\n'
-            "aws_db_instance.payments will be destroyed"
-        )
+        text = 'resource "aws_iam_role" "r" {}\naws_db_instance.payments will be destroyed'
         ids = _ids(scan_terraform(text))
         assert "terraform-iam-role-change" in ids
         assert "terraform-db-instance-change" in ids
@@ -71,9 +66,7 @@ class TestScanKubernetes:
         assert scan_kubernetes("") == []
         assert scan_kubernetes(None) == []
 
-    @pytest.mark.parametrize(
-        "keyword, rule_id, score, severity, description", KUBERNETES_SIGNALS
-    )
+    @pytest.mark.parametrize("keyword, rule_id, score, severity, description", KUBERNETES_SIGNALS)
     def test_each_signal_triggers(self, keyword, rule_id, score, severity, description):
         # Avoid the special Deployment probe checks by not using a Deployment
         # for non-deployment signals; for the deployment signal include probes.

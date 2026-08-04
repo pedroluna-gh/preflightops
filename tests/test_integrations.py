@@ -13,14 +13,12 @@ network call is made.
 import pytest
 import yaml
 
-from preflightops import cli
-from preflightops import integrations
-from preflightops import sample_data
+from preflightops import cli, integrations, sample_data
 from preflightops.integrations import (
-    push_to_servicenow,
-    push_to_jira,
-    correlation_id,
     IntegrationError,
+    correlation_id,
+    push_to_jira,
+    push_to_servicenow,
 )
 
 
@@ -155,9 +153,7 @@ class TestJira:
             }
         )
         monkeypatch.setattr(integrations, "_http_request", fake)
-        info = push_to_jira(
-            "https://acme.atlassian.net/", _result(), _change(), env=JIRA_ENV
-        )
+        info = push_to_jira("https://acme.atlassian.net/", _result(), _change(), env=JIRA_ENV)
         assert info["action"] == "created"
         assert info["key"] == "OPS-42"
         assert info["url"].endswith("/browse/OPS-42")
@@ -234,17 +230,24 @@ class TestCliIntegration:
         change = _write_yaml(tmp_path / "change.yaml", sample_data.HIGH_RISK_CHANGE)
         code = cli.main(
             [
-                "--services", services,
-                "--change", change,
-                "--output", str(tmp_path / "r.md"),
-                "--servicenow", "https://dev123.service-now.com",
+                "--services",
+                services,
+                "--change",
+                change,
+                "--output",
+                str(tmp_path / "r.md"),
+                "--servicenow",
+                "https://dev123.service-now.com",
                 "--yes",
             ]
         )
         assert code == 0
         assert captured["instance_url"] == "https://dev123.service-now.com"
         # The summary is generated and handed to the integration.
-        assert captured["ticket_markdown"] and "# Production Change Summary" in captured["ticket_markdown"]
+        assert (
+            captured["ticket_markdown"]
+            and "# Production Change Summary" in captured["ticket_markdown"]
+        )
         out = capsys.readouterr().out
         assert "ServiceNow change record created: CHG0030001" in out
 
@@ -262,10 +265,14 @@ class TestCliIntegration:
         change = _write_yaml(tmp_path / "change.yaml", sample_data.HIGH_RISK_CHANGE)
         code = cli.main(
             [
-                "--services", services,
-                "--change", change,
-                "--output", str(tmp_path / "r.md"),
-                "--jira", "https://acme.atlassian.net",
+                "--services",
+                services,
+                "--change",
+                change,
+                "--output",
+                str(tmp_path / "r.md"),
+                "--jira",
+                "https://acme.atlassian.net",
                 "--yes",
             ]
         )
@@ -282,10 +289,14 @@ class TestCliIntegration:
         change = _write_yaml(tmp_path / "change.yaml", sample_data.LOW_RISK_CHANGE)
         code = cli.main(
             [
-                "--services", services,
-                "--change", change,
-                "--output", str(tmp_path / "r.md"),
-                "--servicenow", "https://dev123.service-now.com",
+                "--services",
+                services,
+                "--change",
+                change,
+                "--output",
+                str(tmp_path / "r.md"),
+                "--servicenow",
+                "https://dev123.service-now.com",
                 "--yes",
             ]
         )
