@@ -135,7 +135,7 @@ def _http_request(url, method, headers, body=None, timeout=HTTP_TIMEOUT):
 
 
 def _basic_auth_header(username, secret):
-    token = base64.b64encode(f"{username}:{secret}".encode("utf-8")).decode("ascii")
+    token = base64.b64encode(f"{username}:{secret}".encode()).decode("ascii")
     return f"Basic {token}"
 
 
@@ -167,8 +167,7 @@ def push_to_servicenow(instance_url, result, change_doc=None, ticket_markdown=No
     instance_url = (instance_url or "").rstrip("/")
     if not instance_url:
         raise IntegrationError(
-            "ServiceNow instance URL is required "
-            "(e.g. https://dev12345.service-now.com)."
+            "ServiceNow instance URL is required (e.g. https://dev12345.service-now.com)."
         )
 
     user = env.get(SERVICENOW_USER_ENV)
@@ -251,9 +250,7 @@ def push_to_jira(base_url, result, change_doc=None, ticket_markdown=None, env=No
     env = os.environ if env is None else env
     base_url = (base_url or "").rstrip("/")
     if not base_url:
-        raise IntegrationError(
-            "Jira base URL is required (e.g. https://example.atlassian.net)."
-        )
+        raise IntegrationError("Jira base URL is required (e.g. https://example.atlassian.net).")
 
     email = env.get(JIRA_EMAIL_ENV)
     token = env.get(JIRA_API_TOKEN_ENV)
@@ -285,9 +282,7 @@ def push_to_jira(base_url, result, change_doc=None, ticket_markdown=None, env=No
     # same issue instead of creating a duplicate.
     jql = f'project = "{project}" AND labels = "{corr}" ORDER BY created DESC'
     search_query = urllib.parse.urlencode({"jql": jql, "maxResults": "1"})
-    _, found = _http_request(
-        f"{base_url}/rest/api/2/search?{search_query}", "GET", headers
-    )
+    _, found = _http_request(f"{base_url}/rest/api/2/search?{search_query}", "GET", headers)
     issues = found.get("issues") or []
 
     if issues:

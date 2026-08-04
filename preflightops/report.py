@@ -12,12 +12,12 @@ def _group_by_source(triggered: list) -> dict:
     Known sources are ordered per ``SOURCE_ORDER``; any unexpected sources are
     appended afterwards in first-seen order.
     """
-    groups = {}
+    groups: dict[str, list[dict]] = {}
     for rule in triggered:
         source = rule.get("source", "Other")
         groups.setdefault(source, []).append(rule)
 
-    ordered = {}
+    ordered: dict[str, list[dict]] = {}
     for source in SOURCE_ORDER:
         if source in groups:
             ordered[source] = groups[source]

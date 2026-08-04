@@ -10,11 +10,35 @@ can be merged into the overall assessment.
 TERRAFORM_SIGNALS = [
     ("aws_iam_policy", "terraform-iam-policy-change", 30, "high", "IAM policy change detected"),
     ("aws_iam_role", "terraform-iam-role-change", 30, "high", "IAM role change detected"),
-    ("google_project_iam_member", "terraform-gcp-iam-member-change", 30, "high", "GCP IAM member change detected"),
-    ("security_group", "terraform-security-group-change", 25, "high", "Security group change detected"),
+    (
+        "google_project_iam_member",
+        "terraform-gcp-iam-member-change",
+        30,
+        "high",
+        "GCP IAM member change detected",
+    ),
+    (
+        "security_group",
+        "terraform-security-group-change",
+        25,
+        "high",
+        "Security group change detected",
+    ),
     ("firewall", "terraform-firewall-change", 25, "high", "Firewall rule change detected"),
-    ("db_instance", "terraform-db-instance-change", 25, "high", "Database instance change detected"),
-    ("database", "terraform-database-change", 25, "high", "Database-related infrastructure change detected"),
+    (
+        "db_instance",
+        "terraform-db-instance-change",
+        25,
+        "high",
+        "Database instance change detected",
+    ),
+    (
+        "database",
+        "terraform-database-change",
+        25,
+        "high",
+        "Database-related infrastructure change detected",
+    ),
     ("delete", "terraform-delete-action", 30, "high", "Delete action detected"),
     ("destroy", "terraform-destroy-action", 40, "critical", "Destroy action detected"),
     ("public_ip", "terraform-public-ip-exposure", 25, "high", "Public IP exposure detected"),
@@ -25,12 +49,42 @@ TERRAFORM_SIGNALS = [
 
 # (keyword, rule_id, score, severity, description) — keyword matched case-insensitively
 KUBERNETES_SIGNALS = [
-    ("kind: deployment", "kubernetes-deployment-change", 10, "medium", "Kubernetes Deployment change detected"),
-    ("kind: statefulset", "kubernetes-statefulset-change", 20, "high", "Kubernetes StatefulSet change detected"),
-    ("kind: ingress", "kubernetes-ingress-change", 25, "high", "Kubernetes Ingress change detected"),
-    ("kind: networkpolicy", "kubernetes-networkpolicy-change", 25, "high", "Kubernetes NetworkPolicy change detected"),
+    (
+        "kind: deployment",
+        "kubernetes-deployment-change",
+        10,
+        "medium",
+        "Kubernetes Deployment change detected",
+    ),
+    (
+        "kind: statefulset",
+        "kubernetes-statefulset-change",
+        20,
+        "high",
+        "Kubernetes StatefulSet change detected",
+    ),
+    (
+        "kind: ingress",
+        "kubernetes-ingress-change",
+        25,
+        "high",
+        "Kubernetes Ingress change detected",
+    ),
+    (
+        "kind: networkpolicy",
+        "kubernetes-networkpolicy-change",
+        25,
+        "high",
+        "Kubernetes NetworkPolicy change detected",
+    ),
     ("kind: secret", "kubernetes-secret-change", 25, "high", "Kubernetes Secret change detected"),
-    ("type: loadbalancer", "kubernetes-loadbalancer-exposure", 25, "high", "LoadBalancer exposure detected"),
+    (
+        "type: loadbalancer",
+        "kubernetes-loadbalancer-exposure",
+        25,
+        "high",
+        "LoadBalancer exposure detected",
+    ),
     ("replicas: 0", "kubernetes-replicas-zero", 30, "high", "Replicas set to zero detected"),
 ]
 
@@ -51,7 +105,7 @@ def _finding(rule_id, description, severity, score, source):
 
 def scan_terraform(text) -> list:
     """Scan pasted Terraform plan/diff text for risky keywords."""
-    findings = []
+    findings: list[dict] = []
     if not text:
         return findings
 
@@ -65,7 +119,7 @@ def scan_terraform(text) -> list:
 
 def scan_kubernetes(text) -> list:
     """Scan pasted Kubernetes manifest text for risky keywords."""
-    findings = []
+    findings: list[dict] = []
     if not text:
         return findings
 

@@ -7,12 +7,12 @@ into a single 0-100 risk score with a level, recommendation, triggered rules,
 and a list of missing operational controls.
 """
 
+from .scanners import scan_kubernetes, scan_terraform
 from .validators import (
     is_bad_rollback_plan,
     is_monitoring_plan_incomplete,
     is_validation_plan_valid,
 )
-from .scanners import scan_terraform, scan_kubernetes
 
 MAX_SCORE = 100
 
@@ -73,9 +73,7 @@ def find_service(services, service_name):
         if isinstance(service, dict) and service.get("name") == service_name:
             return service
 
-    raise ValueError(
-        f"Service '{service_name}' was not found in the service catalog."
-    )
+    raise ValueError(f"Service '{service_name}' was not found in the service catalog.")
 
 
 def _is_empty(value) -> bool:
@@ -120,9 +118,7 @@ def assess_risk(services, change_doc, terraform_text="", k8s_text=""):
         The risk result object.
     """
     if not isinstance(change_doc, dict) or "change" not in change_doc:
-        raise ValueError(
-            "Change request must be a YAML document with a top-level 'change' object."
-        )
+        raise ValueError("Change request must be a YAML document with a top-level 'change' object.")
 
     change = change_doc.get("change") or {}
     if not isinstance(change, dict):
@@ -138,26 +134,54 @@ def assess_risk(services, change_doc, terraform_text="", k8s_text=""):
     environment = change.get("environment", "")
     change_type = change.get("change_type", "")
 
-    triggered = []
-    missing_controls = []
+    triggered: list[dict] = []
+    missing_controls: list[str] = []
 
     # 1. production-change
     if environment == "production":
-        _rule(triggered, "production-change", "Change targets production environment", "medium", 20, SOURCE_SERVICE_CONTROLS)
+        _rule(
+            triggered,
+            "production-change",
+            "Change targets production environment",
+            "medium",
+            20,
+            SOURCE_SERVICE_CONTROLS,
+        )
 
     # 2. critical-service
     criticality = (service.get("criticality") or "").lower()
     if criticality in ("high", "critical"):
-        _rule(triggered, "critical-service", "Service is marked as high or critical", "high", 25, SOURCE_SERVICE_CONTROLS)
+        _rule(
+            triggered,
+            "critical-service",
+            "Service is marked as high or critical",
+            "high",
+            25,
+            SOURCE_SERVICE_CONTROLS,
+        )
 
     # 3. missing-owner
     if _is_empty(service.get("owner")):
-        _rule(triggered, "missing-owner", "Service owner is missing", "high", 25, SOURCE_SERVICE_CONTROLS)
+        _rule(
+            triggered,
+            "missing-owner",
+            "Service owner is missing",
+            "high",
+            25,
+            SOURCE_SERVICE_CONTROLS,
+        )
         missing_controls.append("service_owner")
 
     # 4. missing-runbook
     if _is_empty(service.get("runbook")):
-        _rule(triggered, "missing-runbook", "Service runbook is missing", "medium", 15, SOURCE_SERVICE_CONTROLS)
+        _rule(
+            triggered,
+            "missing-runbook",
+            "Service runbook is missing",
+            "medium",
+            15,
+            SOURCE_SERVICE_CONTROLS,
+        )
         missing_controls.append("runbook")
 
     # 5. missing-business-impact
@@ -186,7 +210,14 @@ def assess_risk(services, change_doc, terraform_text="", k8s_text=""):
 
     # 7. missing-monitoring-plan
     if is_monitoring_plan_incomplete(change.get("monitoring_plan")):
-        _rule(triggered, "missing-monitoring-plan", "No monitoring plan defined", "medium", 20, SOURCE_SERVICE_CONTROLS)
+        _rule(
+            triggered,
+            "missing-monitoring-plan",
+            "No monitoring plan defined",
+            "medium",
+            20,
+            SOURCE_SERVICE_CONTROLS,
+        )
         missing_controls.append("monitoring_plan")
 
     # 8. missing-validation-plan
@@ -203,13 +234,36 @@ def assess_risk(services, change_doc, terraform_text="", k8s_text=""):
 
     # 9-12. change-type rules
     if change_type == "database":
-        _rule(triggered, "database-change", "Database change detected", "high", 25, SOURCE_CHANGE_TYPE)
+        _rule(
+            triggered, "database-change", "Database change detected", "high", 25, SOURCE_CHANGE_TYPE
+        )
     elif change_type == "security":
-        _rule(triggered, "security-change", "Security-related change detected", "high", 25, SOURCE_CHANGE_TYPE)
+        _rule(
+            triggered,
+            "security-change",
+            "Security-related change detected",
+            "high",
+            25,
+            SOURCE_CHANGE_TYPE,
+        )
     elif change_type == "network":
-        _rule(triggered, "network-change", "Network-related change detected", "high", 25, SOURCE_CHANGE_TYPE)
+        _rule(
+            triggered,
+            "network-change",
+            "Network-related change detected",
+            "high",
+            25,
+            SOURCE_CHANGE_TYPE,
+        )
     elif change_type == "infrastructure":
-        _rule(triggered, "infrastructure-change", "Infrastructure change detected", "medium", 20, SOURCE_CHANGE_TYPE)
+        _rule(
+            triggered,
+            "infrastructure-change",
+            "Infrastructure change detected",
+            "medium",
+            20,
+            SOURCE_CHANGE_TYPE,
+        )
 
     # Scanner findings
     triggered.extend(scan_terraform(terraform_text))
