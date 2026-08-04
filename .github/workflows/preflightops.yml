@@ -1,10 +1,11 @@
 name: PreflightOps
 
-# Pull-request risk gate.
+# Manual smoke/demo workflow for this source repository.
 #
-# PreflightOps reads your change inputs, scores the deployment risk, writes a
-# Markdown report, uploads it as a build artifact, posts it as a PR comment, and
-# fails the build when the assessed risk level is CRITICAL.
+# A consuming repository can configure the composite action as a pull-request
+# gate. This source repository does not ship application-specific services.yaml
+# or change.yaml files, so this workflow is dispatch-only until paths are
+# supplied explicitly.
 #
 # Edit the file paths in `env` below to point at the inputs in your repository.
 

@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pedroluna-gh/preflightops/schemas/change-request-v1.schema.json",
+  "title": "PreflightOps Change Request v1",
+  "type": "object",
+  "required": ["change"],
+  "properties": {
+    "change": {
+      "type": "object",
+      "required": ["service"],
+      "properties": {
+        "id": {"type": ["string", "null"]},
+        "title": {"type": ["string", "null"]},
+        "service": {"type": "string", "minLength": 1},
+        "environment": {"type": ["string", "null"]},
+        "change_type": {"type": ["string", "null"]},
+        "requested_by": {"type": ["string", "null"]},
+        "description": {"type": ["string", "null"]},
+        "rollback_plan": {"type": ["string", "null"]},
+        "monitoring_plan": {
+          "type": ["object", "null"],
+          "properties": {
+            "dashboards": {"type": "array"},
+            "alerts": {"type": "array"},
+            "validation_window": {},
+            "success_criteria": {"type": "array"},
+            "logs": {"type": "array"}
+          },
+          "additionalProperties": true
+        },
+        "validation_plan": {"type": ["array", "null"]}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

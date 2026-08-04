@@ -2,6 +2,11 @@
 
 PreflightOps can run as a pull-request risk gate.
 
+The workflow bundled in this source repository is intentionally manual because
+the source repository has no application-specific service catalog or change
+request. Copy the example below into a consuming repository, or invoke the
+composite action directly, to run on pull requests.
+
 It can:
 
 - read a service catalog;

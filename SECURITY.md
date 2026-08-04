@@ -61,7 +61,8 @@ PreflightOps currently:
 
 - runs locally;
 - does not require a database;
-- does not call external APIs;
+- does not call external APIs during the default offline assessment path;
+- calls ServiceNow or Jira only when a live integration is explicitly enabled;
 - does not send data to AI services;
 - does not require authentication;
 - produces local Markdown and JSON reports.

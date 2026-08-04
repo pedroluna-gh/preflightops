@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Nothing yet.
+### Added
+
+- Contract Set v1 with JSON Schemas for the service catalog, change request,
+  JSON risk report, and ticket template.
+- Public contract inventory, compatibility policy, and versioning ADR.
+- `preflightops --version` and version metadata in Markdown/JSON reports.
+
+### Changed
+
+- Package metadata, Python API, CLI, and reports now use one version source.
+- Documentation now distinguishes the source repository's manual smoke workflow
+  from consumer pull-request integrations and accurately describes opt-in API
+  calls.
 
 ## [0.1.2] - 2026-06-08
 
