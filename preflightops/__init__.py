@@ -1,5 +1,7 @@
 """PreflightOps: pre-deployment risk assessment for SRE and Platform teams."""
 
+from ._version import __version__
+
 from .risk_engine import (
     assess_risk,
     find_service,
@@ -41,5 +43,3 @@ __all__ = [
     "correlation_id",
     "IntegrationError",
 ]
-
-__version__ = "0.1.0"
