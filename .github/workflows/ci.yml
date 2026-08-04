@@ -1,40 +1,160 @@
 name: CI
 
-# Runs the PreflightOps test suite on every push and pull request to main,
-# across all supported Python versions.
-
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
 
 permissions:
   contents: read
 
-jobs:
-  test:
-    name: Tests (Python ${{ matrix.python-version }})
-    runs-on: ubuntu-latest
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
+env:
+  UV_VERSION: "0.12.1"
+  UV_FROZEN: "1"
+
+jobs:
+  quality:
+    name: Quality gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: .python-version
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Verify lock and install quality environment
+        run: uv sync --locked --all-extras --group quality
+
+      - name: Check formatting
+        run: uv run ruff format --check .
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Type check
+        run: uv run mypy preflightops
+
+      - name: Test with branch coverage
+        run: uv run pytest --cov=preflightops --cov-report=term-missing --cov-fail-under=85
+
+      - name: Export locked dependency sets
+        run: |
+          uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file .runtime-requirements.txt
+          uv export --locked --no-dev --extra app --no-emit-project --format requirements-txt --output-file .dependency-audit.txt
+
+      - name: Audit runtime dependencies
+        run: uv run pip-audit --requirement .dependency-audit.txt
+
+      - name: Build distributions
+        run: uv run python -m build --no-isolation
+
+      - name: Validate distribution metadata
+        run: uv run twine check dist/*
+
+      - name: Test clean wheel installation and CLI
+        run: uv run python scripts/package_smoke.py --requirements .runtime-requirements.txt dist
+
+  compatibility:
+    name: Tests (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
-
+        include:
+          - os: ubuntu-24.04
+            python: "3.9"
+          - os: ubuntu-24.04
+            python: "3.10"
+          - os: ubuntu-24.04
+            python: "3.11"
+          - os: ubuntu-24.04
+            python: "3.12"
+          - os: ubuntu-24.04
+            python: "3.13"
+          - os: windows-2025
+            python: "3.12"
+          - os: macos-15
+            python: "3.12"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v6
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python }}
 
-      - name: Install PreflightOps with test extras
-        run: pip install -e ".[app,test]"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
 
-      - name: Run tests
-        run: pytest
+      - name: Install from the frozen lockfile
+        run: uv sync --locked --all-extras --no-dev
+
+      - name: Run regression suite
+        run: uv run --no-dev pytest
+
+  action-contract:
+    name: Composite action contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: LOW risk must pass
+        id: low
+        uses: ./
+        with:
+          services: examples/services-low-risk.yaml
+          change: examples/change-low-risk.yaml
+          output: low-report.md
+          json-output: low-report.json
+          fail-on: critical
+
+      - name: Assert LOW contract
+        shell: bash
+        run: |
+          test "${{ steps.low.outputs.risk-level }}" = "LOW"
+          test -s low-report.md
+          test -s low-report.json
+
+      - name: CRITICAL risk must fail the risk gate
+        id: critical
+        continue-on-error: true
+        uses: ./
+        with:
+          services: examples/services-critical-risk.yaml
+          change: examples/change-critical-risk.yaml
+          terraform: examples/terraform-critical.txt
+          output: critical-report.md
+          json-output: critical-report.json
+          fail-on: critical
+
+      - name: Assert CRITICAL contract
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.critical.outcome }}" = "failure"
+          test "${{ steps.critical.outputs.risk-level }}" = "CRITICAL"
+          test -s critical-report.md
+          test -s critical-report.json
