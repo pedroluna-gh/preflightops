@@ -6,22 +6,21 @@ shipped under ``examples/`` and in ``preflightops.sample_data``.
 
 import os
 
-import pytest
 import yaml
 
-from preflightops.risk_engine import assess_risk
 from preflightops import sample_data
+from preflightops.risk_engine import assess_risk
 
 EXAMPLES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "examples")
 
 
 def _load_yaml(filename):
-    with open(os.path.join(EXAMPLES_DIR, filename), "r", encoding="utf-8") as handle:
+    with open(os.path.join(EXAMPLES_DIR, filename), encoding="utf-8") as handle:
         return yaml.safe_load(handle)
 
 
 def _load_text(filename):
-    with open(os.path.join(EXAMPLES_DIR, filename), "r", encoding="utf-8") as handle:
+    with open(os.path.join(EXAMPLES_DIR, filename), encoding="utf-8") as handle:
         return handle.read()
 
 
@@ -59,16 +58,12 @@ class TestExampleFiles:
 # ---------------------------------------------------------------------------
 class TestSampleData:
     def test_low_risk_sample(self):
-        result = assess_risk(
-            sample_data.LOW_RISK_SERVICES, sample_data.LOW_RISK_CHANGE
-        )
+        result = assess_risk(sample_data.LOW_RISK_SERVICES, sample_data.LOW_RISK_CHANGE)
         assert result["risk_score"] == 0
         assert result["risk_level"] == "LOW"
 
     def test_high_risk_sample(self):
-        result = assess_risk(
-            sample_data.HIGH_RISK_SERVICES, sample_data.HIGH_RISK_CHANGE
-        )
+        result = assess_risk(sample_data.HIGH_RISK_SERVICES, sample_data.HIGH_RISK_CHANGE)
         assert result["risk_score"] == 80
         assert result["risk_level"] == "HIGH"
 
@@ -87,9 +82,7 @@ class TestSampleData:
 # Expected high-risk score breakdown (documents how 80 is reached)
 # ---------------------------------------------------------------------------
 def test_high_risk_breakdown():
-    result = assess_risk(
-        sample_data.HIGH_RISK_SERVICES, sample_data.HIGH_RISK_CHANGE
-    )
+    result = assess_risk(sample_data.HIGH_RISK_SERVICES, sample_data.HIGH_RISK_CHANGE)
     triggered = {rule["id"]: rule["score"] for rule in result["triggered_rules"]}
     assert triggered == {
         "production-change": 20,

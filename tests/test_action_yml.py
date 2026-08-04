@@ -16,7 +16,7 @@ ACTION_YML = os.path.join(os.path.dirname(os.path.dirname(__file__)), "action.ym
 
 @pytest.fixture(scope="module")
 def action_text():
-    with open(ACTION_YML, "r", encoding="utf-8") as handle:
+    with open(ACTION_YML, encoding="utf-8") as handle:
         return handle.read()
 
 

@@ -11,8 +11,7 @@ import os
 import pytest
 import yaml
 
-from preflightops import cli
-from preflightops import sample_data
+from preflightops import cli, sample_data
 
 EXAMPLES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "examples")
 
@@ -31,9 +30,7 @@ class TestExitCodes:
         services = _write_yaml(tmp_path / "services.yaml", sample_data.LOW_RISK_SERVICES)
         change = _write_yaml(tmp_path / "change.yaml", sample_data.LOW_RISK_CHANGE)
         output = tmp_path / "report.md"
-        code = cli.main(
-            ["--services", services, "--change", change, "--output", str(output)]
-        )
+        code = cli.main(["--services", services, "--change", change, "--output", str(output)])
         assert code == 0
 
     def test_high_risk_returns_zero(self, tmp_path):
@@ -41,15 +38,11 @@ class TestExitCodes:
         services = _write_yaml(tmp_path / "services.yaml", sample_data.HIGH_RISK_SERVICES)
         change = _write_yaml(tmp_path / "change.yaml", sample_data.HIGH_RISK_CHANGE)
         output = tmp_path / "report.md"
-        code = cli.main(
-            ["--services", services, "--change", change, "--output", str(output)]
-        )
+        code = cli.main(["--services", services, "--change", change, "--output", str(output)])
         assert code == 0
 
     def test_critical_risk_returns_one(self, tmp_path):
-        services = _write_yaml(
-            tmp_path / "services.yaml", sample_data.CRITICAL_RISK_SERVICES
-        )
+        services = _write_yaml(tmp_path / "services.yaml", sample_data.CRITICAL_RISK_SERVICES)
         change = _write_yaml(tmp_path / "change.yaml", sample_data.CRITICAL_RISK_CHANGE)
         terraform = tmp_path / "tf.txt"
         terraform.write_text(sample_data.CRITICAL_TERRAFORM_TEXT, encoding="utf-8")
@@ -58,11 +51,16 @@ class TestExitCodes:
         output = tmp_path / "report.md"
         code = cli.main(
             [
-                "--services", services,
-                "--change", change,
-                "--terraform", str(terraform),
-                "--k8s", str(k8s),
-                "--output", str(output),
+                "--services",
+                services,
+                "--change",
+                change,
+                "--terraform",
+                str(terraform),
+                "--k8s",
+                str(k8s),
+                "--output",
+                str(output),
             ]
         )
         assert code == 1
@@ -76,9 +74,7 @@ class TestOutput:
         services = _write_yaml(tmp_path / "services.yaml", sample_data.HIGH_RISK_SERVICES)
         change = _write_yaml(tmp_path / "change.yaml", sample_data.HIGH_RISK_CHANGE)
         output = tmp_path / "report.md"
-        cli.main(
-            ["--services", services, "--change", change, "--output", str(output)]
-        )
+        cli.main(["--services", services, "--change", change, "--output", str(output)])
         assert output.exists()
         contents = output.read_text(encoding="utf-8")
         assert "# PreflightOps Risk Report" in contents
@@ -88,9 +84,7 @@ class TestOutput:
         services = _write_yaml(tmp_path / "services.yaml", sample_data.HIGH_RISK_SERVICES)
         change = _write_yaml(tmp_path / "change.yaml", sample_data.HIGH_RISK_CHANGE)
         output = tmp_path / "report.md"
-        cli.main(
-            ["--services", services, "--change", change, "--output", str(output)]
-        )
+        cli.main(["--services", services, "--change", change, "--output", str(output)])
         out = capsys.readouterr().out
         assert "Service:     checkout-api" in out
         assert "Environment: production" in out
@@ -117,9 +111,12 @@ class TestErrorCodes:
         output = tmp_path / "report.md"
         code = cli.main(
             [
-                "--services", str(tmp_path / "does-not-exist.yaml"),
-                "--change", change,
-                "--output", str(output),
+                "--services",
+                str(tmp_path / "does-not-exist.yaml"),
+                "--change",
+                change,
+                "--output",
+                str(output),
             ]
         )
         assert code == 2
@@ -130,9 +127,12 @@ class TestErrorCodes:
         services = _write_yaml(tmp_path / "services.yaml", sample_data.LOW_RISK_SERVICES)
         code = cli.main(
             [
-                "--services", services,
-                "--change", str(tmp_path / "nope.yaml"),
-                "--output", str(tmp_path / "report.md"),
+                "--services",
+                services,
+                "--change",
+                str(tmp_path / "nope.yaml"),
+                "--output",
+                str(tmp_path / "report.md"),
             ]
         )
         assert code == 2
@@ -151,9 +151,7 @@ class TestErrorCodes:
     def test_unknown_service_returns_two(self, tmp_path, capsys):
         # File loads fine, but assess_risk raises ValueError for an unknown service.
         services = _write_yaml(tmp_path / "services.yaml", sample_data.LOW_RISK_SERVICES)
-        change = _write_yaml(
-            tmp_path / "change.yaml", {"change": {"service": "ghost-service"}}
-        )
+        change = _write_yaml(tmp_path / "change.yaml", {"change": {"service": "ghost-service"}})
         code = cli.main(
             ["--services", services, "--change", change, "--output", str(tmp_path / "r.md")]
         )
@@ -176,24 +174,26 @@ class TestLivePushConfirmation:
         change = _write_yaml(tmp_path / "change.yaml", sample_data.HIGH_RISK_CHANGE)
         output = tmp_path / "report.md"
         return [
-            "--services", services,
-            "--change", change,
-            "--output", str(output),
+            "--services",
+            services,
+            "--change",
+            change,
+            "--output",
+            str(output),
         ]
 
     def test_declining_makes_no_api_call(self, tmp_path, capsys, monkeypatch):
         calls = []
         monkeypatch.setattr(
-            cli, "push_to_servicenow",
+            cli,
+            "push_to_servicenow",
             lambda *a, **k: calls.append(a) or {},
         )
         # Interactive terminal that answers "no".
         monkeypatch.setattr(cli.sys.stdin, "isatty", lambda: True)
         monkeypatch.setattr("builtins.input", lambda *a: "n")
 
-        code = cli.main(
-            self._base_args(tmp_path) + ["--servicenow", "https://dev.service-now.com"]
-        )
+        code = cli.main(self._base_args(tmp_path) + ["--servicenow", "https://dev.service-now.com"])
 
         assert code == 0  # HIGH risk is not CRITICAL; clean exit
         assert calls == []  # no network call made
@@ -218,9 +218,7 @@ class TestLivePushConfirmation:
         monkeypatch.setattr(cli.sys.stdin, "isatty", lambda: True)
         monkeypatch.setattr("builtins.input", lambda *a: "y")
 
-        code = cli.main(
-            self._base_args(tmp_path) + ["--servicenow", "https://dev.service-now.com"]
-        )
+        code = cli.main(self._base_args(tmp_path) + ["--servicenow", "https://dev.service-now.com"])
 
         assert code == 0
         assert calls == ["https://dev.service-now.com"]
@@ -230,13 +228,17 @@ class TestLivePushConfirmation:
     def test_yes_flag_skips_prompt(self, tmp_path, monkeypatch):
         calls = []
         monkeypatch.setattr(
-            cli, "push_to_jira",
-            lambda *a, **k: calls.append(a[0]) or {
-                "system": "jira",
-                "action": "created",
-                "key": "OPS-1",
-                "url": "https://x/browse/OPS-1",
-            },
+            cli,
+            "push_to_jira",
+            lambda *a, **k: (
+                calls.append(a[0])
+                or {
+                    "system": "jira",
+                    "action": "created",
+                    "key": "OPS-1",
+                    "url": "https://x/browse/OPS-1",
+                }
+            ),
         )
 
         def _no_input(*a):
@@ -245,8 +247,7 @@ class TestLivePushConfirmation:
         monkeypatch.setattr("builtins.input", _no_input)
 
         code = cli.main(
-            self._base_args(tmp_path)
-            + ["--jira", "https://org.atlassian.net", "--yes"]
+            self._base_args(tmp_path) + ["--jira", "https://org.atlassian.net", "--yes"]
         )
 
         assert code == 0
@@ -255,7 +256,8 @@ class TestLivePushConfirmation:
     def test_no_tty_without_yes_skips_push(self, tmp_path, capsys, monkeypatch):
         calls = []
         monkeypatch.setattr(
-            cli, "push_to_servicenow",
+            cli,
+            "push_to_servicenow",
             lambda *a, **k: calls.append(a) or {},
         )
         # Non-interactive: no terminal attached and --yes not given.
@@ -266,9 +268,7 @@ class TestLivePushConfirmation:
 
         monkeypatch.setattr("builtins.input", _no_input)
 
-        code = cli.main(
-            self._base_args(tmp_path) + ["--servicenow", "https://dev.service-now.com"]
-        )
+        code = cli.main(self._base_args(tmp_path) + ["--servicenow", "https://dev.service-now.com"])
 
         assert code == 0  # clean exit, offline path unaffected
         assert calls == []
@@ -282,14 +282,11 @@ class TestLivePushConfirmation:
 
         monkeypatch.setattr("builtins.input", _no_input)
         ticket_output = tmp_path / "ticket.md"
-        code = cli.main(
-            self._base_args(tmp_path) + ["--ticket-output", str(ticket_output)]
-        )
+        code = cli.main(self._base_args(tmp_path) + ["--ticket-output", str(ticket_output)])
         assert code == 0
         assert ticket_output.exists()
 
     def test_preview_shows_target_and_correlation_id(self, tmp_path, capsys, monkeypatch):
-        from preflightops import integrations
 
         monkeypatch.setattr(cli.sys.stdin, "isatty", lambda: True)
         monkeypatch.setattr("builtins.input", lambda *a: "n")
@@ -301,10 +298,14 @@ class TestLivePushConfirmation:
 
         cli.main(
             [
-                "--services", services,
-                "--change", change,
-                "--output", str(output),
-                "--jira", "https://org.atlassian.net",
+                "--services",
+                services,
+                "--change",
+                change,
+                "--output",
+                str(output),
+                "--jira",
+                "https://org.atlassian.net",
             ]
         )
 
@@ -326,11 +327,16 @@ def test_cli_with_example_files(tmp_path):
     output = tmp_path / "report.md"
     code = cli.main(
         [
-            "--services", services,
-            "--change", change,
-            "--terraform", terraform,
-            "--k8s", k8s,
-            "--output", str(output),
+            "--services",
+            services,
+            "--change",
+            change,
+            "--terraform",
+            terraform,
+            "--k8s",
+            k8s,
+            "--output",
+            str(output),
         ]
     )
     assert code == 1

@@ -15,7 +15,6 @@ from preflightops.report import generate_json_report
 from preflightops.risk_engine import assess_risk
 from preflightops.ticket import DEFAULT_TEMPLATE
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMAS = ROOT / "schemas"
 
@@ -76,18 +75,16 @@ def test_public_api_is_in_contract_inventory():
         assert f"`{symbol}`" in contracts
 
 
-def test_source_workflow_is_documented_as_manual():
-    workflow = (ROOT / ".github" / "workflows" / "preflightops.yml").read_text(
-        encoding="utf-8"
-    )
+def test_source_workflow_is_documented_as_manual_adoption_example():
+    workflow = (ROOT / ".github" / "workflows" / "preflightops.yml").read_text(encoding="utf-8")
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "workflow_dispatch:" in workflow
     assert "\n  pull_request:" not in workflow
-    assert "manually dispatched smoke/demo workflow" in readme
+    assert "manually dispatched adoption example" in readme
+    assert "Engineering quality gates run separately" in readme
 
 
 def test_security_policy_acknowledges_opt_in_network_calls():
     policy = (ROOT / "SECURITY.md").read_text(encoding="utf-8")
     assert "calls ServiceNow or Jira only when" in policy
     assert "does not call external APIs;" not in policy
-

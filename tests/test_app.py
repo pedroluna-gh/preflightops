@@ -13,9 +13,9 @@ import pytest
 import yaml
 
 import app
-from preflightops.risk_engine import assess_risk
-from preflightops.report import generate_markdown_report, generate_json_report
 from preflightops import sample_data
+from preflightops.report import generate_json_report, generate_markdown_report
+from preflightops.risk_engine import assess_risk
 
 AppTest = pytest.importorskip("streamlit.testing.v1").AppTest
 
@@ -38,11 +38,16 @@ def _capture_downloads(monkeypatch):
     captured = {}
     original_add = MediaFileManager.add
 
-    def _add(self, path_or_data, mimetype, coordinates, file_name=None,
-             is_for_static_download=False):
+    def _add(
+        self, path_or_data, mimetype, coordinates, file_name=None, is_for_static_download=False
+    ):
         captured[file_name] = {"data": path_or_data, "mimetype": mimetype}
         return original_add(
-            self, path_or_data, mimetype, coordinates, file_name,
+            self,
+            path_or_data,
+            mimetype,
+            coordinates,
+            file_name,
             is_for_static_download,
         )
 
@@ -116,10 +121,8 @@ class TestExampleButtons:
         at = _run_app()
         at.button[0].click().run()
         assert not at.exception
-        assert yaml.safe_load(at.session_state["services_input"]) == \
-            sample_data.LOW_RISK_SERVICES
-        assert yaml.safe_load(at.session_state["change_input"]) == \
-            sample_data.LOW_RISK_CHANGE
+        assert yaml.safe_load(at.session_state["services_input"]) == sample_data.LOW_RISK_SERVICES
+        assert yaml.safe_load(at.session_state["change_input"]) == sample_data.LOW_RISK_CHANGE
         # LOW example carries no terraform / k8s input.
         assert at.session_state["terraform_input"] == ""
         assert at.session_state["k8s_input"] == ""
@@ -128,17 +131,16 @@ class TestExampleButtons:
         at = _run_app()
         at.button[1].click().run()
         assert not at.exception
-        assert yaml.safe_load(at.session_state["services_input"]) == \
-            sample_data.HIGH_RISK_SERVICES
-        assert yaml.safe_load(at.session_state["change_input"]) == \
-            sample_data.HIGH_RISK_CHANGE
+        assert yaml.safe_load(at.session_state["services_input"]) == sample_data.HIGH_RISK_SERVICES
+        assert yaml.safe_load(at.session_state["change_input"]) == sample_data.HIGH_RISK_CHANGE
 
     def test_critical_example_button_loads_terraform_and_k8s(self):
         at = _run_app()
         at.button[2].click().run()
         assert not at.exception
-        assert yaml.safe_load(at.session_state["services_input"]) == \
-            sample_data.CRITICAL_RISK_SERVICES
+        assert (
+            yaml.safe_load(at.session_state["services_input"]) == sample_data.CRITICAL_RISK_SERVICES
+        )
         assert at.session_state["terraform_input"] == sample_data.CRITICAL_TERRAFORM_TEXT
         assert at.session_state["k8s_input"] == sample_data.RISKY_K8S_TEXT
 
@@ -282,10 +284,7 @@ class TestReportDownloads:
         # The preview echoes the report in a markdown code block. ``st.code``
         # strips trailing whitespace for display, so compare on rstrip.
         code_blocks = [c.value for c in at.code if c.language == "markdown"]
-        assert any(
-            block.rstrip("\n") == expected_markdown.rstrip("\n")
-            for block in code_blocks
-        )
+        assert any(block.rstrip("\n") == expected_markdown.rstrip("\n") for block in code_blocks)
 
     def test_download_buttons_are_present_and_labelled(self, monkeypatch):
         at, _, _ = self._run_assessment(monkeypatch)
@@ -435,9 +434,7 @@ class TestSendHelpers:
             }
         )
         monkeypatch.setattr(integrations, "_http_request", fake)
-        info = app._send_to_servicenow(
-            _result(), _change(), None, env=SERVICENOW_ENV
-        )
+        info = app._send_to_servicenow(_result(), _change(), None, env=SERVICENOW_ENV)
         assert info["system"] == "servicenow"
         assert info["action"] == "created"
         assert info["number"] == "CHG0030001"
@@ -525,11 +522,7 @@ class TestPushConfirmation:
     def test_review_surface_shows_target_and_correlation_id(self, monkeypatch):
         at = self._configured_app(monkeypatch)
         result = at.session_state["result"]
-        change_doc = (
-            at.session_state["change_doc"]
-            if "change_doc" in at.session_state
-            else None
-        )
+        change_doc = at.session_state["change_doc"] if "change_doc" in at.session_state else None
         corr = integrations.correlation_id(result, change_doc)
         blob = "\n".join(m.value for m in at.markdown)
         # Both target instances and the deterministic correlation id are shown.

@@ -7,25 +7,21 @@ back to the exact text specified in the feature request. They also cover the CLI
 ``--ticket-output`` flag writing the file and printing its confirmation message.
 """
 
-import os
-
+import pytest
 import yaml
 
-from preflightops import cli
-from preflightops import sample_data
-import pytest
-
+from preflightops import cli, sample_data
 from preflightops.ticket import (
+    APPROVAL_BY_LEVEL,
+    DEFAULT_TEMPLATE,
+    DEPLOYMENT_WINDOW_BY_LEVEL,
+    NO_BUSINESS_IMPACT,
+    NO_MONITORING_PLAN,
+    NO_ROLLBACK_PLAN,
+    NO_VALIDATION_PLAN,
     generate_ticket_markdown,
     load_template,
     load_template_file,
-    DEFAULT_TEMPLATE,
-    NO_ROLLBACK_PLAN,
-    NO_MONITORING_PLAN,
-    NO_VALIDATION_PLAN,
-    NO_BUSINESS_IMPACT,
-    APPROVAL_BY_LEVEL,
-    DEPLOYMENT_WINDOW_BY_LEVEL,
 )
 
 REQUIRED_HEADINGS = [
@@ -173,10 +169,14 @@ class TestCliTicketOutput:
         ticket = tmp_path / "ticket.md"
         code = cli.main(
             [
-                "--services", services,
-                "--change", change,
-                "--output", str(tmp_path / "report.md"),
-                "--ticket-output", str(ticket),
+                "--services",
+                services,
+                "--change",
+                change,
+                "--output",
+                str(tmp_path / "report.md"),
+                "--ticket-output",
+                str(ticket),
             ]
         )
         assert code == 0
@@ -191,10 +191,14 @@ class TestCliTicketOutput:
         ticket = tmp_path / "ticket.md"
         cli.main(
             [
-                "--services", services,
-                "--change", change,
-                "--output", str(tmp_path / "report.md"),
-                "--ticket-output", str(ticket),
+                "--services",
+                services,
+                "--change",
+                change,
+                "--output",
+                str(tmp_path / "report.md"),
+                "--ticket-output",
+                str(ticket),
             ]
         )
         out = capsys.readouterr().out
@@ -220,9 +224,7 @@ class TestDefaultTemplate:
         # passing nothing, so existing output is reproduced exactly.
         change = {"change": {"title": "Migrate payments-core"}}
         without = generate_ticket_markdown(_critical_result(), change)
-        with_default = generate_ticket_markdown(
-            _critical_result(), change, DEFAULT_TEMPLATE
-        )
+        with_default = generate_ticket_markdown(_critical_result(), change, DEFAULT_TEMPLATE)
         assert without == with_default
 
     def test_load_template_none_returns_default_copy(self):
@@ -325,11 +327,16 @@ class TestTemplateFileAndCli:
         ticket = tmp_path / "ticket.md"
         code = cli.main(
             [
-                "--services", services,
-                "--change", change,
-                "--output", str(tmp_path / "report.md"),
-                "--ticket-output", str(ticket),
-                "--ticket-template", template,
+                "--services",
+                services,
+                "--change",
+                change,
+                "--output",
+                str(tmp_path / "report.md"),
+                "--ticket-output",
+                str(ticket),
+                "--ticket-template",
+                template,
             ]
         )
         assert code == 0
@@ -347,11 +354,16 @@ class TestTemplateFileAndCli:
         )
         code = cli.main(
             [
-                "--services", services,
-                "--change", change,
-                "--output", str(tmp_path / "report.md"),
-                "--ticket-output", str(tmp_path / "ticket.md"),
-                "--ticket-template", template,
+                "--services",
+                services,
+                "--change",
+                change,
+                "--output",
+                str(tmp_path / "report.md"),
+                "--ticket-output",
+                str(tmp_path / "ticket.md"),
+                "--ticket-template",
+                template,
             ]
         )
         assert code == 2
