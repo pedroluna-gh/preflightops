@@ -16,6 +16,10 @@ ENV/
 .pytest_cache/
 .coverage
 htmlcov/
+.quality-venv/
+.uv-cache/
+.runtime-requirements.txt
+.dependency-audit.txt
 .tox/
 .nox/
 

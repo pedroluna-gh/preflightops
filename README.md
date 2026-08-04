@@ -151,26 +151,17 @@ The CLI prints the score and level, writes a Markdown report to `--output` (and 
 PreflightOps ships a composite Action that consuming repositories can configure
 as a pull-request gate. The workflow in
 [`.github/workflows/preflightops.yml`](.github/workflows/preflightops.yml) is a
-manually dispatched smoke/demo workflow for this source repository because this
-repository does not contain an application's `services.yaml` and `change.yaml`.
+manually dispatched adoption example using the LOW, HIGH, and CRITICAL inputs
+shipped in `examples/`. Engineering quality gates run separately in
+`.github/workflows/ci.yml`.
 The complete pull-request workflow for consuming repositories is documented in
 [`docs/GITHUB_ACTION.md`](docs/GITHUB_ACTION.md).
 
 ![PreflightOps pull request comment](docs/screenshots/github-pr-comment.png)
 
-Point the workflow at your input files via the `env` block at the top of the file:
-
-```yaml
-env:
-  PREFLIGHTOPS_INSTALL: "git+https://github.com/pedroluna-gh/preflightops.git@main"
-  PREFLIGHTOPS_SERVICES: services.yaml   # required: service catalog
-  PREFLIGHTOPS_CHANGE: change.yaml       # required: change request
-  PREFLIGHTOPS_TERRAFORM: tfplan.txt     # optional: Terraform plan/diff
-  PREFLIGHTOPS_K8S: k8s.yaml             # optional: Kubernetes manifest
-  PREFLIGHTOPS_REPORT: preflightops-report.md
-```
-
-Optional inputs are skipped automatically when the file is absent. The workflow needs `pull-requests: write` permission to post the comment (already declared in the example file).
+Run the manual source workflow and choose a scenario to inspect the result in
+the job summary. It has only `contents: read`; it does not comment on pull
+requests or write repository state.
 
 You can also call the bundled composite action directly with `uses:`. It sets up Python, installs PreflightOps, runs the assessment, and gates the job on `fail-on`. Add `ticket-output` to also generate a copy/paste-ready change summary — this stays fully offline:
 
@@ -407,7 +398,8 @@ preflightops/
 │   └── cli.py                 # Command-line entry point (exit 1 on CRITICAL)
 ├── examples/                  # Example YAML / text inputs for each scenario
 ├── tests/                     # pytest suite (engine, validators, scanners, CLI, UI)
-├── .github/workflows/         # Ready-to-use PR risk-gate Action
+├── .github/workflows/         # Mandatory CI + manual adoption example
+├── scripts/                   # Reproducible packaging smoke checks
 ├── pyproject.toml             # Packaging + console script + optional extras
 └── requirements.txt           # Editable install for local development
 ```
@@ -417,11 +409,12 @@ preflightops/
 PreflightOps ships with a `pytest` suite covering the risk-engine rules, the rollback/monitoring/validation validators, the Terraform/Kubernetes scanners (including the readiness/liveness probe checks), the CLI and report generators, the web UI, and the documented LOW / HIGH / CRITICAL scenarios.
 
 ```bash
-pip install -r requirements.txt
-pytest
+uv sync --locked --all-extras --group quality
+uv run pytest
 ```
 
-Run from the `preflightops/` directory. Tests live under `tests/`.
+Run from the `preflightops/` directory. Tests live under `tests/`; all mandatory
+local commands are documented in [`docs/QUALITY_GATES.md`](docs/QUALITY_GATES.md).
 
 ## Public contracts and compatibility
 

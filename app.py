@@ -5,35 +5,30 @@ Run with:
 """
 
 import os
+from importlib.util import find_spec
 
-import yaml
 import streamlit as st
+import yaml
 
-try:
-    import pandas as pd
-
-    HAS_PANDAS = True
-except ImportError:  # pragma: no cover - pandas is in requirements
-    HAS_PANDAS = False
-
-from preflightops.risk_engine import assess_risk, SOURCE_ORDER
-from preflightops.report import generate_markdown_report, generate_json_report
-from preflightops.ticket import generate_ticket_markdown
 from preflightops import sample_data
 from preflightops.integrations import (
-    push_to_servicenow,
-    push_to_jira,
-    correlation_id,
-    IntegrationError,
-    SERVICENOW_INSTANCE_URL_ENV,
-    SERVICENOW_USER_ENV,
-    SERVICENOW_PASSWORD_ENV,
+    JIRA_API_TOKEN_ENV,
     JIRA_BASE_URL_ENV,
     JIRA_EMAIL_ENV,
-    JIRA_API_TOKEN_ENV,
     JIRA_PROJECT_ENV,
+    SERVICENOW_INSTANCE_URL_ENV,
+    SERVICENOW_PASSWORD_ENV,
+    SERVICENOW_USER_ENV,
+    IntegrationError,
+    correlation_id,
+    push_to_jira,
+    push_to_servicenow,
 )
+from preflightops.report import generate_json_report, generate_markdown_report
+from preflightops.risk_engine import SOURCE_ORDER, assess_risk
+from preflightops.ticket import generate_ticket_markdown
 
+HAS_PANDAS = find_spec("pandas") is not None
 
 # ---------------------------------------------------------------------------
 # Default inputs (the checkout-api example from the spec)
@@ -180,7 +175,7 @@ def _severity_chip(severity: str) -> str:
     color = SEVERITY_COLORS.get(sev, "#57606a")
     return (
         f'<span style="display:inline-block;padding:1px 8px;border-radius:10px;'
-        f'background-color:{color};color:white;font-size:11px;font-weight:700;'
+        f"background-color:{color};color:white;font-size:11px;font-weight:700;"
         f'text-transform:uppercase;letter-spacing:0.5px;">{sev}</span>'
     )
 
@@ -212,9 +207,11 @@ def _render_score_breakdown(triggered: list) -> None:
 
         label_l, label_r = st.columns([3, 1])
         with label_l:
-            st.markdown(f"**{source}** &nbsp; <span style='color:#57606a;'>"
-                        f"({len(rules)} finding{'s' if len(rules) != 1 else ''})</span>",
-                        unsafe_allow_html=True)
+            st.markdown(
+                f"**{source}** &nbsp; <span style='color:#57606a;'>"
+                f"({len(rules)} finding{'s' if len(rules) != 1 else ''})</span>",
+                unsafe_allow_html=True,
+            )
         with label_r:
             st.markdown(
                 f"<div style='text-align:right;font-weight:700;'>{group_score} pts &nbsp;"
@@ -241,9 +238,11 @@ def _render_grouped_rules(triggered: list) -> None:
 
     for source, rules in groups.items():
         group_score = sum(rule.get("score", 0) for rule in rules)
-        st.markdown(f"#### {source} &nbsp; "
-                    f"<span style='color:#57606a;font-size:14px;'>+{group_score} pts</span>",
-                    unsafe_allow_html=True)
+        st.markdown(
+            f"#### {source} &nbsp; "
+            f"<span style='color:#57606a;font-size:14px;'>+{group_score} pts</span>",
+            unsafe_allow_html=True,
+        )
 
         ordered = sorted(
             rules, key=lambda r: SEVERITY_RANK.get((r.get("severity") or "").lower(), 99)
@@ -514,15 +513,11 @@ def _send_to_jira(result, change_doc, ticket_markdown, env=None) -> dict:
     env = os.environ if env is None else env
     base_url, missing = _jira_status(env)
     if missing:
-        raise IntegrationError(
-            "Jira integration is not configured. Set: " + ", ".join(missing)
-        )
+        raise IntegrationError("Jira integration is not configured. Set: " + ", ".join(missing))
     return push_to_jira(base_url, result, change_doc, ticket_markdown, env)
 
 
-def _handle_push(
-    system: str, sender, result, change_doc, ticket_markdown, confirmed: bool
-) -> None:
+def _handle_push(system: str, sender, result, change_doc, ticket_markdown, confirmed: bool) -> None:
     """Run a push and record its outcome in session state for display.
 
     The push only happens when ``confirmed`` is truthy. Without an explicit
@@ -534,8 +529,7 @@ def _handle_push(
         statuses[system] = {
             "ok": False,
             "message": (
-                "Confirm the target and action above before sending. "
-                "No API call was made."
+                "Confirm the target and action above before sending. No API call was made."
             ),
         }
         return
@@ -605,9 +599,7 @@ def _render_integrations(result, change_doc, ticket_markdown, env=None) -> None:
 
     with col_sn:
         if sn_missing:
-            st.caption(
-                "ServiceNow not configured. Set: " + ", ".join(sn_missing)
-            )
+            st.caption("ServiceNow not configured. Set: " + ", ".join(sn_missing))
         else:
             _render_push_control(
                 system="servicenow",
@@ -637,7 +629,13 @@ def _render_integrations(result, change_doc, ticket_markdown, env=None) -> None:
 
 
 def _render_push_control(
-    system, label, record_kind, target_url, sender, result, change_doc,
+    system,
+    label,
+    record_kind,
+    target_url,
+    sender,
+    result,
+    change_doc,
     ticket_markdown,
 ) -> None:
     """Render a confirm-then-send control for one live integration.

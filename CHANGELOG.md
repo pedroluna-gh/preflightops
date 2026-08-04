@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   JSON risk report, and ticket template.
 - Public contract inventory, compatibility policy, and versioning ADR.
 - `preflightops --version` and version metadata in Markdown/JSON reports.
+- Reproducible uv lockfile, documented quality gates, cross-platform/Python
+  compatibility matrix, dependency audit, and packaging/action contract checks.
+- A manual adoption workflow backed by the repository's real LOW, HIGH, and
+  CRITICAL examples.
 
 ### Changed
 
@@ -20,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation now distinguishes the source repository's manual smoke workflow
   from consumer pull-request integrations and accurately describes opt-in API
   calls.
+- GitHub workflows now use read-only permissions, explicit runner images,
+  bounded timeouts, controlled tool versions, and lock-derived dependency cache.
 
 ## [0.1.2] - 2026-06-08
 
