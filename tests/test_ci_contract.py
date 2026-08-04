@@ -59,3 +59,17 @@ def test_adoption_workflow_is_manual_read_only_and_uses_real_examples():
     assert "uses: ./" in text
     assert "examples/services-${{ inputs.scenario }}-risk.yaml" in text
     assert "services.yaml" not in text
+
+
+def test_ci_exposes_stable_required_check_contract():
+    workflow = _load(CI_PATH)
+    required = workflow["jobs"]["required"]
+    assert required["name"] == "Required"
+    assert set(required["needs"]) == {"quality", "compatibility", "action-contract"}
+    assert required["if"] == "${{ always() }}"
+    step = required["steps"][0]
+    assert step["name"] == "Verify required CI contracts"
+    assert all(
+        result in step["run"]
+        for result in ("QUALITY_RESULT", "COMPATIBILITY_RESULT", "ACTION_CONTRACT_RESULT")
+    )
