@@ -157,3 +157,22 @@ jobs:
           test "${{ steps.critical.outputs.risk-level }}" = "CRITICAL"
           test -s critical-report.md
           test -s critical-report.json
+
+
+  required:
+    name: Required
+    needs: [quality, compatibility, action-contract]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Verify required CI contracts
+        env:
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          COMPATIBILITY_RESULT: ${{ needs.compatibility.result }}
+          ACTION_CONTRACT_RESULT: ${{ needs.action-contract.result }}
+        shell: bash
+        run: |
+          test "$QUALITY_RESULT" = "success"
+          test "$COMPATIBILITY_RESULT" = "success"
+          test "$ACTION_CONTRACT_RESULT" = "success"
