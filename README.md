@@ -148,7 +148,13 @@ The CLI prints the score and level, writes a Markdown report to `--output` (and 
 
 ### GitHub Action (PR risk gate)
 
-PreflightOps ships with a ready-to-use workflow at [`.github/workflows/preflightops.yml`](.github/workflows/preflightops.yml). On every pull request it scores the change, posts the Markdown report as a PR comment (updated in place), uploads it as a build artifact, and **fails the check when the risk level is `CRITICAL`**.
+PreflightOps ships a composite Action that consuming repositories can configure
+as a pull-request gate. The workflow in
+[`.github/workflows/preflightops.yml`](.github/workflows/preflightops.yml) is a
+manually dispatched smoke/demo workflow for this source repository because this
+repository does not contain an application's `services.yaml` and `change.yaml`.
+The complete pull-request workflow for consuming repositories is documented in
+[`docs/GITHUB_ACTION.md`](docs/GITHUB_ACTION.md).
 
 ![PreflightOps pull request comment](docs/screenshots/github-pr-comment.png)
 
@@ -416,6 +422,13 @@ pytest
 ```
 
 Run from the `preflightops/` directory. Tests live under `tests/`.
+
+## Public contracts and compatibility
+
+Machine-readable schemas live under [`schemas/`](schemas/). The CLI, Python API,
+Action, exit codes, reports, and offline/integration behavior are inventoried in
+[`docs/CONTRACTS.md`](docs/CONTRACTS.md). Compatibility and deprecation rules are
+defined in [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md).
 
 ## Contributing
 
