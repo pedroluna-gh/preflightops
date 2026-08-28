@@ -31,8 +31,11 @@ from .changed_files import (
 from .integrations import (
     IntegrationError,
     correlation_id,
+    load_servicenow_mapping,
+    prepare_servicenow_payload,
     push_to_jira,
     push_to_servicenow,
+    validate_servicenow_instance_url,
 )
 from .policy import load_policy_pack
 from .report import (
@@ -45,7 +48,7 @@ from .risk_engine import assess_risk
 from .ticket import generate_ticket_markdown, load_template_file
 
 
-def _confirm_push(system, target, corr, assume_yes):
+def _confirm_push(system, target, corr, assume_yes, change_reference=None):
     """Print what a live push will do and ask for an explicit confirmation.
 
     Returns ``True`` to proceed with the network call, ``False`` to skip it.
@@ -62,7 +65,11 @@ def _confirm_push(system, target, corr, assume_yes):
     print(f"About to push a change record to {system}:")
     print(f"  Target:         {target}")
     print(f"  Correlation id: {corr}")
-    print("  A matching record is updated if it exists, otherwise a new one is created.")
+    if change_reference:
+        print(f"  Existing change: {change_reference}")
+        print("  The existing record is enriched; a missing record fails closed.")
+    else:
+        print("  A matching record is updated if it exists, otherwise a new one is created.")
     if assume_yes:
         print("  Proceeding without prompt (--yes).")
         return True
@@ -204,6 +211,43 @@ def main(argv=None) -> int:
         ),
     )
     parser.add_argument(
+        "--servicenow-mapping",
+        default=None,
+        metavar="YAML_OR_JSON",
+        help=(
+            "Optional versioned field mapping. Only pre-change evidence fields and "
+            "u_ custom fields are allowed; workflow and approval fields are refused."
+        ),
+    )
+    parser.add_argument(
+        "--servicenow-change",
+        default=None,
+        metavar="NUMBER_OR_SYS_ID",
+        help=(
+            "Enrich this existing ServiceNow Change number/sys_id. When supplied, a "
+            "missing record fails closed and no new Change is created."
+        ),
+    )
+    parser.add_argument(
+        "--servicenow-attach-evidence",
+        action="store_true",
+        help=(
+            "Attach a versioned, secret-scrubbed JSON evidence package. Identical "
+            "evidence is deduplicated by SHA-256."
+        ),
+    )
+    parser.add_argument(
+        "--servicenow-dry-run",
+        action="store_true",
+        help="Prepare and validate the ServiceNow payload without credentials or network access.",
+    )
+    parser.add_argument(
+        "--servicenow-preview-output",
+        default="servicenow-preview.json",
+        metavar="PATH",
+        help="Dry-run payload output (default: servicenow-preview.json).",
+    )
+    parser.add_argument(
         "--jira",
         default=None,
         metavar="BASE_URL",
@@ -329,6 +373,14 @@ def main(argv=None) -> int:
             return 2
         ticket_markdown = generate_ticket_markdown(result, change, ticket_template)
 
+    servicenow_mapping = None
+    if args.servicenow and args.servicenow_mapping:
+        try:
+            servicenow_mapping = load_servicenow_mapping(args.servicenow_mapping)
+        except IntegrationError as exc:
+            print(f"ServiceNow integration error: {exc}", file=sys.stderr)
+            return 2
+
     if args.ticket_output:
         assert ticket_markdown is not None
         try:
@@ -338,17 +390,74 @@ def main(argv=None) -> int:
             print(f"Error writing ticket summary: {exc}", file=sys.stderr)
             return 2
 
+    if args.servicenow_dry_run and not args.servicenow:
+        print(
+            "ServiceNow integration error: --servicenow-dry-run requires --servicenow.",
+            file=sys.stderr,
+        )
+        return 2
+
+    if args.servicenow_dry_run:
+        assert ticket_markdown is not None
+        try:
+            target = validate_servicenow_instance_url(args.servicenow)
+            prepared = prepare_servicenow_payload(
+                result,
+                change,
+                ticket_markdown,
+                mapping=servicenow_mapping,
+            )
+            preview = {
+                "mode": "enrich_existing" if args.servicenow_change else "upsert",
+                "target": target,
+                "change_reference": args.servicenow_change,
+                "attach_evidence": args.servicenow_attach_evidence,
+                **prepared,
+            }
+            with open(args.servicenow_preview_output, "w", encoding="utf-8") as handle:
+                json.dump(preview, handle, ensure_ascii=False, sort_keys=True, indent=2)
+                handle.write("\n")
+        except (IntegrationError, OSError) as exc:
+            print(f"ServiceNow integration error: {exc}", file=sys.stderr)
+            return 2
+        print(
+            f"ServiceNow dry run written to: {args.servicenow_preview_output}. "
+            "No credentials were read and no API call was made."
+        )
+
     # Opt-in live integrations. These only run when the caller supplies an
     # instance/base URL; otherwise no network call is ever made. Each push is
     # gated behind an explicit confirmation (or --yes) so a typo never silently
     # creates/updates a real production change record.
     integration_results = []
     corr = correlation_id(result, change) if (args.servicenow or args.jira) else None
-    if args.servicenow:
-        if _confirm_push("ServiceNow", args.servicenow, corr, args.assume_yes):
+    if args.servicenow and not args.servicenow_dry_run:
+        if _confirm_push(
+            "ServiceNow",
+            args.servicenow,
+            corr,
+            args.assume_yes,
+            args.servicenow_change,
+        ):
             try:
                 integration_results.append(
-                    push_to_servicenow(args.servicenow, result, change, ticket_markdown)
+                    push_to_servicenow(
+                        args.servicenow,
+                        result,
+                        change,
+                        ticket_markdown,
+                        **(
+                            {"mapping": servicenow_mapping}
+                            if servicenow_mapping is not None
+                            else {}
+                        ),
+                        **(
+                            {"change_reference": args.servicenow_change}
+                            if args.servicenow_change
+                            else {}
+                        ),
+                        **({"attach_evidence": True} if args.servicenow_attach_evidence else {}),
+                    )
                 )
             except IntegrationError as exc:
                 print(f"ServiceNow integration error: {exc}", file=sys.stderr)

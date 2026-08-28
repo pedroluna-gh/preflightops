@@ -32,6 +32,8 @@ def _schema(name):
         "ticket-template-v1.schema.json",
         "policy-pack-v1.schema.json",
         "monitor-inventory-v1.schema.json",
+        "servicenow-mapping-v1.schema.json",
+        "servicenow-evidence-v1.schema.json",
     ],
 )
 def test_schemas_are_valid_draft_2020_12(name):
@@ -54,12 +56,22 @@ def test_shipped_examples_match_input_schemas():
             yaml.safe_load(policy.read_text(encoding="utf-8")),
             _schema("policy-pack-v1.schema.json"),
         )
+    servicenow_mapping = yaml.safe_load(
+        (ROOT / "examples" / "servicenow-field-map.yaml").read_text(encoding="utf-8")
+    )
+    jsonschema.validate(servicenow_mapping, _schema("servicenow-mapping-v1.schema.json"))
 
 
 def test_json_report_matches_v1_schema():
     result = assess_risk(sample_data.HIGH_RISK_SERVICES, sample_data.HIGH_RISK_CHANGE)
     report = json.loads(generate_json_report(result))
     jsonschema.validate(report, _schema("risk-report-v1.schema.json"))
+
+
+def test_servicenow_evidence_matches_v1_schema():
+    result = assess_risk(sample_data.HIGH_RISK_SERVICES, sample_data.HIGH_RISK_CHANGE)
+    evidence = preflightops.build_servicenow_evidence(result, sample_data.HIGH_RISK_CHANGE, env={})
+    jsonschema.validate(evidence, _schema("servicenow-evidence-v1.schema.json"))
 
 
 def test_default_ticket_template_matches_v1_schema():

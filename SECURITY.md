@@ -12,9 +12,10 @@ PreflightOps is currently in early development.
 
 | Version | Supported |
 |---|---|
+| 0.4.x | Yes |
 | 0.3.x | Yes |
-| 0.2.x | Yes |
-| 0.1.x | Security fixes only |
+| 0.2.x | Security fixes only |
+| 0.1.x | No |
 
 ---
 
@@ -68,6 +69,10 @@ PreflightOps currently:
   runs; it never requests patches and can be disabled with
   `auto-detect-changes: false`;
 - calls ServiceNow or Jira only when a live integration is explicitly enabled;
+- validates ServiceNow HTTPS origins before reading credentials, refuses
+  cross-origin redirects, and requires an explicit allowlist for custom hosts;
+- restricts ServiceNow mappings to pre-change evidence fields, verifies live
+  writes, and never maps workflow state or approvals;
 - does not send data to AI services;
 - does not require authentication;
 - produces local Markdown, JSON, static HTML, and PR-comment reports.
@@ -100,3 +105,8 @@ If you do not need PR comments, remove `pull-requests: write`.
 - Review Terraform plans before storing them in the repository.
 - Avoid using production secrets in Kubernetes examples.
 - Prefer placeholder values in documentation and tests.
+- Keep ServiceNow credentials in a protected GitHub Environment and use a
+  dedicated least-privilege integration identity.
+- Preview ServiceNow payloads with `--servicenow-dry-run` before live publication.
+- Treat generated evidence as operational data and apply appropriate retention
+  and access controls in ServiceNow.

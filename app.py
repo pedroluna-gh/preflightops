@@ -18,6 +18,7 @@ from preflightops.integrations import (
     JIRA_PROJECT_ENV,
     SERVICENOW_INSTANCE_URL_ENV,
     SERVICENOW_PASSWORD_ENV,
+    SERVICENOW_TOKEN_ENV,
     SERVICENOW_USER_ENV,
     IntegrationError,
     correlation_id,
@@ -470,10 +471,11 @@ def _servicenow_status(env) -> tuple:
     missing = []
     if not instance_url:
         missing.append(SERVICENOW_INSTANCE_URL_ENV)
-    if not env.get(SERVICENOW_USER_ENV):
-        missing.append(SERVICENOW_USER_ENV)
-    if not env.get(SERVICENOW_PASSWORD_ENV):
-        missing.append(SERVICENOW_PASSWORD_ENV)
+    if not env.get(SERVICENOW_TOKEN_ENV):
+        if not env.get(SERVICENOW_USER_ENV):
+            missing.append(SERVICENOW_USER_ENV)
+        if not env.get(SERVICENOW_PASSWORD_ENV):
+            missing.append(SERVICENOW_PASSWORD_ENV)
     return instance_url, missing
 
 
@@ -585,8 +587,8 @@ def _render_integrations(result, change_doc, ticket_markdown, env=None) -> None:
         st.info(
             "No live integration is configured, so PreflightOps stays fully "
             "offline. To enable ServiceNow, set "
-            f"`{SERVICENOW_INSTANCE_URL_ENV}`, `{SERVICENOW_USER_ENV}`, and "
-            f"`{SERVICENOW_PASSWORD_ENV}`. To enable Jira, set "
+            f"`{SERVICENOW_INSTANCE_URL_ENV}` and either `{SERVICENOW_TOKEN_ENV}` "
+            f"or `{SERVICENOW_USER_ENV}` / `{SERVICENOW_PASSWORD_ENV}`. To enable Jira, set "
             f"`{JIRA_BASE_URL_ENV}`, `{JIRA_EMAIL_ENV}`, `{JIRA_API_TOKEN_ENV}`, "
             f"and `{JIRA_PROJECT_ENV}`."
         )

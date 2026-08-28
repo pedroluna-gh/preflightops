@@ -1,6 +1,6 @@
 # Public Contracts
 
-This document inventories the public interfaces shipped by PreflightOps 0.3.x.
+This document inventories the public interfaces shipped by PreflightOps 0.4.x.
 The contract inventory itself is versioned as **Contract Set v1**. The JSON
 schemas under [`schemas/`](../schemas/) are the machine-readable definitions for
 the current file inputs and JSON report.
@@ -35,6 +35,11 @@ Console command: `preflightops` (equivalent to `python -m preflightops.cli`).
 | `--ticket-output` | no | none | Offline Markdown ticket path |
 | `--ticket-template` | no | none | YAML/JSON ticket template path |
 | `--servicenow` | no | none | Opt-in ServiceNow base URL |
+| `--servicenow-mapping` | no | built-in v1 | Versioned evidence-field mapping path |
+| `--servicenow-change` | no | none | Existing Change number/sys_id; missing record fails closed |
+| `--servicenow-attach-evidence` | no | false | Attach and deduplicate versioned JSON evidence |
+| `--servicenow-dry-run` | no | false | Validate/render without credentials or network calls |
+| `--servicenow-preview-output` | no | `servicenow-preview.json` | Dry-run payload path |
 | `--jira` | no | none | Opt-in Jira base URL |
 | `--yes`, `--assume-yes` | no | false | Waive interactive live-push confirmation |
 | `--version` | no | — | Print the package version and exit |
@@ -57,6 +62,8 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 `generate_github_comment`, `generate_html_report`, `classify_changed_files`,
 `load_changed_files`,
 `generate_ticket_markdown`, `push_to_servicenow`, `push_to_jira`,
+`prepare_servicenow_payload`, `build_servicenow_evidence`,
+`load_servicenow_mapping`, `validate_servicenow_instance_url`,
 `correlation_id`, and `IntegrationError`.
 
 `preflightops.__version__` is also public. It is sourced from
@@ -70,6 +77,8 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 - [`ticket-template-v1.schema.json`](../schemas/ticket-template-v1.schema.json)
 - [`policy-pack-v1.schema.json`](../schemas/policy-pack-v1.schema.json)
 - [`monitor-inventory-v1.schema.json`](../schemas/monitor-inventory-v1.schema.json)
+- [`servicenow-mapping-v1.schema.json`](../schemas/servicenow-mapping-v1.schema.json)
+- [`servicenow-evidence-v1.schema.json`](../schemas/servicenow-evidence-v1.schema.json)
 
 Schemas intentionally allow additional properties so existing organization-
 specific metadata remains valid. Fields documented as recommended rather than
@@ -92,12 +101,16 @@ explicit scanner inputs if the API is unavailable.
 
 Outputs: `risk-level`, `risk-score`, `report-path`, `json-report-path`,
 `ticket-path`, `html-report-path`, `github-comment-path`,
-`changed-files-path`, and `scanner-scope`.
+`changed-files-path`, `scanner-scope`, and `servicenow-preview-path`.
 
 The workflow in `.github/workflows/preflightops.yml` belongs to this source
 repository and is a manually dispatched smoke/demo workflow. A consuming
 repository can configure the composite action as a pull-request gate after it
 adds its own service and change files.
+
+`.github/workflows/servicenow-demo.yml` is manual-only. Its preview job has no
+credentials or network calls. Its live job requires CAB-boundary acknowledgement,
+an existing Change reference, and the `servicenow-demo` GitHub Environment.
 
 ## Reports
 

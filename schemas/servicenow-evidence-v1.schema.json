@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pedroluna-gh/preflightops/schemas/servicenow-evidence-v1.schema.json",
+  "title": "PreflightOps ServiceNow evidence v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "producer",
+    "change",
+    "assessment",
+    "report",
+    "provenance",
+    "governance",
+    "evidence_hash",
+    "generated_at"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "producer": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {"const": "PreflightOps"},
+        "version": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "change": {"type": "object"},
+    "assessment": {
+      "type": "object",
+      "required": ["risk_score", "risk_level", "recommendation"],
+      "properties": {
+        "risk_score": {"type": "integer", "minimum": 0, "maximum": 100},
+        "risk_level": {"enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]},
+        "recommendation": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "report": {
+      "type": "object",
+      "required": ["ticket_sha256"],
+      "properties": {"ticket_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+      "additionalProperties": false
+    },
+    "provenance": {"type": "object"},
+    "governance": {
+      "type": "object",
+      "required": ["purpose", "cab_authority", "changes_workflow_state"],
+      "properties": {
+        "purpose": {"const": "Automated pre-change evidence"},
+        "cab_authority": {"type": "string", "minLength": 1},
+        "changes_workflow_state": {"const": false}
+      },
+      "additionalProperties": false
+    },
+    "evidence_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "generated_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}

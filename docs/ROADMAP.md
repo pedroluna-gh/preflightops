@@ -9,7 +9,7 @@ keep running locally in a transparent and explainable way.
 Priorities and timing may change based on community feedback — open an issue to
 suggest or upvote an item.
 
-## Recently completed for v0.3
+## Recently completed for v0.4
 
 - Structured Terraform JSON plan parsing with resource/action evidence.
 - Structured multi-document Kubernetes object and container validation.
@@ -18,6 +18,11 @@ suggest or upvote an item.
 - GitHub PR changed-file detection and scanner-scope inference.
 - Compact, grouped GitHub comments with prioritized actions.
 - Dependency-free static HTML reports for CAB stakeholders.
+- Hardened ServiceNow destination validation and OAuth bearer support.
+- Configurable evidence-only field mappings and versioned evidence schemas.
+- Stable/legacy-aware idempotency, ambiguity detection, read-back verification,
+  and deduplicated attachments.
+- Manual dry-run-first ServiceNow demo behind a protected GitHub Environment.
 
 ## v0.1 — Initial release
 
@@ -48,12 +53,20 @@ suggest or upvote an item.
 - Enable / disable individual rules.
 - Per-environment policy (e.g. stricter rules for `production`).
 
-## v0.3 — Pull-request delivery context and reporting (current)
+## v0.3 — Pull-request delivery context and reporting
 
 - Static HTML dashboard export.
 - Metadata-only changed-file detection for GitHub pull requests.
 - Automatic selection of unambiguous structured plan/manifest inputs.
 - Dedicated compact Markdown for idempotent PR comments.
+
+## v0.4 — Verified ServiceNow evidence delivery (current)
+
+- Enrich an existing Change and fail closed when its reference is missing.
+- Keep ServiceNow workflow state, approvals, assignments, and closure outside
+  the integration's writable contract.
+- Attach structured evidence and verify both records and attachments.
+- Support a network-free preview and environment-protected live demo.
 
 ## Next — Reporting depth
 
@@ -63,8 +76,7 @@ suggest or upvote an item.
 ## Ecosystem integrations (optional, opt-in)
 
 - Basic ServiceNow / Jira change-record push — **available now** (see v0.1.x).
-- Stronger ServiceNow / Jira API hardening (retries, error handling, field and
-  richer workflow/state mapping).
+- Jira parity for destination validation, richer mapping, and verification.
 - Audit-trail metadata on generated change records.
 - Expanded, shareable ticket-template library.
 - PagerDuty / Opsgenie incident-history context.
