@@ -505,6 +505,15 @@ New risk rules should be transparent and explainable: a stable rule id, a severi
 
 ## Security
 
+Enterprise adoption and release governance are defined in
+[`docs/ENTERPRISE_GOVERNANCE.md`](docs/ENTERPRISE_GOVERNANCE.md), with the
+corresponding [`threat model`](docs/THREAT_MODEL.md),
+[`data-governance policy`](docs/DATA_GOVERNANCE.md),
+[`Definition of Done`](docs/ENTERPRISE_DOD.md), and
+[`release-management runbook`](docs/RELEASE_MANAGEMENT.md). These controls keep
+PreflightOps in the evidence-assurance role: ServiceNow, Jira and the CAB remain
+authoritative for workflow and approval.
+
 PreflightOps' **risk assessment is offline by default**: it makes no outbound
 network calls, stores no data, and requires no credentials. Your service
 catalogs, change requests, Terraform plans, and Kubernetes manifests never leave
