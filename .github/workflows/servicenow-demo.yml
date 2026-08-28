@@ -101,7 +101,7 @@ jobs:
             echo "PreflightOps supplies technical evidence only. ServiceNow workflow and human CAB approval remain authoritative."
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload preview artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: servicenow-evidence-preview-${{ github.run_id }}
           path: |
