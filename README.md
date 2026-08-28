@@ -7,7 +7,7 @@ PreflightOps is a pre-deployment risk assessment tool for SRE, DevOps, and Platf
 ## Try it in a pull request
 
 ```yaml
-- uses: pedroluna-gh/preflightops@v0.4.1
+- uses: pedroluna-gh/preflightops@v0.4.2
   with:
     services: services.yaml
     change: change.yaml
@@ -192,7 +192,7 @@ self-contained CAB artifact or `ticket-output` for a copy/paste-ready change
 summary:
 
 ```yaml
-- uses: pedroluna-gh/preflightops@v0.4.1
+- uses: pedroluna-gh/preflightops@v0.4.2
   with:
     services: services.yaml
     change: change.yaml
@@ -313,6 +313,19 @@ replacement when that reference is missing. Every live write is read back and
 verified, while evidence attachments are deduplicated by semantic SHA-256.
 See [ServiceNow pre-change evidence integration](docs/SERVICENOW_INTEGRATION.md).
 
+The protected reference workflow validates the request, renders a credential-free
+preview, and publishes only after the `servicenow-demo` GitHub Environment is
+approved:
+
+![Protected ServiceNow evidence workflow](docs/screenshots/servicenow-protected-workflow.png)
+
+The run summary makes the governance boundary explicit: PreflightOps enriches and
+verifies an existing test Change, but cannot write approval, assignment, schedule,
+workflow state, or closure fields. A second identical controlled run also verified
+idempotency and attachment deduplication.
+
+![ServiceNow publication guardrails](docs/screenshots/servicenow-publication-guardrails.png)
+
 ### Opt-in: push from the GitHub Action
 
 The composite action can run the same opt-in push. ServiceNow publication should
@@ -338,7 +351,7 @@ jobs:
       JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
     steps:
       - uses: actions/checkout@v4
-      - uses: pedroluna-gh/preflightops@v0.4.1
+      - uses: pedroluna-gh/preflightops@v0.4.2
         with:
           services: services.yaml
           change: change.yaml

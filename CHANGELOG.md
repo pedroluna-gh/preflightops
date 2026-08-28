@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-08-28
+
+### Changed
+
+- GitHub Marketplace metadata now describes the SRE pre-change, pre-CAB,
+  ServiceNow/Jira, infrastructure, and observability evidence contract.
+- Consumer examples now reference `v0.4.2`.
+- The Marketplace README now includes sanitized visual evidence of the protected
+  ServiceNow publication workflow, its explicit non-CAB writable boundary, and
+  the repeated-run idempotency/deduplication verification.
+- Screenshot maintenance guidance and missing v0.4.1 changelog comparison links
+  were corrected.
+
 ## [0.4.1] - 2026-08-28
 
 ### Changed
@@ -138,7 +151,9 @@ Initial public release.
 - **pytest suite** covering the engine, validators, scanners, reports, CLI,
   web app, and the documented example scenarios.
 
-[Unreleased]: https://github.com/pedroluna-gh/preflightops/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/pedroluna-gh/preflightops/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/pedroluna-gh/preflightops/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/pedroluna-gh/preflightops/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/pedroluna-gh/preflightops/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/pedroluna-gh/preflightops/compare/v0.1.2...v0.3.0
 [0.1.2]: https://github.com/pedroluna-gh/preflightops/compare/v0.1.1...v0.1.2
