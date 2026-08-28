@@ -72,9 +72,12 @@ Some change types carry higher risk by default:
 
 ---
 
-## Terraform scanner
+## Terraform scanners
 
-The Terraform scanner is intentionally simple in the MVP. It scans plan or diff text for risky signals.
+The legacy scanner accepts human-readable plan/diff text. `--terraform-json`
+adds structured resource/action parsing for saved plans generated with
+`terraform show -json`, including replacement versus destroy semantics and
+resource-level evidence.
 
 Examples:
 
@@ -90,9 +93,10 @@ Examples:
 
 ---
 
-## Kubernetes scanner
+## Kubernetes object scanner
 
-The Kubernetes scanner checks for signals such as:
+The Kubernetes scanner parses multi-document YAML and checks each object and
+container independently for signals such as:
 
 | Signal | Why it matters |
 |---|---|
@@ -110,12 +114,13 @@ The Kubernetes scanner checks for signals such as:
 
 ## Current limitations
 
-PreflightOps currently uses lightweight YAML validation and keyword-based scanning.
+PreflightOps provides structured Terraform/Kubernetes parsing, but it is not a
+full infrastructure graph, admission controller, or policy engine.
 
 It does not yet:
 
-- Parse Terraform JSON plans structurally.
-- Parse Kubernetes manifests into full resource graphs.
+- Resolve Terraform provider schemas or cross-resource dependency graphs.
+- Resolve Kubernetes overlays, Helm templates, or cluster admission state.
 - Connect to GitHub, PagerDuty, Datadog, or Grafana directly.
 - Use historical incident data.
 - Use AI to generate rollback or validation plans.
@@ -136,8 +141,8 @@ It does not yet provide full ITSM workflow orchestration, advanced field mapping
 - GitHub PR comment integration
 - Stronger ServiceNow / Jira workflow mapping and API hardening
 - PagerDuty / Opsgenie incident history lookup
-- Datadog / Prometheus / Grafana monitor validation
+- Optional live monitor-provider verification (offline inventory validation is available)
 - OpenTelemetry signal validation
 - AI-assisted risk explanation
 - Policy-as-code support
-- Custom rule packs by industry: fintech, SaaS, healthcare, travel, ecommerce
+- Organization-specific governance packs beyond the shipped industry baselines

@@ -1,0 +1,17 @@
+version: "1"
+name: travel
+description: Booking-path availability, recovery, and customer-impact controls.
+risk_weights:
+  critical-service: 35
+  missing-business-impact: 25
+  missing-rollback-plan: 45
+  missing-monitoring-plan: 40
+  database-change: 35
+  kubernetes-loadbalancer-exposure: 35
+risk_level_thresholds:
+  low: 30
+  medium: 60
+  high: 80
+monitoring:
+  minimum_enabled_monitors: 2
+  required_providers: []

@@ -30,6 +30,8 @@ def _schema(name):
         "change-request-v1.schema.json",
         "risk-report-v1.schema.json",
         "ticket-template-v1.schema.json",
+        "policy-pack-v1.schema.json",
+        "monitor-inventory-v1.schema.json",
     ],
 )
 def test_schemas_are_valid_draft_2020_12(name):
@@ -45,6 +47,13 @@ def test_shipped_examples_match_input_schemas():
     )
     jsonschema.validate(services, _schema("service-catalog-v1.schema.json"))
     jsonschema.validate(change, _schema("change-request-v1.schema.json"))
+    monitors = yaml.safe_load((ROOT / "examples" / "monitors.yaml").read_text(encoding="utf-8"))
+    jsonschema.validate(monitors, _schema("monitor-inventory-v1.schema.json"))
+    for policy in (ROOT / "policy-packs").glob("*.yaml"):
+        jsonschema.validate(
+            yaml.safe_load(policy.read_text(encoding="utf-8")),
+            _schema("policy-pack-v1.schema.json"),
+        )
 
 
 def test_json_report_matches_v1_schema():

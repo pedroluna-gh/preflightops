@@ -9,7 +9,14 @@ keep running locally in a transparent and explainable way.
 Priorities and timing may change based on community feedback — open an issue to
 suggest or upvote an item.
 
-## v0.1 — Initial release (current)
+## Recently completed for v0.2
+
+- Structured Terraform JSON plan parsing with resource/action evidence.
+- Structured multi-document Kubernetes object and container validation.
+- Versioned, customizable policy packs and risk weights.
+- Secrets-free observability inventory validation for major providers.
+
+## v0.1 — Initial release
 
 - Rule-based risk engine with a `0–100` score and four risk levels.
 - Service-control, change-type, Terraform, and Kubernetes rules.
@@ -18,7 +25,7 @@ suggest or upvote an item.
 - Composite GitHub Action for consumer PR risk gates and a manual smoke/demo
   workflow in this source repository.
 
-## v0.1.x — Change-ticket summaries & opt-in integrations (current)
+## v0.1.x — Change-ticket summaries & opt-in integrations
 
 - Copy/paste-ready ServiceNow/Jira change ticket summary (`--ticket-output`).
 - Configurable ticket templates (`--ticket-template`).
@@ -26,13 +33,13 @@ suggest or upvote an item.
   available from the CLI, GitHub Action, and web app. Credentials are read from
   the environment only, and nothing is sent unless explicitly enabled.
 
-## v0.2 — Real Terraform plan parsing
+## v0.2 — Structured change evidence (current)
 
 - Parse `terraform show -json` plan output instead of keyword matching.
 - Distinguish create / update / delete / replace per resource.
 - Map provider resource types to risk weights.
 
-## v0.3 — Real Kubernetes object parsing
+## v0.3 — Extended Kubernetes and delivery context
 
 - Parse Kubernetes manifests as objects (multi-document YAML).
 - Inspect probes, resource limits, replicas, and exposure per workload.

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pedroluna-gh/preflightops/schemas/monitor-inventory-v1.schema.json",
+  "title": "PreflightOps Monitor Inventory v1",
+  "type": "object",
+  "required": ["monitors"],
+  "properties": {
+    "monitors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "provider"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "provider": {"enum": ["datadog", "grafana", "prometheus", "zabbix", "gcp-cloud-monitoring", "other"]},
+          "name": {"type": "string"},
+          "url": {"type": "string"},
+          "enabled": {"type": "boolean"}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

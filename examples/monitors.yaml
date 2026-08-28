@@ -1,0 +1,17 @@
+monitors:
+  - id: checkout-latency
+    provider: grafana
+    url: https://grafana.example.com/d/checkout
+    enabled: true
+  - id: checkout-error-rate
+    provider: prometheus
+    name: CheckoutHighErrorRate
+    enabled: true
+  - id: checkout-host-health
+    provider: zabbix
+    name: checkout production hosts
+    enabled: true
+  - id: checkout-slo
+    provider: gcp-cloud-monitoring
+    url: https://console.cloud.google.com/monitoring/services
+    enabled: true

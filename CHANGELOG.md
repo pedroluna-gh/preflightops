@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Structured `terraform show -json` parsing with per-resource lifecycle,
+  provider-type, public-exposure, and replacement-versus-destroy evidence.
+- Multi-document Kubernetes object parsing with per-container probe and
+  requests/limits validation.
+- Versioned policy packs and customizable rule weights/thresholds for SaaS,
+  fintech, ecommerce, healthcare, critical platforms, and startups.
+- Secrets-free monitor inventory validation for Datadog, Grafana, Prometheus,
+  Zabbix, and GCP Cloud Monitoring evidence.
+- Versioned policy-pack and monitor-inventory JSON schemas.
 - Contract Set v1 with JSON Schemas for the service catalog, change request,
   JSON risk report, and ticket template.
 - Public contract inventory, compatibility policy, and versioning ADR.
@@ -20,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Package development version advanced to 0.2.0 for the additive public CLI,
+  Python, Action, schema, and report contracts.
 - Package metadata, Python API, CLI, and reports now use one version source.
 - Documentation now distinguishes the source repository's manual smoke workflow
   from consumer pull-request integrations and accurately describes opt-in API

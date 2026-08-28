@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pedroluna-gh/preflightops/schemas/policy-pack-v1.schema.json",
+  "title": "PreflightOps Policy Pack v1",
+  "type": "object",
+  "required": ["version", "name", "risk_weights"],
+  "properties": {
+    "version": {"const": "1"},
+    "name": {"type": "string", "minLength": 1},
+    "description": {"type": "string"},
+    "risk_weights": {
+      "type": "object",
+      "additionalProperties": {"type": "integer", "minimum": 0, "maximum": 100}
+    },
+    "risk_level_thresholds": {
+      "type": "object",
+      "required": ["low", "medium", "high"],
+      "properties": {
+        "low": {"type": "integer", "minimum": 0, "maximum": 97},
+        "medium": {"type": "integer", "minimum": 1, "maximum": 98},
+        "high": {"type": "integer", "minimum": 2, "maximum": 99}
+      },
+      "additionalProperties": false
+    },
+    "monitoring": {
+      "type": "object",
+      "properties": {
+        "minimum_enabled_monitors": {"type": "integer", "minimum": 0},
+        "required_providers": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

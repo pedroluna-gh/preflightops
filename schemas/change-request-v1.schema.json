@@ -22,6 +22,7 @@
           "properties": {
             "dashboards": {"type": "array"},
             "alerts": {"type": "array"},
+            "monitor_ids": {"type": "array", "items": {"type": "string"}},
             "validation_window": {},
             "success_criteria": {"type": "array"},
             "logs": {"type": "array"}
