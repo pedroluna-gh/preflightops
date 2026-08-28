@@ -103,7 +103,7 @@ jobs:
 
       - name: Upload risk report
         if: always() && hashFiles(env.PREFLIGHTOPS_REPORT) != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: preflightops-report
           path: ${{ env.PREFLIGHTOPS_REPORT }}
@@ -244,7 +244,7 @@ This stays fully offline — it generates the report and a copy/paste-ready chan
 ticket summary, with no outbound calls:
 
 ```yaml
-- uses: pedroluna-gh/preflightops@v0.4.0
+- uses: pedroluna-gh/preflightops@v0.4.1
   with:
     services: services.yaml
     change: change.yaml
@@ -280,7 +280,7 @@ jobs:
       JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
     steps:
       - uses: actions/checkout@v4
-      - uses: pedroluna-gh/preflightops@v0.4.0
+      - uses: pedroluna-gh/preflightops@v0.4.1
         with:
           services: services.yaml
           change: change.yaml

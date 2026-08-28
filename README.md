@@ -7,7 +7,7 @@ PreflightOps is a pre-deployment risk assessment tool for SRE, DevOps, and Platf
 ## Try it in a pull request
 
 ```yaml
-- uses: pedroluna-gh/preflightops@v0.4.0
+- uses: pedroluna-gh/preflightops@v0.4.1
   with:
     services: services.yaml
     change: change.yaml
@@ -192,7 +192,7 @@ self-contained CAB artifact or `ticket-output` for a copy/paste-ready change
 summary:
 
 ```yaml
-- uses: pedroluna-gh/preflightops@v0.4.0
+- uses: pedroluna-gh/preflightops@v0.4.1
   with:
     services: services.yaml
     change: change.yaml
@@ -338,7 +338,7 @@ jobs:
       JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
     steps:
       - uses: actions/checkout@v4
-      - uses: pedroluna-gh/preflightops@v0.4.0
+      - uses: pedroluna-gh/preflightops@v0.4.1
         with:
           services: services.yaml
           change: change.yaml

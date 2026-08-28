@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-08-28
+
+### Changed
+
+- GitHub artifact uploads now use `actions/upload-artifact@v7`, removing the
+  Node.js 20 deprecation warning and aligning maintained workflows with the
+  Node.js 24 runner baseline.
+- Consumer examples now reference the `v0.4.1` patch release.
+
 ## [0.4.0] - 2026-08-28
 
 ### Added
