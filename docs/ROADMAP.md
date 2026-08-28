@@ -24,6 +24,18 @@ suggest or upvote an item.
   and deduplicated attachments.
 - Manual dry-run-first ServiceNow demo behind a protected GitHub Environment.
 
+## Enterprise maturity program
+
+The sequenced enterprise program is defined by
+[`ENTERPRISE_GOVERNANCE.md`](ENTERPRISE_GOVERNANCE.md),
+[`THREAT_MODEL.md`](THREAT_MODEL.md), and
+[`ENTERPRISE_DOD.md`](ENTERPRISE_DOD.md). Its first secure-SDLC baseline adds
+immutable Action references, CodeQL, dependency review, Scorecard, SBOM,
+checksums and release attestations. Subsequent compatible releases add Evidence
+Contract v2, signed hierarchical policy/waiver verification, production-grade
+CMDB context and organization-scale delivery. PreflightOps remains evidence-only
+and never becomes the CAB or ITSM workflow authority.
+
 ## v0.1 — Initial release
 
 - Rule-based risk engine with a `0–100` score and four risk levels.
