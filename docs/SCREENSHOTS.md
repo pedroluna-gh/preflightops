@@ -2,9 +2,8 @@
 
 The images under `docs/screenshots/` are referenced from the README. They are
 real captures of the running PreflightOps app (`app-overview.png`, `risk-results.png`)
-the bundled placeholder example data. The real public pull-request evidence is
-captured in `preflightops-demo-pr.png`. The steps below explain how to regenerate
-them.
+using the bundled placeholder example data. Public workflow evidence is captured
+from completed GitHub runs. The steps below explain how to regenerate them.
 
 | File | Where it's used | What to capture |
 |---|---|---|
@@ -12,6 +11,8 @@ them.
 | `risk-results.png` | README "Quick demo" | A completed assessment showing the risk score, risk level, and the per-category score breakdown. |
 | `github-pr-comment.png` | README GitHub Action section | The PreflightOps report posted as a pull-request comment with a failed check. |
 | `preflightops-demo-pr.png` | README GitHub Action section | Full-page capture of the public v0.3.0 demo PR, bot comment, and passing check. |
+| `servicenow-protected-workflow.png` | README ServiceNow section | Successful manual workflow graph showing validation, credential-free preview, and protected publication to the test Change. |
+| `servicenow-publication-guardrails.png` | README ServiceNow section | Successful publication summary and protected-environment approval proving the non-CAB writable boundary and repeated-run deduplication check. |
 
 ## How to capture
 
@@ -34,6 +35,11 @@ them.
 5. Refresh `preflightops-demo-pr.png` only from the completed public
    [`preflightops-demo` PR #1](https://github.com/pedroluna-gh/preflightops-demo/pull/1),
    keeping the title, generated comment, and passing check visible together.
+
+6. Refresh the ServiceNow workflow captures only from a successful protected demo
+   run. Crop out credentials, secret values, browser chrome that exposes personal
+   data, and obsolete warnings. Keep the job names, successful state, publication
+   boundary, and environment approval visible.
 
 ## Guidelines
 

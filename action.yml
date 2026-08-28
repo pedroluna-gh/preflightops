@@ -1,5 +1,5 @@
 name: "PreflightOps"
-description: "Pre-deployment risk assessment that scores production change risk and can fail the build on critical risk."
+description: "SRE pre-change risk gate with auditable pre-CAB evidence for ServiceNow, Jira, Terraform, Kubernetes, and observability."
 author: "Pedro Jose Luna Salmon"
 branding:
   icon: "shield"
