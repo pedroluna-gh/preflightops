@@ -1,0 +1,14 @@
+# Default ownership. Replace individual ownership with independent enterprise
+# teams before GA so authors cannot self-approve controls that evaluate them.
+* @pedroluna-gh
+
+# High-risk control surfaces.
+/.github/workflows/ @pedroluna-gh
+/action.yml @pedroluna-gh
+/preflightops/risk_engine.py @pedroluna-gh
+/preflightops/policy.py @pedroluna-gh
+/preflightops/servicenow.py @pedroluna-gh
+/policy-packs/ @pedroluna-gh
+/schemas/ @pedroluna-gh
+/docs/THREAT_MODEL.md @pedroluna-gh
+/docs/ENTERPRISE_GOVERNANCE.md @pedroluna-gh
