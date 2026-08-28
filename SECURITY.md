@@ -23,7 +23,10 @@ PreflightOps is currently in early development.
 
 Please report security issues privately.
 
-If this project is hosted on GitHub, use GitHub Security Advisories when available.
+Use GitHub private vulnerability reporting / Security Advisories for this
+repository when available. Do not include live credentials or customer evidence
+in the initial report; arrange a protected transfer channel with the maintainer
+when a reproducer requires sensitive material.
 
 Otherwise, contact the maintainer directly.
 
@@ -35,6 +38,20 @@ Do not open public issues for vulnerabilities involving:
 - command execution;
 - sensitive report output;
 - workflow permission abuse.
+
+## Response targets
+
+| Severity | Initial acknowledgement | Target mitigation or published plan |
+| --- | --- | --- |
+| Critical | 1 business day | 7 calendar days |
+| High | 2 business days | 14 calendar days |
+| Medium | 5 business days | 30 calendar days |
+| Low | 10 business days | Next planned release |
+
+Targets begin after a report can be reproduced and classified. When a safe fix
+cannot be shipped within the target, the maintainer publishes an interim
+mitigation, affected-version range and next update date without exposing an
+active exploit.
 
 ---
 
@@ -95,6 +112,12 @@ permissions:
 only when the consuming workflow publishes the generated comment.
 
 If you do not need PR comments, remove `pull-requests: write`.
+
+The source repository additionally runs CodeQL, dependency review and OpenSSF
+Scorecard. Release jobs alone receive `contents: write`, `id-token: write` and
+`attestations: write`; they are environment-protected and execute only for
+semantic-version tags. External actions are pinned to full commit SHAs and kept
+current through reviewed dependency pull requests.
 
 ---
 

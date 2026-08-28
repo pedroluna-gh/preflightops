@@ -64,7 +64,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
 
       - name: Build a network-free ServiceNow preview
         id: assess
@@ -101,7 +103,7 @@ jobs:
             echo "PreflightOps supplies technical evidence only. ServiceNow workflow and human CAB approval remain authoritative."
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload preview artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: servicenow-evidence-preview-${{ github.run_id }}
           path: |
@@ -127,7 +129,9 @@ jobs:
       SERVICENOW_PASSWORD: ${{ secrets.SERVICENOW_PASSWORD }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
 
       - name: Enrich existing Change with verified evidence
         id: publish

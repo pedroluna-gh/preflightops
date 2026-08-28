@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Enterprise product charter, authority boundary, RACI, threat model, data
+  governance, Definition of Done, and release-management controls.
+- CodeQL, dependency review, OpenSSF Scorecard, Dependabot, CODEOWNERS, and a
+  security-focused pull-request template.
+- Protected-tag release workflow that builds once, generates an SPDX SBOM and
+  checksums, creates GitHub/Sigstore provenance, preserves the immutable bundle,
+  and publishes those exact artifacts.
+- Contract tests that reject mutable third-party Action references and protect
+  the security/release workflow invariants.
+
+### Changed
+
+- Every external GitHub Action reference is pinned to a full commit SHA with a
+  human-readable release comment, and checkout credentials are not persisted.
+
 ## [0.4.2] - 2026-08-28
 
 ### Changed
