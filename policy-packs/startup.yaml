@@ -1,0 +1,11 @@
+version: "1"
+name: startup
+description: Lightweight governance while preserving rollback and observability basics.
+risk_weights:
+  missing-runbook: 10
+  missing-business-impact: 5
+  missing-validation-plan: 10
+risk_level_thresholds: {low: 30, medium: 60, high: 80}
+monitoring:
+  minimum_enabled_monitors: 1
+  required_providers: []

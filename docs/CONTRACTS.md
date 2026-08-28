@@ -1,6 +1,6 @@
 # Public Contracts
 
-This document inventories the public interfaces shipped by PreflightOps 0.1.x.
+This document inventories the public interfaces shipped by PreflightOps 0.2.x.
 The contract inventory itself is versioned as **Contract Set v1**. The JSON
 schemas under [`schemas/`](../schemas/) are the machine-readable definitions for
 the current file inputs and JSON report.
@@ -21,7 +21,10 @@ Console command: `preflightops` (equivalent to `python -m preflightops.cli`).
 | `--services` | yes | — | Service catalog YAML/JSON path |
 | `--change` | yes | — | Change request YAML/JSON path |
 | `--terraform` | no | none | Terraform plan/diff text path |
+| `--terraform-json` | no | none | Structured `terraform show -json` plan path |
 | `--k8s` | no | none | Kubernetes manifest text path |
+| `--policy` | no | `default` | Built-in policy name or versioned policy YAML path |
+| `--monitors` | no | none | Offline monitor inventory YAML path |
 | `--output` | no | `report.md` | Markdown report path |
 | `--json-output` | no | none | JSON report path |
 | `--ticket-output` | no | none | Offline Markdown ticket path |
@@ -44,6 +47,7 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 `assess_risk`, `find_service`, `RISK_LEVELS`, `RECOMMENDATIONS`,
 `score_to_level`, `is_bad_rollback_plan`, `is_monitoring_plan_incomplete`,
 `is_validation_plan_valid`, `scan_terraform`, `scan_kubernetes`,
+`scan_terraform_json`, `load_policy_pack`, `validate_monitoring_evidence`,
 `generate_markdown_report`, `generate_json_report`,
 `generate_ticket_markdown`, `push_to_servicenow`, `push_to_jira`,
 `correlation_id`, and `IntegrationError`.
@@ -57,6 +61,8 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 - [`change-request-v1.schema.json`](../schemas/change-request-v1.schema.json)
 - [`risk-report-v1.schema.json`](../schemas/risk-report-v1.schema.json)
 - [`ticket-template-v1.schema.json`](../schemas/ticket-template-v1.schema.json)
+- [`policy-pack-v1.schema.json`](../schemas/policy-pack-v1.schema.json)
+- [`monitor-inventory-v1.schema.json`](../schemas/monitor-inventory-v1.schema.json)
 
 Schemas intentionally allow additional properties so existing organization-
 specific metadata remains valid. Fields documented as recommended rather than
@@ -69,6 +75,9 @@ Existing required inputs are `services` and `change`. All live integrations are
 opt-in. The action's `fail-on` setting is independent from the CLI's fixed exit
 semantics.
 
+Structured Terraform JSON, policy packs, and monitor inventories are optional
+Action inputs. They remain offline and add no credential requirements.
+
 Outputs: `risk-level`, `risk-score`, `report-path`, `json-report-path`, and
 `ticket-path`.
 
@@ -80,7 +89,7 @@ adds its own service and change files.
 ## Reports
 
 The Markdown report is a human-readable interface. The JSON report is the
-machine-readable interface described by `risk-report-v1.schema.json`. In 0.1.2
+machine-readable interface described by `risk-report-v1.schema.json`. In 0.2.0
 both include the PreflightOps version. New optional metadata may be added in
 future compatible releases; consumers must ignore unknown fields.
 
@@ -90,4 +99,3 @@ Assessment, report, and ticket generation are offline by default. Network calls
 occur only when `--servicenow` or `--jira` is explicitly supplied, or their
 equivalent application/Action configuration is enabled. Credential environment
 variables are not part of report output and must not be logged.
-

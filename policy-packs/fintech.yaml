@@ -1,0 +1,14 @@
+version: "1"
+name: fintech
+description: Strict rollback, auditability, IAM, encryption, and monitoring controls.
+risk_weights:
+  missing-rollback-plan: 45
+  missing-monitoring-plan: 35
+  terraform-iam-policy-change: 40
+  terraform-cloud-iam-change: 40
+  terraform-kms-change: 35
+  database-change: 35
+risk_level_thresholds: {low: 30, medium: 60, high: 80}
+monitoring:
+  minimum_enabled_monitors: 2
+  required_providers: []

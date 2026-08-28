@@ -7,7 +7,11 @@ into a single 0-100 risk score with a level, recommendation, triggered rules,
 and a list of missing operational controls.
 """
 
-from .scanners import scan_kubernetes, scan_terraform
+from typing import Optional
+
+from .monitoring import validate_monitoring_evidence
+from .policy import load_policy_pack
+from .scanners import scan_kubernetes, scan_terraform, scan_terraform_json
 from .validators import (
     is_bad_rollback_plan,
     is_monitoring_plan_incomplete,
@@ -21,6 +25,7 @@ SOURCE_SERVICE_CONTROLS = "Service Controls"
 SOURCE_CHANGE_TYPE = "Change Type"
 SOURCE_TERRAFORM = "Terraform"
 SOURCE_KUBERNETES = "Kubernetes"
+SOURCE_OBSERVABILITY = "Observability"
 
 # Display order for grouped breakdowns.
 SOURCE_ORDER = [
@@ -28,6 +33,7 @@ SOURCE_ORDER = [
     SOURCE_CHANGE_TYPE,
     SOURCE_TERRAFORM,
     SOURCE_KUBERNETES,
+    SOURCE_OBSERVABILITY,
 ]
 # Risk level thresholds (inclusive upper bounds except CRITICAL).
 RISK_LEVELS = [
@@ -45,8 +51,16 @@ RECOMMENDATIONS = {
 }
 
 
-def score_to_level(score: int) -> str:
+def score_to_level(score: int, thresholds: Optional[dict] = None) -> str:
     """Map a numeric score to a risk level label."""
+    if thresholds:
+        if score <= thresholds["low"]:
+            return "LOW"
+        if score <= thresholds["medium"]:
+            return "MEDIUM"
+        if score <= thresholds["high"]:
+            return "HIGH"
+        return "CRITICAL"
     for upper_bound, level in RISK_LEVELS:
         if score <= upper_bound:
             return level
@@ -98,7 +112,16 @@ def _rule(triggered, rule_id, description, severity, score, source):
     )
 
 
-def assess_risk(services, change_doc, terraform_text="", k8s_text=""):
+def assess_risk(
+    services,
+    change_doc,
+    terraform_text="",
+    k8s_text="",
+    *,
+    terraform_json=None,
+    policy=None,
+    monitor_inventory=None,
+):
     """Run the full risk assessment.
 
     Parameters
@@ -265,13 +288,30 @@ def assess_risk(services, change_doc, terraform_text="", k8s_text=""):
             SOURCE_CHANGE_TYPE,
         )
 
-    # Scanner findings
+    # Scanner and evidence-provider findings.
     triggered.extend(scan_terraform(terraform_text))
+    triggered.extend(scan_terraform_json(terraform_json))
     triggered.extend(scan_kubernetes(k8s_text))
+
+    active_policy = policy or load_policy_pack()
+    monitor_findings, monitor_validation = validate_monitoring_evidence(
+        change,
+        monitor_inventory,
+        active_policy,
+    )
+    triggered.extend(monitor_findings)
+
+    # Policy weights are applied only after every source has emitted stable rule
+    # ids. The default policy has no overrides, preserving historical scoring.
+    weights = active_policy.get("risk_weights", {})
+    for rule in triggered:
+        if rule["id"] in weights:
+            rule["default_score"] = rule["score"]
+            rule["score"] = weights[rule["id"]]
 
     raw_score = sum(rule["score"] for rule in triggered)
     risk_score = min(raw_score, MAX_SCORE)
-    risk_level = score_to_level(risk_score)
+    risk_level = score_to_level(risk_score, active_policy.get("risk_level_thresholds"))
 
     business_impact = service.get("business_impact") or ""
 
@@ -285,4 +325,9 @@ def assess_risk(services, change_doc, terraform_text="", k8s_text=""):
         "triggered_rules": triggered,
         "missing_controls": missing_controls,
         "business_impact": business_impact,
+        "policy_pack": {
+            "version": active_policy["version"],
+            "name": active_policy["name"],
+        },
+        "monitor_validation": monitor_validation,
     }

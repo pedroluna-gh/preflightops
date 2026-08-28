@@ -159,7 +159,10 @@ assessment, and gates the job on `fail-on`.
 | `services` | yes | — | Path to the service catalog YAML file. |
 | `change` | yes | — | Path to the change request YAML file. |
 | `terraform` | no | `""` | Optional Terraform plan/diff text file. |
+| `terraform-json` | no | `""` | Optional structured `terraform show -json` plan. |
 | `k8s` | no | `""` | Optional Kubernetes manifest YAML file. |
+| `policy` | no | `""` | Built-in policy pack name or policy YAML path. |
+| `monitors` | no | `""` | Optional offline monitor inventory YAML path. |
 | `output` | no | `preflightops-report.md` | Path to write the Markdown report. |
 | `json-output` | no | `preflightops-report.json` | Path to write the JSON report. |
 | `ticket-output` | no | `""` | Optional path to write a ServiceNow/Jira-ready change ticket summary. |

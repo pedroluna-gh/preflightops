@@ -7,6 +7,8 @@ from .integrations import (
     push_to_jira,
     push_to_servicenow,
 )
+from .monitoring import validate_monitoring_evidence
+from .policy import load_policy_pack
 from .report import generate_json_report, generate_markdown_report
 from .risk_engine import (
     RECOMMENDATIONS,
@@ -15,7 +17,7 @@ from .risk_engine import (
     find_service,
     score_to_level,
 )
-from .scanners import scan_kubernetes, scan_terraform
+from .scanners import scan_kubernetes, scan_terraform, scan_terraform_json
 from .ticket import generate_ticket_markdown
 from .validators import (
     is_bad_rollback_plan,
@@ -33,7 +35,10 @@ __all__ = [
     "is_monitoring_plan_incomplete",
     "is_validation_plan_valid",
     "scan_terraform",
+    "scan_terraform_json",
     "scan_kubernetes",
+    "load_policy_pack",
+    "validate_monitoring_evidence",
     "generate_markdown_report",
     "generate_json_report",
     "generate_ticket_markdown",

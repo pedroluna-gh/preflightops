@@ -1,0 +1,18 @@
+{
+  "format_version": "1.2",
+  "resource_changes": [
+    {
+      "address": "google_compute_firewall.checkout",
+      "type": "google_compute_firewall",
+      "change": {
+        "actions": ["update"],
+        "after": {"source_ranges": ["0.0.0.0/0"]}
+      }
+    },
+    {
+      "address": "google_sql_database_instance.checkout",
+      "type": "google_sql_database_instance",
+      "change": {"actions": ["delete"], "after": null}
+    }
+  ]
+}

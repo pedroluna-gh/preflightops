@@ -14,7 +14,9 @@
     "missing_controls",
     "business_impact",
     "score_breakdown",
-    "preflightops_version"
+    "preflightops_version",
+    "policy_pack",
+    "monitor_validation"
   ],
   "properties": {
     "service": {"type": "string"},
@@ -54,7 +56,27 @@
         "additionalProperties": true
       }
     },
-    "preflightops_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+"}
+    "preflightops_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+"},
+    "policy_pack": {
+      "type": "object",
+      "required": ["version", "name"],
+      "properties": {"version": {"type": "string"}, "name": {"type": "string"}},
+      "additionalProperties": true
+    },
+    "monitor_validation": {
+      "type": "object",
+      "required": ["status", "dashboard_count", "valid_dashboard_count", "inventory_monitor_count", "enabled_monitor_count", "referenced_monitor_ids", "providers"],
+      "properties": {
+        "status": {"enum": ["pass", "fail"]},
+        "dashboard_count": {"type": "integer", "minimum": 0},
+        "valid_dashboard_count": {"type": "integer", "minimum": 0},
+        "inventory_monitor_count": {"type": "integer", "minimum": 0},
+        "enabled_monitor_count": {"type": "integer", "minimum": 0},
+        "referenced_monitor_ids": {"type": "array", "items": {"type": "string"}},
+        "providers": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": true
+    }
   },
   "additionalProperties": true
 }

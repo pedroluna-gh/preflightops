@@ -17,6 +17,7 @@ Exit codes
 """
 
 import argparse
+import json
 import sys
 
 import yaml
@@ -28,6 +29,7 @@ from .integrations import (
     push_to_jira,
     push_to_servicenow,
 )
+from .policy import load_policy_pack
 from .report import generate_json_report, generate_markdown_report
 from .risk_engine import assess_risk
 from .ticket import generate_ticket_markdown, load_template_file
@@ -83,6 +85,13 @@ def _load_text(path):
         return handle.read()
 
 
+def _load_json(path):
+    if not path:
+        return None
+    with open(path, encoding="utf-8") as handle:
+        return json.load(handle)
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         prog="preflightops",
@@ -99,7 +108,27 @@ def main(argv=None) -> int:
         "--terraform", default=None, help="Optional path to a Terraform plan/diff text file"
     )
     parser.add_argument(
+        "--terraform-json",
+        default=None,
+        help="Optional path to structured output from 'terraform show -json'.",
+    )
+    parser.add_argument(
         "--k8s", default=None, help="Optional path to a Kubernetes manifest YAML file"
+    )
+    parser.add_argument(
+        "--policy",
+        default=None,
+        metavar="PACK_OR_FILE",
+        help=(
+            "Built-in policy pack (saas, fintech, ecommerce, healthcare, "
+            "critical-platform, startup) or a versioned policy YAML file."
+        ),
+    )
+    parser.add_argument(
+        "--monitors",
+        default=None,
+        metavar="INVENTORY_YAML",
+        help="Optional offline monitor inventory for Datadog/Grafana/Prometheus/Zabbix/GCP validation.",
     )
     parser.add_argument("--output", default="report.md", help="Where to write the Markdown report")
     parser.add_argument(
@@ -163,13 +192,24 @@ def main(argv=None) -> int:
         services = _load_yaml(args.services)
         change = _load_yaml(args.change)
         terraform_text = _load_text(args.terraform)
+        terraform_json = _load_json(args.terraform_json)
         k8s_text = _load_text(args.k8s)
-    except (OSError, yaml.YAMLError) as exc:
+        monitor_inventory = _load_yaml(args.monitors) if args.monitors else None
+        policy = load_policy_pack(args.policy)
+    except (OSError, yaml.YAMLError, json.JSONDecodeError, ValueError) as exc:
         print(f"Error loading input files: {exc}", file=sys.stderr)
         return 2
 
     try:
-        result = assess_risk(services, change, terraform_text, k8s_text)
+        result = assess_risk(
+            services,
+            change,
+            terraform_text,
+            k8s_text,
+            terraform_json=terraform_json,
+            policy=policy,
+            monitor_inventory=monitor_inventory,
+        )
     except ValueError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 2
@@ -241,6 +281,7 @@ def main(argv=None) -> int:
     print(f"Environment: {result['environment']}")
     print(f"Risk Score:  {result['risk_score']}/100")
     print(f"Risk Level:  {result['risk_level']}")
+    print(f"Policy Pack: {result['policy_pack']['name']}")
     print(f"Report written to: {args.output}")
     if args.json_output:
         print(f"JSON report written to: {args.json_output}")
