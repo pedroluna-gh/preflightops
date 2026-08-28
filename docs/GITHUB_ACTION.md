@@ -2,6 +2,13 @@
 
 PreflightOps can run as a pull-request risk gate.
 
+For a working, public reference, see
+[`pedroluna-gh/preflightops-demo`](https://github.com/pedroluna-gh/preflightops-demo)
+and its completed
+[`HIGH 75/100` example PR](https://github.com/pedroluna-gh/preflightops-demo/pull/1).
+The demo is pinned to `v0.3.0`, publishes an idempotent bot comment, uploads
+Markdown/JSON/HTML artifacts, and creates no cloud or ITSM resources.
+
 The workflow bundled in this source repository is intentionally manual and uses
 the LOW, HIGH and CRITICAL examples shipped under `examples/`. Mandatory source
 quality checks run independently in `ci.yml`. Copy the pull-request example

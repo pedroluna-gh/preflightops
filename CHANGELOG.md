@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Public `preflightops-demo` repository with a completed real pull request,
+  generated bot comment, review artifacts, and captured visual evidence.
+
 ## [0.3.0] - 2026-08-28
 
 ### Added
