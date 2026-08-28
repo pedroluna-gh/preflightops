@@ -35,7 +35,7 @@ uv run twine check dist/*
 uv run python scripts/package_smoke.py --requirements .runtime-requirements.txt dist
 ```
 
-The 85% branch-coverage floor is deliberately below the measured 90% baseline.
+The 85% branch-coverage floor is deliberately below the measured 87%+ baseline.
 It blocks material regressions while preserving a small margin for platform-
 specific branches. Raising it requires tests, not exclusions of production code.
 

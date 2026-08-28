@@ -12,7 +12,9 @@ PreflightOps is currently in early development.
 
 | Version | Supported |
 |---|---|
-| 0.1.x | Yes |
+| 0.3.x | Yes |
+| 0.2.x | Yes |
+| 0.1.x | Security fixes only |
 
 ---
 
@@ -62,10 +64,13 @@ PreflightOps currently:
 - runs locally;
 - does not require a database;
 - does not call external APIs during the default offline assessment path;
+- can read bounded filename/status metadata from GitHub in pull-request Action
+  runs; it never requests patches and can be disabled with
+  `auto-detect-changes: false`;
 - calls ServiceNow or Jira only when a live integration is explicitly enabled;
 - does not send data to AI services;
 - does not require authentication;
-- produces local Markdown and JSON reports.
+- produces local Markdown, JSON, static HTML, and PR-comment reports.
 
 This makes it simple to audit, but it also means users are responsible for controlling where input files and reports are stored.
 
@@ -81,7 +86,8 @@ permissions:
   pull-requests: write
 ```
 
-This is needed to read repository content and comment on pull requests.
+`pull-requests: read` is enough for changed-file detection. `write` is needed
+only when the consuming workflow publishes the generated comment.
 
 If you do not need PR comments, remove `pull-requests: write`.
 

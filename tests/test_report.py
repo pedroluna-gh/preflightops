@@ -9,7 +9,12 @@ for both populated and empty results.
 import json
 
 from preflightops import __version__
-from preflightops.report import generate_json_report, generate_markdown_report
+from preflightops.report import (
+    generate_github_comment,
+    generate_html_report,
+    generate_json_report,
+    generate_markdown_report,
+)
 
 
 def _section(report, heading):
@@ -160,3 +165,45 @@ def test_handles_missing_keys_gracefully():
 def test_json_report_includes_package_version():
     report = json.loads(generate_json_report(populated_result()))
     assert report["preflightops_version"] == __version__
+
+
+def test_github_comment_is_compact_grouped_and_actionable():
+    result = populated_result()
+    comment = generate_github_comment(result, "https://github.com/acme/api/actions/runs/42")
+
+    assert comment.startswith("<!-- preflightops-report -->")
+    assert "### 🔴 `CRITICAL` risk · **100/100**" in comment
+    assert "| Service | Environment | Change type | Policy | Findings |" in comment
+    assert "<details><summary><strong>Service Controls</strong>" in comment
+    assert "### Top actions" in comment
+    assert comment.count("\n1. ") == 1
+    assert "[Open the full report artifact](https://github.com/acme/api/actions/runs/42)" in comment
+
+
+def test_github_comment_rejects_non_http_report_url():
+    result = populated_result()
+    result["service"] = "payments <script>alert(1)</script>"
+    comment = generate_github_comment(result, "javascript:alert(1)")
+    assert "javascript:" not in comment
+    assert "Open the full report artifact" not in comment
+    assert "&lt;script&gt;" in comment
+    assert "payments <script>" not in comment
+    assert "Open the full report artifact" not in generate_github_comment(
+        populated_result(), "https://github.com/acme/run\n[unsafe]"
+    )
+
+
+def test_html_report_is_static_readable_and_escapes_input():
+    result = populated_result()
+    result["service"] = "payments <script>alert(1)</script>"
+    report = generate_html_report(result, "https://github.com/acme/api/actions/runs/42")
+
+    assert report.startswith("<!doctype html>")
+    assert '<meta name="viewport"' in report
+    assert "CRITICAL · 100/100" in report
+    assert "Findings by source" in report
+    assert "Top actions" in report
+    assert "payments &lt;script&gt;alert(1)&lt;/script&gt;" in report
+    assert "payments <script>" not in report
+    assert "<script" not in report.lower()
+    assert "Static report, no scripts or external assets" in report

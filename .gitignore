@@ -36,8 +36,12 @@ Thumbs.db
 *.log
 report.md
 report.json
+report.html
 preflightops-report.md
 preflightops-report.json
+preflightops-report.html
+preflightops-comment.md
+preflightops-changed-files.json
 
 # Local Replit / generated workspace files
 .replit

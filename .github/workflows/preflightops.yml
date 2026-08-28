@@ -35,6 +35,8 @@ jobs:
           change: examples/change-${{ inputs.scenario }}-risk.yaml
           output: preflightops-report.md
           json-output: preflightops-report.json
+          html-output: preflightops-report.html
+          github-comment-output: preflightops-comment.md
           fail-on: none
 
       - name: Write job summary
@@ -48,3 +50,14 @@ jobs:
             echo
             cat preflightops-report.md
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload review artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: preflightops-${{ inputs.scenario }}-risk
+          path: |
+            preflightops-report.md
+            preflightops-report.json
+            preflightops-report.html
+            preflightops-comment.md
+          if-no-files-found: error

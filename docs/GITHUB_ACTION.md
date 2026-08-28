@@ -13,7 +13,9 @@ It can:
 - read a change request;
 - optionally scan a Terraform plan;
 - optionally scan Kubernetes manifests;
+- detect pull-request filenames and infer Terraform/Kubernetes scanner scope;
 - generate a Markdown report;
+- generate a compact PR comment and optional static HTML report;
 - upload the report as an artifact;
 - comment the report on the pull request;
 - fail the workflow when risk is `CRITICAL`.
@@ -54,6 +56,7 @@ jobs:
       PREFLIGHTOPS_TERRAFORM: tfplan.txt
       PREFLIGHTOPS_K8S: k8s.yaml
       PREFLIGHTOPS_REPORT: preflightops-report.md
+      PREFLIGHTOPS_COMMENT: preflightops-comment.md
 
     steps:
       - name: Checkout repository
@@ -82,7 +85,7 @@ jobs:
             args+=(--k8s "$PREFLIGHTOPS_K8S")
           fi
 
-          args+=(--output "$PREFLIGHTOPS_REPORT")
+          args+=(--output "$PREFLIGHTOPS_REPORT" --github-comment-output "$PREFLIGHTOPS_COMMENT")
 
           set +e
           preflightops "${args[@]}"
@@ -105,7 +108,7 @@ jobs:
           script: |
             const fs = require('fs');
             const marker = '<!-- preflightops-report -->';
-            const body = `${marker}\n` + fs.readFileSync(process.env.PREFLIGHTOPS_REPORT, 'utf8');
+            const body = fs.readFileSync(process.env.PREFLIGHTOPS_COMMENT, 'utf8');
 
             const { owner, repo } = context.repo;
             const issue_number = context.issue.number;
@@ -163,8 +166,13 @@ assessment, and gates the job on `fail-on`.
 | `k8s` | no | `""` | Optional Kubernetes manifest YAML file. |
 | `policy` | no | `""` | Built-in policy pack name or policy YAML path. |
 | `monitors` | no | `""` | Optional offline monitor inventory YAML path. |
+| `changed-files` | no | `""` | Optional newline/JSON file manifest; auto-detected in PR runs when blank. |
+| `auto-detect-changes` | no | `true` | Fetch PR filenames and infer scanner scope. |
 | `output` | no | `preflightops-report.md` | Path to write the Markdown report. |
 | `json-output` | no | `preflightops-report.json` | Path to write the JSON report. |
+| `html-output` | no | `""` | Optional dependency-free static HTML report path. |
+| `github-comment-output` | no | `preflightops-comment.md` | Compact PR comment Markdown path. |
+| `full-report-url` | no | current run | Optional HTTP(S) workflow/artifact link. |
 | `ticket-output` | no | `""` | Optional path to write a ServiceNow/Jira-ready change ticket summary. |
 | `ticket-template` | no | `""` | Optional path to a YAML or JSON ticket template. |
 | `servicenow` | no | `""` | Optional ServiceNow instance URL for opt-in live ticket push. |
@@ -175,9 +183,47 @@ assessment, and gates the job on `fail-on`.
 
 ### Outputs
 
-`risk-level`, `risk-score`, `report-path`, `json-report-path`, and `ticket-path`
-(the path of the generated ticket summary, empty when `ticket-output` was not
-set).
+`risk-level`, `risk-score`, `report-path`, `json-report-path`, `ticket-path`,
+`html-report-path`, `github-comment-path`, `changed-files-path`, and
+`scanner-scope` (a comma-separated list such as `terraform,kubernetes`).
+
+### Automatic pull-request scope detection
+
+In a `pull_request` workflow, the composite action retrieves only each changed
+file's `filename` and `status` through GitHub's paginated REST API. Add the
+minimum permissions needed by detection and commenting:
+
+```yaml
+permissions:
+  contents: read
+  pull-requests: write
+```
+
+`pull-requests: read` is sufficient when the workflow only generates artifacts.
+Detection is bounded, never downloads patches, and never logs the token. If the
+API is unavailable, the action emits a warning and continues with explicit
+`terraform`, `terraform-json`, and `k8s` inputs. Set `auto-detect-changes: false`
+to disable the network read, or provide `changed-files` for an entirely offline
+manifest-driven run.
+
+Changed `.tf` files identify Terraform scope but are not treated as plan
+evidence. For resource-level findings, commit or generate a structured
+`terraform show -json` artifact and pass `terraform-json`. An unambiguous changed
+Terraform JSON plan and valid Kubernetes manifests are loaded automatically;
+multiple Terraform plans require an explicit selection.
+
+### Compact comment and static HTML
+
+The action writes `preflightops-comment.md` by default. It contains the risk
+level near the top, a compact summary table, grouped findings, and the top three
+actions. A consuming workflow can idempotently create/update the marked comment
+using the `actions/github-script` example above. The action itself does not
+silently mutate the pull request.
+
+Set `html-output: preflightops-report.html` to create a self-contained report
+for CAB reviewers. It has no JavaScript, remote CSS, fonts, or runtime
+dependencies and can be uploaded with `actions/upload-artifact` alongside the
+Markdown and JSON reports.
 
 ### Safe example (offline ticket summary)
 
@@ -185,7 +231,7 @@ This stays fully offline — it generates the report and a copy/paste-ready chan
 ticket summary, with no outbound calls:
 
 ```yaml
-- uses: pedroluna-gh/preflightops@v0.1.2
+- uses: pedroluna-gh/preflightops@v0.3.0
   with:
     services: services.yaml
     change: change.yaml
@@ -194,6 +240,7 @@ ticket summary, with no outbound calls:
     output: preflightops-report.md
     json-output: preflightops-report.json
     ticket-output: preflightops-ticket.md
+    auto-detect-changes: false
     fail-on: critical
 ```
 
@@ -217,7 +264,7 @@ jobs:
       JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
     steps:
       - uses: actions/checkout@v4
-      - uses: pedroluna-gh/preflightops@v0.1.2
+      - uses: pedroluna-gh/preflightops@v0.3.0
         with:
           services: services.yaml
           change: change.yaml

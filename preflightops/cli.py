@@ -23,6 +23,11 @@ import sys
 import yaml
 
 from ._version import __version__
+from .changed_files import (
+    classify_changed_files,
+    load_auto_scanner_inputs,
+    load_changed_files,
+)
 from .integrations import (
     IntegrationError,
     correlation_id,
@@ -30,7 +35,12 @@ from .integrations import (
     push_to_servicenow,
 )
 from .policy import load_policy_pack
-from .report import generate_json_report, generate_markdown_report
+from .report import (
+    generate_github_comment,
+    generate_html_report,
+    generate_json_report,
+    generate_markdown_report,
+)
 from .risk_engine import assess_risk
 from .ticket import generate_ticket_markdown, load_template_file
 
@@ -130,11 +140,40 @@ def main(argv=None) -> int:
         metavar="INVENTORY_YAML",
         help="Optional offline monitor inventory for Datadog/Grafana/Prometheus/Zabbix/GCP validation.",
     )
+    parser.add_argument(
+        "--changed-files",
+        default=None,
+        metavar="MANIFEST",
+        help=(
+            "Optional newline or JSON PR file manifest. Infers scanner scope and "
+            "automatically loads unambiguous Terraform JSON/Kubernetes inputs."
+        ),
+    )
+    parser.add_argument(
+        "--repository-root",
+        default=".",
+        help="Checkout root used to resolve paths from --changed-files (default: current directory).",
+    )
     parser.add_argument("--output", default="report.md", help="Where to write the Markdown report")
     parser.add_argument(
         "--json-output",
         default=None,
         help="Optional path to also write the machine-readable JSON report",
+    )
+    parser.add_argument(
+        "--html-output",
+        default=None,
+        help="Optional path to write a dependency-free static HTML report.",
+    )
+    parser.add_argument(
+        "--github-comment-output",
+        default=None,
+        help="Optional path to write a compact GitHub pull-request comment.",
+    )
+    parser.add_argument(
+        "--full-report-url",
+        default=None,
+        help="Optional HTTP(S) workflow/artifact URL included in HTML and GitHub reports.",
     )
     parser.add_argument(
         "--ticket-output",
@@ -191,9 +230,25 @@ def main(argv=None) -> int:
     try:
         services = _load_yaml(args.services)
         change = _load_yaml(args.change)
+        changed_scope = None
+        auto_inputs: dict = {
+            "terraform_json": None,
+            "kubernetes_text": "",
+            "terraform_json_files": [],
+            "kubernetes_files": [],
+        }
+        if args.changed_files:
+            changed_paths = load_changed_files(args.changed_files)
+            changed_scope = classify_changed_files(changed_paths, args.repository_root)
+            auto_inputs = load_auto_scanner_inputs(changed_scope, args.repository_root)
+
         terraform_text = _load_text(args.terraform)
         terraform_json = _load_json(args.terraform_json)
+        if terraform_json is None:
+            terraform_json = auto_inputs["terraform_json"]
         k8s_text = _load_text(args.k8s)
+        if not k8s_text:
+            k8s_text = auto_inputs["kubernetes_text"]
         monitor_inventory = _load_yaml(args.monitors) if args.monitors else None
         policy = load_policy_pack(args.policy)
     except (OSError, yaml.YAMLError, json.JSONDecodeError, ValueError) as exc:
@@ -210,6 +265,17 @@ def main(argv=None) -> int:
             policy=policy,
             monitor_inventory=monitor_inventory,
         )
+        if changed_scope is not None:
+            changed_scope["selected_inputs"] = {
+                "terraform_text": [args.terraform] if args.terraform else [],
+                "terraform_json": (
+                    [args.terraform_json]
+                    if args.terraform_json
+                    else auto_inputs["terraform_json_files"]
+                ),
+                "kubernetes": [args.k8s] if args.k8s else auto_inputs["kubernetes_files"],
+            }
+            result["change_scope"] = changed_scope
     except ValueError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 2
@@ -230,6 +296,24 @@ def main(argv=None) -> int:
                 handle.write(json_report)
         except OSError as exc:
             print(f"Error writing JSON report: {exc}", file=sys.stderr)
+            return 2
+
+    if args.html_output:
+        html_report = generate_html_report(result, args.full_report_url)
+        try:
+            with open(args.html_output, "w", encoding="utf-8") as handle:
+                handle.write(html_report)
+        except OSError as exc:
+            print(f"Error writing HTML report: {exc}", file=sys.stderr)
+            return 2
+
+    if args.github_comment_output:
+        github_comment = generate_github_comment(result, args.full_report_url)
+        try:
+            with open(args.github_comment_output, "w", encoding="utf-8") as handle:
+                handle.write(github_comment)
+        except OSError as exc:
+            print(f"Error writing GitHub comment: {exc}", file=sys.stderr)
             return 2
 
     # The same change summary backs the offline file and the opt-in API push.
@@ -285,6 +369,13 @@ def main(argv=None) -> int:
     print(f"Report written to: {args.output}")
     if args.json_output:
         print(f"JSON report written to: {args.json_output}")
+    if args.html_output:
+        print(f"HTML report written to: {args.html_output}")
+    if args.github_comment_output:
+        print(f"GitHub comment written to: {args.github_comment_output}")
+    if changed_scope is not None:
+        scanners = ", ".join(changed_scope["scanners"]) or "none"
+        print(f"Changed-file scanner scope: {scanners}")
     if args.ticket_output:
         print(f"Change ticket summary written to {args.ticket_output}")
     for info in integration_results:

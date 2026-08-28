@@ -6,6 +6,7 @@ These tests lock in the exit codes, the error codes for bad/missing input, and
 the report-writing + summary behaviour.
 """
 
+import json
 import os
 
 import pytest
@@ -100,6 +101,69 @@ class TestOutput:
         code = cli.main(["--services", services, "--change", change])
         assert code == 0
         assert (tmp_path / "report.md").exists()
+
+    def test_writes_html_and_github_comment_outputs(self, tmp_path):
+        services = _write_yaml(tmp_path / "services.yaml", sample_data.HIGH_RISK_SERVICES)
+        change = _write_yaml(tmp_path / "change.yaml", sample_data.HIGH_RISK_CHANGE)
+        markdown = tmp_path / "report.md"
+        html = tmp_path / "report.html"
+        comment = tmp_path / "comment.md"
+
+        code = cli.main(
+            [
+                "--services",
+                services,
+                "--change",
+                change,
+                "--output",
+                str(markdown),
+                "--html-output",
+                str(html),
+                "--github-comment-output",
+                str(comment),
+                "--full-report-url",
+                "https://github.com/acme/api/actions/runs/42",
+            ]
+        )
+
+        assert code == 0
+        assert "<!doctype html>" in html.read_text(encoding="utf-8")
+        assert "<!-- preflightops-report -->" in comment.read_text(encoding="utf-8")
+
+    def test_changed_files_auto_loads_kubernetes_and_records_scope(self, tmp_path):
+        services = _write_yaml(tmp_path / "services.yaml", sample_data.LOW_RISK_SERVICES)
+        change = _write_yaml(tmp_path / "change.yaml", sample_data.LOW_RISK_CHANGE)
+        k8s = tmp_path / "k8s"
+        k8s.mkdir()
+        (k8s / "secret.yaml").write_text(
+            "apiVersion: v1\nkind: Secret\nmetadata:\n  name: api-secret\n", encoding="utf-8"
+        )
+        changed = tmp_path / "changed.json"
+        changed.write_text(json.dumps(["k8s/secret.yaml"]), encoding="utf-8")
+        json_output = tmp_path / "report.json"
+
+        code = cli.main(
+            [
+                "--services",
+                services,
+                "--change",
+                change,
+                "--changed-files",
+                str(changed),
+                "--repository-root",
+                str(tmp_path),
+                "--output",
+                str(tmp_path / "report.md"),
+                "--json-output",
+                str(json_output),
+            ]
+        )
+
+        assert code in {0, 1}
+        result = json.loads(json_output.read_text(encoding="utf-8"))
+        assert result["change_scope"]["scanners"] == ["kubernetes"]
+        assert result["change_scope"]["selected_inputs"]["kubernetes"] == ["k8s/secret.yaml"]
+        assert any(rule["id"] == "kubernetes-secret-change" for rule in result["triggered_rules"])
 
 
 # ---------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 """PreflightOps: pre-deployment risk assessment for SRE and Platform teams."""
 
 from ._version import __version__ as __version__
+from .changed_files import classify_changed_files, load_changed_files
 from .integrations import (
     IntegrationError,
     correlation_id,
@@ -9,7 +10,12 @@ from .integrations import (
 )
 from .monitoring import validate_monitoring_evidence
 from .policy import load_policy_pack
-from .report import generate_json_report, generate_markdown_report
+from .report import (
+    generate_github_comment,
+    generate_html_report,
+    generate_json_report,
+    generate_markdown_report,
+)
 from .risk_engine import (
     RECOMMENDATIONS,
     RISK_LEVELS,
@@ -41,6 +47,10 @@ __all__ = [
     "validate_monitoring_evidence",
     "generate_markdown_report",
     "generate_json_report",
+    "generate_github_comment",
+    "generate_html_report",
+    "classify_changed_files",
+    "load_changed_files",
     "generate_ticket_markdown",
     "push_to_servicenow",
     "push_to_jira",

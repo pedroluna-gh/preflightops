@@ -9,12 +9,15 @@ keep running locally in a transparent and explainable way.
 Priorities and timing may change based on community feedback — open an issue to
 suggest or upvote an item.
 
-## Recently completed for v0.2
+## Recently completed for v0.3
 
 - Structured Terraform JSON plan parsing with resource/action evidence.
 - Structured multi-document Kubernetes object and container validation.
 - Versioned, customizable policy packs and risk weights.
 - Secrets-free observability inventory validation for major providers.
+- GitHub PR changed-file detection and scanner-scope inference.
+- Compact, grouped GitHub comments with prioritized actions.
+- Dependency-free static HTML reports for CAB stakeholders.
 
 ## v0.1 — Initial release
 
@@ -33,31 +36,31 @@ suggest or upvote an item.
   available from the CLI, GitHub Action, and web app. Credentials are read from
   the environment only, and nothing is sent unless explicitly enabled.
 
-## v0.2 — Structured change evidence (current)
+## v0.2 — Structured change evidence
 
 - Parse `terraform show -json` plan output instead of keyword matching.
 - Distinguish create / update / delete / replace per resource.
 - Map provider resource types to risk weights.
-
-## v0.3 — Extended Kubernetes and delivery context
-
 - Parse Kubernetes manifests as objects (multi-document YAML).
 - Inspect probes, resource limits, replicas, and exposure per workload.
 - Detect risky `kind` + field combinations more precisely.
-
-## v0.4 — Configurable policy
-
 - User-supplied rule weights and thresholds via a config file.
 - Enable / disable individual rules.
 - Per-environment policy (e.g. stricter rules for `production`).
 
-## v0.5 — Reporting & export
+## v0.3 — Pull-request delivery context and reporting (current)
 
 - Static HTML dashboard export.
+- Metadata-only changed-file detection for GitHub pull requests.
+- Automatic selection of unambiguous structured plan/manifest inputs.
+- Dedicated compact Markdown for idempotent PR comments.
+
+## Next — Reporting depth
+
 - Historical trend view across multiple assessments.
 - SARIF output for code-scanning integrations.
 
-## v0.6 — Ecosystem integrations (optional, opt-in)
+## Ecosystem integrations (optional, opt-in)
 
 - Basic ServiceNow / Jira change-record push — **available now** (see v0.1.x).
 - Stronger ServiceNow / Jira API hardening (retries, error handling, field and

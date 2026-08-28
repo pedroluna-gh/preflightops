@@ -7,7 +7,7 @@ PreflightOps is a pre-deployment risk assessment tool for SRE, DevOps, and Platf
 ## Try it in a pull request
 
 ```yaml
-- uses: pedroluna-gh/preflightops@v0.1.2
+- uses: pedroluna-gh/preflightops@v0.3.0
   with:
     services: services.yaml
     change: change.yaml
@@ -19,7 +19,7 @@ PreflightOps is a pre-deployment risk assessment tool for SRE, DevOps, and Platf
 ---
 
 
-It runs as a **Streamlit web app** for interactive reviews and as a **CLI / GitHub Action** for automated pull-request gates. No database, no login, no AI — the risk assessment runs entirely locally. Outbound calls happen only when you explicitly opt in to the [ServiceNow / Jira integrations](#opt-in-push-straight-into-servicenow--jira).
+It runs as a **Streamlit web app** for interactive reviews and as a **CLI / GitHub Action** for automated pull-request gates. No database, no login, no AI — the risk assessment runs entirely locally. Network access is limited to metadata-only PR filename discovery in the Action and explicit [ServiceNow / Jira integrations](#opt-in-push-straight-into-servicenow--jira).
 
 [![CI](https://github.com/pedroluna-gh/preflightops/actions/workflows/ci.yml/badge.svg)](https://github.com/pedroluna-gh/preflightops/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -144,13 +144,20 @@ preflightops \
   --k8s examples/k8s-risk.yaml \
   --policy fintech \
   --monitors examples/monitors.yaml \
+  --changed-files changed-files.json \
   --output report.md \
-  --json-output report.json
+  --json-output report.json \
+  --html-output report.html \
+  --github-comment-output pr-comment.md
 ```
 
 (The equivalent `python -m preflightops.cli ...` also works.)
 
-The CLI prints the score and level, writes a Markdown report to `--output` (and an optional JSON report to `--json-output`), and **exits with code `1` when the risk level is `CRITICAL`** (otherwise `0`) — so you can fail a pipeline on critical risk.
+The CLI prints the score and level, writes Markdown plus optional JSON, static
+HTML, and compact GitHub-comment reports, and **exits with code `1` when the risk
+level is `CRITICAL`** (otherwise `0`) — so you can fail a pipeline on critical
+risk. A newline/JSON `--changed-files` manifest records PR scope and safely
+auto-loads unambiguous structured Terraform plans and Kubernetes manifests.
 
 Structured inputs, policy packs, and the secrets-free observability inventory
 are documented in [`docs/POLICY_AND_EVIDENCE.md`](docs/POLICY_AND_EVIDENCE.md).
@@ -172,16 +179,21 @@ Run the manual source workflow and choose a scenario to inspect the result in
 the job summary. It has only `contents: read`; it does not comment on pull
 requests or write repository state.
 
-You can also call the bundled composite action directly with `uses:`. It sets up Python, installs PreflightOps, runs the assessment, and gates the job on `fail-on`. Add `ticket-output` to also generate a copy/paste-ready change summary — this stays fully offline:
+You can also call the bundled composite action directly with `uses:`. It detects
+changed PR filenames, infers relevant scanners, generates a compact comment,
+runs the assessment, and gates the job on `fail-on`. Add `html-output` for a
+self-contained CAB artifact or `ticket-output` for a copy/paste-ready change
+summary:
 
 ```yaml
-- uses: pedroluna-gh/preflightops@v0.1.2
+- uses: pedroluna-gh/preflightops@v0.3.0
   with:
     services: services.yaml
     change: change.yaml
     terraform: tfplan.txt
     k8s: k8s.yaml
     output: preflightops-report.md
+    html-output: preflightops-report.html
     ticket-output: preflightops-ticket.md
     fail-on: critical
 ```
@@ -296,7 +308,7 @@ jobs:
       JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
     steps:
       - uses: actions/checkout@v4
-      - uses: pedroluna-gh/preflightops@v0.1.2
+      - uses: pedroluna-gh/preflightops@v0.3.0
         with:
           services: services.yaml
           change: change.yaml
@@ -439,14 +451,20 @@ Contributions are welcome — bug reports, new risk rules, scanner signals, and 
 1. Fork the repo and create a feature branch.
 2. Make your change and **add or update tests** under `tests/`.
 3. Run `pytest` and make sure the full suite passes.
-4. Keep the project's constraints intact: **no database, no login, no AI, and no network calls by default** — the only outbound calls are the explicitly opt-in ServiceNow / Jira integrations.
+4. Keep the project's constraints intact: **no database, no login, no AI, and an offline assessment core**. Network access is limited to explicit ServiceNow/Jira integrations and the Action's bounded GitHub PR filename discovery.
 5. Open a pull request with a clear description of the change and the risk it addresses.
 
 New risk rules should be transparent and explainable: a stable rule id, a severity, a point value, and a human-readable description. Please open an issue first for larger changes so we can align on direction.
 
 ## Security
 
-PreflightOps is **offline by default**: the risk assessment makes no outbound network calls, stores no data, and requires no credentials. Your service catalogs, change requests, Terraform plans, and Kubernetes manifests never leave your machine or CI runner — unless you explicitly enable the opt-in ServiceNow / Jira integrations, which send the generated change summary to the instance/base URL you configure using credentials read from the environment only.
+PreflightOps' **risk assessment is offline by default**: it makes no outbound
+network calls, stores no data, and requires no credentials. Your service
+catalogs, change requests, Terraform plans, and Kubernetes manifests never leave
+your machine or CI runner unless you explicitly enable ServiceNow/Jira. In a PR
+workflow, automatic scope detection separately reads only filename/status
+metadata from GitHub using the run-scoped token; disable it with
+`auto-detect-changes: false` for a fully offline Action run.
 
 - Treat any input you paste as sensitive — Terraform plans and Kubernetes manifests can contain infrastructure details. The bundled examples use placeholder data only.
 - PreflightOps is a **decision-support aid, not a security boundary.** It surfaces risk signals to inform human review; it does not guarantee a change is safe.
@@ -457,9 +475,10 @@ PreflightOps is **offline by default**: the risk assessment makes no outbound ne
 - Copy/paste ServiceNow/Jira-ready change ticket summary (`--ticket-output`) — **available now**
 - Opt-in ServiceNow API integration and Jira API integration (`--servicenow` / `--jira`), from the CLI, GitHub Action, and web app — **available now**
 - Configurable / custom ticket templates (`--ticket-template`) — **available now**
+- Compact GitHub PR comments and changed-file scanner inference — **available now**
+- Static HTML dashboard export (`--html-output`) — **available now**
 - Live provider adapters layered on the offline observability evidence contract
 - PagerDuty / Opsgenie incident-history connector
-- Static HTML dashboard export
 - Policy-as-code approval workflows
 
 ## Suggested GitHub topics

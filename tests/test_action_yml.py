@@ -61,11 +61,42 @@ def test_ticket_path_output_added(action):
     assert "ticket-path" in action["outputs"]
 
 
+@pytest.mark.parametrize(
+    "name",
+    [
+        "changed-files",
+        "auto-detect-changes",
+        "html-output",
+        "github-comment-output",
+        "full-report-url",
+    ],
+)
+def test_reporting_and_detection_inputs_are_optional(action, name):
+    assert name in action["inputs"]
+    assert action["inputs"][name].get("required", False) is False
+
+
+@pytest.mark.parametrize(
+    "name",
+    ["html-report-path", "github-comment-path", "changed-files-path", "scanner-scope"],
+)
+def test_reporting_and_detection_outputs_are_present(action, name):
+    assert name in action["outputs"]
+
+
 def test_run_script_passes_new_flags(action_text):
     # The run script must translate the inputs into the real CLI flags, and map
     # the assume-yes input to --yes (the CLI flag is --yes / --assume-yes).
     for flag in ("--ticket-output", "--ticket-template", "--servicenow", "--jira", "--yes"):
         assert flag in action_text, f"run script does not pass {flag}"
+
+
+def test_action_detects_pr_files_and_passes_report_flags(action_text):
+    assert "python -m preflightops.changed_files" in action_text
+    assert "--changed-files" in action_text
+    assert "--repository-root" in action_text
+    assert "--html-output" in action_text
+    assert "--github-comment-output" in action_text
 
 
 def test_no_changeguard_references(action_text):
