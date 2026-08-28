@@ -1,0 +1,158 @@
+name: ServiceNow pre-change evidence demo
+
+# Manual only: untrusted pull requests can never reach ServiceNow credentials.
+on:
+  workflow_dispatch:
+    inputs:
+      instance_url:
+        description: ServiceNow test instance origin (HTTPS, no path)
+        required: true
+        type: string
+      change_reference:
+        description: Existing test Change number or sys_id to enrich
+        required: true
+        type: string
+      scenario:
+        description: PreflightOps example scenario
+        required: true
+        default: high
+        type: choice
+        options:
+          - low
+          - high
+          - critical
+      dry_run:
+        description: Render the payload without contacting ServiceNow
+        required: true
+        default: true
+        type: boolean
+      cab_boundary_acknowledged:
+        description: Confirm this publishes evidence only and does not approve the Change
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: servicenow-evidence-${{ inputs.change_reference }}
+  cancel-in-progress: false
+
+jobs:
+  validate-request:
+    name: Validate manual request
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Enforce CAB boundary for live publication
+        shell: bash
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          CAB_ACK: ${{ inputs.cab_boundary_acknowledged }}
+        run: |
+          set -euo pipefail
+          if [ "$DRY_RUN" != "true" ] && [ "$CAB_ACK" != "true" ]; then
+            echo "::error::Live publication requires explicit acknowledgement of the CAB boundary."
+            exit 2
+          fi
+
+  preview:
+    name: Assess and preview evidence
+    needs: validate-request
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Build a network-free ServiceNow preview
+        id: assess
+        uses: ./
+        with:
+          services: examples/services-${{ inputs.scenario }}-risk.yaml
+          change: examples/change-${{ inputs.scenario }}-risk.yaml
+          policy: critical-platform
+          output: preflightops-report.md
+          json-output: preflightops-report.json
+          html-output: preflightops-report.html
+          ticket-output: preflightops-change-ticket.md
+          servicenow: ${{ inputs.instance_url }}
+          servicenow-mapping: examples/servicenow-field-map.yaml
+          servicenow-change: ${{ inputs.change_reference }}
+          servicenow-attach-evidence: "true"
+          servicenow-dry-run: "true"
+          servicenow-preview-output: servicenow-preview.json
+          fail-on: none
+
+      - name: Summarize preview
+        shell: bash
+        env:
+          RISK_LEVEL: ${{ steps.assess.outputs.risk-level }}
+          RISK_SCORE: ${{ steps.assess.outputs.risk-score }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          {
+            echo "## ServiceNow pre-change evidence"
+            echo
+            echo "Risk: **$RISK_LEVEL ($RISK_SCORE/100)**"
+            echo "Requested mode: **$([ "$DRY_RUN" = "true" ] && echo dry-run || echo protected live publish)**"
+            echo
+            echo "PreflightOps supplies technical evidence only. ServiceNow workflow and human CAB approval remain authoritative."
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload preview artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: servicenow-evidence-preview-${{ github.run_id }}
+          path: |
+            preflightops-report.md
+            preflightops-report.json
+            preflightops-report.html
+            preflightops-change-ticket.md
+            servicenow-preview.json
+          if-no-files-found: error
+
+  publish:
+    name: Publish evidence to test Change
+    needs: [validate-request, preview]
+    if: ${{ inputs.dry_run == false }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: servicenow-demo
+      url: ${{ inputs.instance_url }}
+    env:
+      SERVICENOW_TOKEN: ${{ secrets.SERVICENOW_TOKEN }}
+      SERVICENOW_USER: ${{ secrets.SERVICENOW_USER }}
+      SERVICENOW_PASSWORD: ${{ secrets.SERVICENOW_PASSWORD }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Enrich existing Change with verified evidence
+        id: publish
+        uses: ./
+        with:
+          services: examples/services-${{ inputs.scenario }}-risk.yaml
+          change: examples/change-${{ inputs.scenario }}-risk.yaml
+          policy: critical-platform
+          output: preflightops-report.md
+          json-output: preflightops-report.json
+          html-output: preflightops-report.html
+          ticket-output: preflightops-change-ticket.md
+          servicenow: ${{ inputs.instance_url }}
+          servicenow-mapping: examples/servicenow-field-map.yaml
+          servicenow-change: ${{ inputs.change_reference }}
+          servicenow-attach-evidence: "true"
+          assume-yes: "true"
+          fail-on: none
+
+      - name: Record CAB boundary
+        shell: bash
+        run: |
+          {
+            echo "## Evidence publication complete"
+            echo
+            echo "The existing test Change was enriched and verified."
+            echo "No approval, assignment, schedule, workflow state, or closure field is writable by this integration."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -166,28 +166,39 @@ notes: Filed via the internal CAB process.
 `--ticket-output` and is **optional** — nothing reaches the network unless you
 pass this flag.
 
-- **What it does:** posts the change summary as a `change_request` via the
-  ServiceNow Table API. A deterministic correlation id is stored on the record,
-  so a second run for the same change updates the existing record instead of
-  creating a duplicate.
-- **Required environment variables:** `SERVICENOW_USER` and
-  `SERVICENOW_PASSWORD`.
+- **What it does:** maps the change summary and operational plans into
+  `change_request` evidence fields through the versioned ServiceNow Table API.
+  A stable manifest change id is preferred for correlation; legacy title-based
+  records are still discovered and migrated.
+- **Authentication:** prefer `SERVICENOW_TOKEN`; a dedicated test user may use
+  `SERVICENOW_USER` and `SERVICENOW_PASSWORD` instead.
 - **Credentials are read from the environment only** — never passed inline on the
   command line and never hard-coded. The instance URL is the only argument.
+- **Enrich-only mode:** `--servicenow-change CHG...` refuses to create a
+  replacement if the referenced Change does not exist.
+- **Evidence:** `--servicenow-attach-evidence` uploads a bounded JSON package,
+  deduplicates it by semantic SHA-256, and verifies the attachment.
+- **Preview:** `--servicenow-dry-run` validates target/mapping and writes
+  `servicenow-preview.json` without reading credentials or making API calls.
+- **Verification:** creates and updates are read back and compared before the
+  integration reports success.
 - **Confirmation:** before any push, PreflightOps prints the target URL and the
   correlation id and asks for an explicit `y/N` confirmation. Pass `--yes`
   (alias `--assume-yes`) to skip the prompt in CI. When there is no interactive
   terminal and `--yes` was not given, the push is skipped (no API call).
 
 ```bash
-export SERVICENOW_USER="..."
-export SERVICENOW_PASSWORD="..."
+export SERVICENOW_TOKEN="..."
 
 preflightops \
   --services examples/services-critical-risk.yaml \
   --change examples/change-critical-risk.yaml \
   --ticket-output ticket.md \
-  --servicenow https://example.service-now.com
+  --servicenow https://example.service-now.com \
+  --servicenow-change CHG0030001 \
+  --servicenow-mapping examples/servicenow-field-map.yaml \
+  --servicenow-attach-evidence \
+  --servicenow-dry-run
 ```
 
 ## Optional Jira push
@@ -241,4 +252,6 @@ preflightops \
 3. Customize templates (`--ticket-template`) if your change format needs it.
 4. Enable live ServiceNow/Jira push (`--servicenow` / `--jira`) only in trusted
    workflows.
-5. Later, integrate with your team's governance processes (CAB, approvals).
+5. Put live ServiceNow publication behind an approved GitHub Environment and
+   enrich an existing test Change before considering a production pilot.
+6. Keep ServiceNow workflow and human CAB approvals authoritative.

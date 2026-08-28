@@ -7,10 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-28
+
 ### Added
 
 - Public `preflightops-demo` repository with a completed real pull request,
   generated bot comment, review artifacts, and captured visual evidence.
+- Versioned ServiceNow field mappings limited to pre-change evidence fields and
+  optional `u_` custom fields.
+- Network-free ServiceNow payload preview and a manual, environment-protected
+  evidence demo workflow.
+- Bounded, secret-scrubbed JSON evidence attachments with semantic SHA-256
+  deduplication and upload verification.
+- OAuth bearer-token support alongside the existing test-only Basic Auth path.
+
+### Changed
+
+- ServiceNow destinations now require HTTPS, trusted hostnames, standard ports,
+  and same-origin redirects.
+- ServiceNow idempotency now prefers immutable manifest change ids, migrates
+  legacy title-based correlations, rejects ambiguous lookups, avoids unchanged
+  writes, and fails closed when an explicitly referenced Change is missing.
+- ServiceNow create/update operations are read back and field-verified before a
+  successful result is returned.
+- The ServiceNow integration now uses the versioned v1 Table API endpoint and
+  explicitly preserves ServiceNow workflow and human CAB authority.
 
 ## [0.3.0] - 2026-08-28
 
@@ -108,7 +129,8 @@ Initial public release.
 - **pytest suite** covering the engine, validators, scanners, reports, CLI,
   web app, and the documented example scenarios.
 
-[Unreleased]: https://github.com/pedroluna-gh/preflightops/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/pedroluna-gh/preflightops/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/pedroluna-gh/preflightops/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/pedroluna-gh/preflightops/compare/v0.1.2...v0.3.0
 [0.1.2]: https://github.com/pedroluna-gh/preflightops/compare/v0.1.1...v0.1.2
 [0.1.0]: https://github.com/pedroluna-gh/preflightops/releases/tag/v0.1.0

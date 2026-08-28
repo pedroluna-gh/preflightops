@@ -24,14 +24,47 @@ carries the same risk rationale as the offline summary.
 """
 
 import base64
-import hashlib
 import json
 import os
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 
+from .integration_errors import IntegrationError
+from .servicenow import (
+    SERVICENOW_TOKEN_ENV,
+    _short_description,
+    correlation_id,
+)
+from .servicenow import (
+    build_evidence as build_servicenow_evidence,
+)
+from .servicenow import (
+    load_mapping as load_servicenow_mapping,
+)
+from .servicenow import (
+    prepare_payload as prepare_servicenow_payload,
+)
+from .servicenow import (
+    push as _push_servicenow,
+)
+from .servicenow import (
+    validate_instance_url as validate_servicenow_instance_url,
+)
 from .ticket import generate_ticket_markdown
+
+__all__ = [
+    "IntegrationError",
+    "SERVICENOW_TOKEN_ENV",
+    "build_servicenow_evidence",
+    "correlation_id",
+    "load_servicenow_mapping",
+    "prepare_servicenow_payload",
+    "push_to_jira",
+    "push_to_servicenow",
+    "validate_servicenow_instance_url",
+]
 
 # Environment variables that supply credentials. These are read at call time and
 # never logged or echoed back.
@@ -58,52 +91,44 @@ DEFAULT_JIRA_ISSUE_TYPE = "Task"
 HTTP_TIMEOUT = 30
 
 # ServiceNow short_description has a practical length cap; keep summaries short.
-_SHORT_DESCRIPTION_MAX = 160
+_RETRYABLE_STATUSES = {429, 500, 502, 503, 504}
+_RETRYABLE_METHODS = {"GET", "HEAD", "PATCH", "PUT", "DELETE"}
+_MAX_HTTP_ATTEMPTS = 3
 
 
-class IntegrationError(Exception):
-    """Raised when an opt-in integration is misconfigured or its API call fails.
+class _SameOriginRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Allow redirects only when scheme, hostname, and port stay unchanged."""
 
-    The CLI catches this, prints the message to stderr, and exits non-zero. It is
-    deliberately distinct from input/validation errors so the offline paths are
-    never affected by an integration problem.
-    """
-
-
-def _change_section(change_doc):
-    """Return the inner ``change`` mapping from a parsed change document."""
-    if isinstance(change_doc, dict):
-        nested = change_doc.get("change")
-        if isinstance(nested, dict):
-            return nested
-    return {}
-
-
-def correlation_id(result, change_doc=None):
-    """Return a deterministic identifier for this change.
-
-    The same service + environment + change title always produces the same id, so
-    a second run updates the existing record instead of creating a duplicate.
-    """
-    change = _change_section(change_doc)
-    title = (change.get("title") or "").strip()
-    service = (result.get("service") or "").strip()
-    environment = (result.get("environment") or "").strip()
-    basis = "|".join([service, environment, title]).lower()
-    digest = hashlib.sha256(basis.encode("utf-8")).hexdigest()[:16]
-    return f"preflightops-{digest}"
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        old = urllib.parse.urlsplit(req.full_url)
+        new = urllib.parse.urlsplit(newurl)
+        old_origin = (old.scheme.lower(), old.hostname, old.port or 443)
+        new_origin = (new.scheme.lower(), new.hostname, new.port or 443)
+        if old_origin != new_origin:
+            raise urllib.error.HTTPError(
+                req.full_url,
+                403,
+                "cross-origin redirect refused",
+                headers,
+                fp,
+            )
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-def _short_description(result, change_doc=None):
-    """Build a concise one-line summary for the record title."""
-    change = _change_section(change_doc)
-    title = (change.get("title") or "").strip() or "Production change"
-    service = (result.get("service") or "").strip() or "unknown service"
-    level = (result.get("risk_level") or "").strip() or "UNKNOWN"
-    summary = f"[{level}] {title} ({service})"
-    if len(summary) > _SHORT_DESCRIPTION_MAX:
-        summary = summary[: _SHORT_DESCRIPTION_MAX - 1].rstrip() + "\u2026"
-    return summary
+def _safe_http_detail(raw):
+    """Return a bounded API error without reflecting arbitrary response data."""
+
+    text = (raw or "").replace("\r", " ").replace("\n", " ").strip()
+    try:
+        parsed = json.loads(text)
+        error = parsed.get("error") if isinstance(parsed, dict) else None
+        if isinstance(error, dict):
+            text = " ".join(
+                str(error.get(key) or "").strip() for key in ("message", "detail")
+            ).strip()
+    except (json.JSONDecodeError, TypeError):
+        pass
+    return text[:500]
 
 
 def _http_request(url, method, headers, body=None, timeout=HTTP_TIMEOUT):
@@ -113,25 +138,45 @@ def _http_request(url, method, headers, body=None, timeout=HTTP_TIMEOUT):
     misconfiguration (bad URL, wrong credentials, unknown field) is actionable.
     """
     data = None
-    if body is not None:
+    if isinstance(body, (bytes, bytearray)):
+        data = bytes(body)
+    elif body is not None:
         data = json.dumps(body).encode("utf-8")
-    request = urllib.request.Request(url, data=data, headers=headers, method=method)
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            raw = response.read().decode("utf-8")
-            parsed = json.loads(raw) if raw.strip() else {}
-            return response.status, parsed
-    except urllib.error.HTTPError as exc:
-        detail = ""
+    opener = urllib.request.build_opener(_SameOriginRedirectHandler())
+    attempts = _MAX_HTTP_ATTEMPTS if method in _RETRYABLE_METHODS else 1
+    for attempt in range(1, attempts + 1):
+        request = urllib.request.Request(url, data=data, headers=headers, method=method)
         try:
-            detail = exc.read().decode("utf-8", "replace")
-        except Exception:  # pragma: no cover - defensive only
+            with opener.open(request, timeout=timeout) as response:
+                raw = response.read().decode("utf-8")
+                try:
+                    parsed = json.loads(raw) if raw.strip() else {}
+                except json.JSONDecodeError as exc:
+                    raise IntegrationError(f"{method} {url} returned invalid JSON.") from exc
+                if not isinstance(parsed, dict):
+                    raise IntegrationError(f"{method} {url} returned an invalid response object.")
+                return response.status, parsed
+        except urllib.error.HTTPError as exc:
+            if exc.code in _RETRYABLE_STATUSES and attempt < attempts:
+                retry_after = exc.headers.get("Retry-After", "") if exc.headers else ""
+                delay = int(retry_after) if str(retry_after).isdigit() else 2 ** (attempt - 1)
+                time.sleep(min(delay, 10))
+                continue
             detail = ""
-        raise IntegrationError(
-            f"{method} {url} failed: HTTP {exc.code} {exc.reason} {detail}".strip()
-        ) from exc
-    except urllib.error.URLError as exc:
-        raise IntegrationError(f"{method} {url} failed: {exc.reason}") from exc
+            try:
+                detail = _safe_http_detail(exc.read().decode("utf-8", "replace"))
+            except Exception:  # pragma: no cover - defensive only
+                detail = ""
+            suffix = f" {detail}" if detail else ""
+            raise IntegrationError(
+                f"{method} {url} failed: HTTP {exc.code} {exc.reason}{suffix}"
+            ) from exc
+        except urllib.error.URLError as exc:
+            if attempt < attempts:
+                time.sleep(2 ** (attempt - 1))
+                continue
+            raise IntegrationError(f"{method} {url} failed: {exc.reason}") from exc
+    raise IntegrationError(f"{method} {url} failed after retry attempts.")
 
 
 def _basic_auth_header(username, secret):
@@ -142,7 +187,18 @@ def _basic_auth_header(username, secret):
 # ---------------------------------------------------------------------------
 # ServiceNow
 # ---------------------------------------------------------------------------
-def push_to_servicenow(instance_url, result, change_doc=None, ticket_markdown=None, env=None):
+def push_to_servicenow(
+    instance_url,
+    result,
+    change_doc=None,
+    ticket_markdown=None,
+    env=None,
+    *,
+    mapping=None,
+    change_reference=None,
+    attach_evidence=False,
+    source=None,
+):
     """Create or update a ServiceNow ``change_request`` from the risk result.
 
     Parameters
@@ -164,65 +220,37 @@ def push_to_servicenow(instance_url, result, change_doc=None, ticket_markdown=No
         ``{"system", "action", "number", "sys_id", "url"}`` describing the record.
     """
     env = os.environ if env is None else env
-    instance_url = (instance_url or "").rstrip("/")
-    if not instance_url:
-        raise IntegrationError(
-            "ServiceNow instance URL is required (e.g. https://dev12345.service-now.com)."
-        )
-
-    user = env.get(SERVICENOW_USER_ENV)
-    password = env.get(SERVICENOW_PASSWORD_ENV)
-    if not user or not password:
-        raise IntegrationError(
-            "ServiceNow integration requires the "
-            f"{SERVICENOW_USER_ENV} and {SERVICENOW_PASSWORD_ENV} "
-            "environment variables."
-        )
-
+    instance_url = validate_servicenow_instance_url(instance_url, env)
+    token = env.get(SERVICENOW_TOKEN_ENV)
+    if token:
+        authorization = f"Bearer {token}"
+    else:
+        user = env.get(SERVICENOW_USER_ENV)
+        password = env.get(SERVICENOW_PASSWORD_ENV)
+        if not user or not password:
+            raise IntegrationError(
+                f"ServiceNow integration requires {SERVICENOW_TOKEN_ENV}, or both "
+                f"{SERVICENOW_USER_ENV} and {SERVICENOW_PASSWORD_ENV}."
+            )
+        authorization = _basic_auth_header(user, password)
     headers = {
-        "Authorization": _basic_auth_header(user, password),
+        "Authorization": authorization,
         "Accept": "application/json",
         "Content-Type": "application/json",
     }
-
-    if ticket_markdown is None:
-        ticket_markdown = generate_ticket_markdown(result, change_doc)
-
-    corr = correlation_id(result, change_doc)
-    payload = {
-        "short_description": _short_description(result, change_doc),
-        "description": ticket_markdown,
-        "correlation_id": corr,
-    }
-
-    table_url = f"{instance_url}/api/now/table/change_request"
-    query = urllib.parse.urlencode(
-        {"sysparm_query": f"correlation_id={corr}", "sysparm_limit": "1"}
+    return _push_servicenow(
+        instance_url,
+        result,
+        change_doc,
+        ticket_markdown,
+        env=env,
+        headers=headers,
+        request_json=_http_request,
+        mapping=mapping,
+        change_reference=change_reference,
+        attach_evidence=attach_evidence,
+        source=source,
     )
-    _, found = _http_request(f"{table_url}?{query}", "GET", headers)
-    records = found.get("result") or []
-
-    if records:
-        sys_id = records[0].get("sys_id")
-        _, data = _http_request(f"{table_url}/{sys_id}", "PATCH", headers, payload)
-        action = "updated"
-    else:
-        _, data = _http_request(table_url, "POST", headers, payload)
-        action = "created"
-
-    record = data.get("result") or {}
-    sys_id = record.get("sys_id")
-    return {
-        "system": "servicenow",
-        "action": action,
-        "number": record.get("number"),
-        "sys_id": sys_id,
-        "url": (
-            f"{instance_url}/nav_to.do?uri=change_request.do?sys_id={sys_id}"
-            if sys_id
-            else instance_url
-        ),
-    }
 
 
 # ---------------------------------------------------------------------------

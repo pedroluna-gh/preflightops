@@ -1,0 +1,32 @@
+version: "1"
+table: change_request
+
+# PreflightOps deliberately allows evidence fields only. Workflow state,
+# approvals, assignments, scheduling, and closure fields are rejected even if
+# they are added to this file.
+fields:
+  short_description:
+    source: summary
+    required: true
+    max_length: 160
+  description:
+    source: ticket_markdown
+    required: true
+    max_length: 12000
+  implementation_plan:
+    source: change.description
+    max_length: 4000
+  backout_plan:
+    source: change.rollback_plan
+    max_length: 4000
+  test_plan:
+    source: change.validation_plan
+    max_length: 4000
+  justification:
+    source: result.business_impact
+    max_length: 4000
+  correlation_display:
+    value: PreflightOps pre-change evidence
+  correlation_id:
+    source: correlation_id
+    required: true

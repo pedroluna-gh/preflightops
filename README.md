@@ -7,7 +7,7 @@ PreflightOps is a pre-deployment risk assessment tool for SRE, DevOps, and Platf
 ## Try it in a pull request
 
 ```yaml
-- uses: pedroluna-gh/preflightops@v0.3.0
+- uses: pedroluna-gh/preflightops@v0.4.0
   with:
     services: services.yaml
     change: change.yaml
@@ -192,7 +192,7 @@ self-contained CAB artifact or `ticket-output` for a copy/paste-ready change
 summary:
 
 ```yaml
-- uses: pedroluna-gh/preflightops@v0.3.0
+- uses: pedroluna-gh/preflightops@v0.4.0
   with:
     services: services.yaml
     change: change.yaml
@@ -255,8 +255,10 @@ never accepted on the command line or hard-coded.
 
 ```bash
 # Credentials via environment/secrets only — never on the command line.
-export SERVICENOW_USER=...        # ServiceNow
-export SERVICENOW_PASSWORD=...
+export SERVICENOW_TOKEN=...       # preferred OAuth bearer token
+# Or, for an isolated test user only:
+# export SERVICENOW_USER=...
+# export SERVICENOW_PASSWORD=...
 export JIRA_EMAIL=...             # Jira
 export JIRA_API_TOKEN=...
 export JIRA_PROJECT_KEY=OPS
@@ -289,37 +291,62 @@ working exactly as before. An integration misconfiguration (missing credentials,
 bad URL, API error) is reported to stderr and exits non-zero **without** touching
 the offline report paths.
 
+For controlled enterprise adoption, prefer enriching an existing Change and
+attaching evidence:
+
+```bash
+preflightops \
+  --services examples/services-high-risk.yaml \
+  --change examples/change-high-risk.yaml \
+  --output report.md \
+  --servicenow https://dev12345.service-now.com \
+  --servicenow-change CHG0030001 \
+  --servicenow-mapping examples/servicenow-field-map.yaml \
+  --servicenow-attach-evidence \
+  --servicenow-dry-run
+```
+
+Dry-run reads no credentials and makes no API calls. Remove
+`--servicenow-dry-run`, review the preview, and explicitly confirm to publish.
+An existing Change reference is fail-closed: PreflightOps never creates a
+replacement when that reference is missing. Every live write is read back and
+verified, while evidence attachments are deduplicated by semantic SHA-256.
+See [ServiceNow pre-change evidence integration](docs/SERVICENOW_INTEGRATION.md).
+
 ### Opt-in: push from the GitHub Action
 
-The composite action can run the same opt-in push, so the ServiceNow
-`change_request` and/or Jira issue is created or updated as part of the
-pull-request check.
+The composite action can run the same opt-in push. ServiceNow publication should
+be separated from pull-request assessment and placed behind a protected GitHub
+Environment; the included `ServiceNow pre-change evidence demo` workflow is the
+reference implementation.
 
 It stays **off by default**: the Action behaves exactly as it does today until
 you pass a non-secret `servicenow` and/or `jira` URL as an action input. Because
 a CI runner has no interactive terminal, set `assume-yes: true` to waive the
-confirmation prompt. Provide the credentials as **GitHub repository secrets**
-(Settings → Secrets and variables → Actions) through the job's `env` block — never
-on the command line:
+confirmation prompt. Provide credentials as **environment-scoped secrets**, never
+on the command line. The example below is the lower-level Action contract;
+prefer the protected manual workflow for real publication:
 
 ```yaml
 jobs:
   risk-review:
     runs-on: ubuntu-latest
     env:
-      SERVICENOW_USER: ${{ secrets.SERVICENOW_USER }}
-      SERVICENOW_PASSWORD: ${{ secrets.SERVICENOW_PASSWORD }}
+      SERVICENOW_TOKEN: ${{ secrets.SERVICENOW_TOKEN }}
       JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
       JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
       JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
     steps:
       - uses: actions/checkout@v4
-      - uses: pedroluna-gh/preflightops@v0.3.0
+      - uses: pedroluna-gh/preflightops@v0.4.0
         with:
           services: services.yaml
           change: change.yaml
           ticket-output: preflightops-ticket.md
           servicenow: https://dev12345.service-now.com  # enables --servicenow
+          servicenow-change: CHG0030001
+          servicenow-mapping: examples/servicenow-field-map.yaml
+          servicenow-attach-evidence: true
           jira: https://example.atlassian.net           # enables --jira
           assume-yes: true
 ```
@@ -328,8 +355,9 @@ The secrets above map to the environment variables the CLI reads:
 
 | Secret | Used by | Required |
 | --- | --- | --- |
-| `SERVICENOW_USER` | ServiceNow | when the `servicenow` input is set |
-| `SERVICENOW_PASSWORD` | ServiceNow | when the `servicenow` input is set |
+| `SERVICENOW_TOKEN` | ServiceNow | preferred bearer authentication |
+| `SERVICENOW_USER` | ServiceNow | test-only alternative when no bearer token is set |
+| `SERVICENOW_PASSWORD` | ServiceNow | test-only alternative when no bearer token is set |
 | `JIRA_EMAIL` | Jira | when the `jira` input is set |
 | `JIRA_API_TOKEN` | Jira | when the `jira` input is set |
 | `JIRA_PROJECT_KEY` | Jira | when the `jira` input is set |
@@ -351,7 +379,7 @@ instance/base URL and the create-or-update action, tick the confirmation
 checkbox, and only then does the **Send** button become enabled.
 
 As with the CLI, credentials are read from the environment only (the same
-`SERVICENOW_USER` / `SERVICENOW_PASSWORD` and `JIRA_EMAIL` / `JIRA_API_TOKEN` /
+`SERVICENOW_TOKEN` or `SERVICENOW_USER` / `SERVICENOW_PASSWORD`, and `JIRA_EMAIL` / `JIRA_API_TOKEN` /
 `JIRA_PROJECT_KEY` variables). The send controls stay hidden — with guidance on
 which variables to set — until the integration is configured, so the app makes
 no outbound network calls unless you opt in.

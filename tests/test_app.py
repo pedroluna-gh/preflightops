@@ -382,11 +382,23 @@ class _FakeHttp:
     def __init__(self, responses):
         self.responses = responses
         self.calls = []
+        self.servicenow_record = None
 
     def __call__(self, url, method, headers, body=None, timeout=30):
         self.calls.append({"url": url, "method": method, "body": body})
+        if method == "GET" and "/change_request/" in url and "sysparm_query" not in url:
+            return 200, {"result": dict(self.servicenow_record)}
+        if method == "GET" and "sysparm_query" in url and self.servicenow_record is not None:
+            return 200, {"result": [dict(self.servicenow_record)]}
         for (m, needle), response in self.responses.items():
             if m == method and needle in url:
+                if method in ("POST", "PATCH") and "change_request" in url:
+                    result = response[1].get("result", {})
+                    self.servicenow_record = {
+                        **(self.servicenow_record or {}),
+                        **(body or {}),
+                        **result,
+                    }
                 return response
         raise AssertionError(f"unexpected request: {method} {url}")
 
@@ -403,6 +415,16 @@ class TestIntegrationStatus:
 
     def test_servicenow_status_configured(self):
         url, missing = app._servicenow_status(SERVICENOW_ENV)
+        assert url == "https://dev123.service-now.com"
+        assert missing == []
+
+    def test_servicenow_status_accepts_bearer_token(self):
+        url, missing = app._servicenow_status(
+            {
+                "SERVICENOW_INSTANCE_URL": "https://dev123.service-now.com",
+                "SERVICENOW_TOKEN": "token",
+            }
+        )
         assert url == "https://dev123.service-now.com"
         assert missing == []
 
@@ -429,7 +451,7 @@ class TestSendHelpers:
                 ("GET", "sysparm_query"): (200, {"result": []}),
                 ("POST", "change_request"): (
                     201,
-                    {"result": {"number": "CHG0030001", "sys_id": "sys123"}},
+                    {"result": {"number": "CHG0030001", "sys_id": "a" * 32}},
                 ),
             }
         )
@@ -558,7 +580,7 @@ class TestPushConfirmation:
                 ("GET", "sysparm_query"): (200, {"result": []}),
                 ("POST", "change_request"): (
                     201,
-                    {"result": {"number": "CHG0030001", "sys_id": "sys123"}},
+                    {"result": {"number": "CHG0030001", "sys_id": "a" * 32}},
                 ),
             }
         )

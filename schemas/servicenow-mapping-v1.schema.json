@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pedroluna-gh/preflightops/schemas/servicenow-mapping-v1.schema.json",
+  "title": "PreflightOps ServiceNow field mapping v1",
+  "type": "object",
+  "required": ["version", "fields"],
+  "properties": {
+    "version": {"const": "1"},
+    "table": {"const": "change_request", "default": "change_request"},
+    "fields": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(short_description|description|implementation_plan|backout_plan|test_plan|justification|correlation_id|correlation_display|risk|impact|u_[a-z0-9_]+)$"
+      },
+      "additionalProperties": {
+        "oneOf": [
+          {"type": "string", "minLength": 1},
+          {
+            "type": "object",
+            "properties": {
+              "source": {"type": "string", "minLength": 1},
+              "value": {},
+              "required": {"type": "boolean"},
+              "omit_empty": {"type": "boolean"},
+              "max_length": {"type": "integer", "minimum": 1, "maximum": 100000}
+            },
+            "oneOf": [
+              {"required": ["source"], "not": {"required": ["value"]}},
+              {"required": ["value"], "not": {"required": ["source"]}}
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "additionalProperties": false
+}

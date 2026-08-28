@@ -183,6 +183,11 @@ assessment, and gates the job on `fail-on`.
 | `ticket-output` | no | `""` | Optional path to write a ServiceNow/Jira-ready change ticket summary. |
 | `ticket-template` | no | `""` | Optional path to a YAML or JSON ticket template. |
 | `servicenow` | no | `""` | Optional ServiceNow instance URL for opt-in live ticket push. |
+| `servicenow-mapping` | no | `""` | Optional versioned evidence-field mapping YAML/JSON. |
+| `servicenow-change` | no | `""` | Existing Change number/sys_id; missing records fail closed. |
+| `servicenow-attach-evidence` | no | `false` | Attach and deduplicate the JSON evidence package. |
+| `servicenow-dry-run` | no | `false` | Render a validated preview with no credentials or network. |
+| `servicenow-preview-output` | no | `servicenow-preview.json` | Path for the dry-run payload. |
 | `jira` | no | `""` | Optional Jira base URL for opt-in live ticket push. |
 | `assume-yes` | no | `"false"` | Skip confirmation prompts for an explicitly requested live push. |
 | `fail-on` | no | `critical` | Minimum risk level that fails the action: `none`, `low`, `medium`, `high`, `critical`. |
@@ -192,7 +197,8 @@ assessment, and gates the job on `fail-on`.
 
 `risk-level`, `risk-score`, `report-path`, `json-report-path`, `ticket-path`,
 `html-report-path`, `github-comment-path`, `changed-files-path`, and
-`scanner-scope` (a comma-separated list such as `terraform,kubernetes`).
+`scanner-scope` (a comma-separated list such as `terraform,kubernetes`), and
+`servicenow-preview-path`.
 
 ### Automatic pull-request scope detection
 
@@ -238,7 +244,7 @@ This stays fully offline — it generates the report and a copy/paste-ready chan
 ticket summary, with no outbound calls:
 
 ```yaml
-- uses: pedroluna-gh/preflightops@v0.3.0
+- uses: pedroluna-gh/preflightops@v0.4.0
   with:
     services: services.yaml
     change: change.yaml
@@ -253,30 +259,36 @@ ticket summary, with no outbound calls:
 
 ### Advanced example (opt-in live ServiceNow / Jira push)
 
-Live push is **opt-in** and should only be enabled in trusted workflows.
-Pass the non-secret instance/base URL as an input, and provide credentials as
-GitHub Actions secrets through the job's `env` block — never inline. Set
-`assume-yes: true` because a CI runner has no interactive terminal to confirm the
-push:
+Live push is **opt-in** and should only be enabled in trusted workflows. The
+repository includes `.github/workflows/servicenow-demo.yml`, which separates a
+network-free preview from an environment-protected live publication. It requires
+an existing Change reference and explicit acknowledgement that ServiceNow/CAB
+retain approval authority.
+
+At the lower-level Action interface, pass the non-secret instance URL as an
+input and provide credentials as environment-scoped secrets — never inline. Set
+`assume-yes: true` because a CI runner has no interactive terminal:
 
 ```yaml
 jobs:
   risk-review:
     runs-on: ubuntu-latest
     env:
-      SERVICENOW_USER: ${{ secrets.SERVICENOW_USER }}
-      SERVICENOW_PASSWORD: ${{ secrets.SERVICENOW_PASSWORD }}
+      SERVICENOW_TOKEN: ${{ secrets.SERVICENOW_TOKEN }}
       JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
       JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
       JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
     steps:
       - uses: actions/checkout@v4
-      - uses: pedroluna-gh/preflightops@v0.3.0
+      - uses: pedroluna-gh/preflightops@v0.4.0
         with:
           services: services.yaml
           change: change.yaml
           ticket-output: preflightops-ticket.md
           servicenow: https://example.service-now.com
+          servicenow-change: CHG0030001
+          servicenow-mapping: examples/servicenow-field-map.yaml
+          servicenow-attach-evidence: true
           jira: https://example.atlassian.net
           assume-yes: true
 ```

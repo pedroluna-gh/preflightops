@@ -31,7 +31,18 @@ def test_action_yml_exists():
 
 @pytest.mark.parametrize(
     "name",
-    ["ticket-output", "ticket-template", "servicenow", "jira", "assume-yes"],
+    [
+        "ticket-output",
+        "ticket-template",
+        "servicenow",
+        "servicenow-mapping",
+        "servicenow-change",
+        "servicenow-attach-evidence",
+        "servicenow-dry-run",
+        "servicenow-preview-output",
+        "jira",
+        "assume-yes",
+    ],
 )
 def test_new_optional_inputs_present(action, name):
     assert name in action["inputs"], f"action.yml is missing the '{name}' input"
@@ -55,6 +66,10 @@ def test_existing_inputs_preserved(action):
 def test_existing_outputs_preserved(action):
     for name in ("risk-level", "risk-score", "report-path", "json-report-path"):
         assert name in action["outputs"], f"existing output '{name}' was removed"
+
+
+def test_servicenow_preview_output_added(action):
+    assert "servicenow-preview-path" in action["outputs"]
 
 
 def test_ticket_path_output_added(action):
@@ -87,7 +102,17 @@ def test_reporting_and_detection_outputs_are_present(action, name):
 def test_run_script_passes_new_flags(action_text):
     # The run script must translate the inputs into the real CLI flags, and map
     # the assume-yes input to --yes (the CLI flag is --yes / --assume-yes).
-    for flag in ("--ticket-output", "--ticket-template", "--servicenow", "--jira", "--yes"):
+    for flag in (
+        "--ticket-output",
+        "--ticket-template",
+        "--servicenow",
+        "--servicenow-mapping",
+        "--servicenow-change",
+        "--servicenow-attach-evidence",
+        "--servicenow-dry-run",
+        "--jira",
+        "--yes",
+    ):
         assert flag in action_text, f"run script does not pass {flag}"
 
 

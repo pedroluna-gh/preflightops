@@ -69,9 +69,29 @@ inputs:
     required: false
     default: ""
   servicenow:
-    description: "Optional ServiceNow instance URL for opt-in live ticket push. Credentials come from the SERVICENOW_USER / SERVICENOW_PASSWORD environment variables (set them from GitHub Actions secrets)."
+    description: "Optional ServiceNow instance URL for opt-in live evidence publication. Authentication uses SERVICENOW_TOKEN (preferred) or SERVICENOW_USER / SERVICENOW_PASSWORD from GitHub Actions secrets."
     required: false
     default: ""
+  servicenow-mapping:
+    description: "Optional versioned ServiceNow field mapping YAML/JSON file."
+    required: false
+    default: ""
+  servicenow-change:
+    description: "Existing ServiceNow Change number or sys_id to enrich. Missing records fail closed."
+    required: false
+    default: ""
+  servicenow-attach-evidence:
+    description: "Attach the versioned JSON evidence package and deduplicate it by SHA-256."
+    required: false
+    default: "false"
+  servicenow-dry-run:
+    description: "Validate and render the ServiceNow payload without credentials or network calls."
+    required: false
+    default: "false"
+  servicenow-preview-output:
+    description: "Path for the ServiceNow dry-run payload."
+    required: false
+    default: "servicenow-preview.json"
   jira:
     description: "Optional Jira base URL for opt-in live ticket push. Credentials come from the JIRA_EMAIL / JIRA_API_TOKEN / JIRA_PROJECT_KEY environment variables (set them from GitHub Actions secrets)."
     required: false
@@ -117,6 +137,9 @@ outputs:
   scanner-scope:
     description: "Comma-separated scanners inferred from pull-request filenames."
     value: ${{ steps.assess.outputs.scanner-scope }}
+  servicenow-preview-path:
+    description: "Path to the ServiceNow dry-run payload when requested."
+    value: ${{ steps.assess.outputs.servicenow-preview-path }}
 
 runs:
   using: "composite"
@@ -179,6 +202,11 @@ runs:
         PFO_TICKET: ${{ inputs.ticket-output }}
         PFO_TICKET_TEMPLATE: ${{ inputs.ticket-template }}
         PFO_SERVICENOW: ${{ inputs.servicenow }}
+        PFO_SERVICENOW_MAPPING: ${{ inputs.servicenow-mapping }}
+        PFO_SERVICENOW_CHANGE: ${{ inputs.servicenow-change }}
+        PFO_SERVICENOW_ATTACH_EVIDENCE: ${{ inputs.servicenow-attach-evidence }}
+        PFO_SERVICENOW_DRY_RUN: ${{ inputs.servicenow-dry-run }}
+        PFO_SERVICENOW_PREVIEW: ${{ inputs.servicenow-preview-output }}
         PFO_JIRA: ${{ inputs.jira }}
         PFO_ASSUME_YES: ${{ inputs.assume-yes }}
         PFO_FAIL_ON: ${{ inputs.fail-on }}
@@ -234,6 +262,20 @@ runs:
         if [ -n "$PFO_SERVICENOW" ]; then
           args+=(--servicenow "$PFO_SERVICENOW")
         fi
+        if [ -n "$PFO_SERVICENOW_MAPPING" ]; then
+          args+=(--servicenow-mapping "$PFO_SERVICENOW_MAPPING")
+        fi
+        if [ -n "$PFO_SERVICENOW_CHANGE" ]; then
+          args+=(--servicenow-change "$PFO_SERVICENOW_CHANGE")
+        fi
+        attach_evidence=$(echo "$PFO_SERVICENOW_ATTACH_EVIDENCE" | tr '[:upper:]' '[:lower:]')
+        if [ "$attach_evidence" = "true" ]; then
+          args+=(--servicenow-attach-evidence)
+        fi
+        servicenow_dry_run=$(echo "$PFO_SERVICENOW_DRY_RUN" | tr '[:upper:]' '[:lower:]')
+        if [ "$servicenow_dry_run" = "true" ]; then
+          args+=(--servicenow-dry-run --servicenow-preview-output "$PFO_SERVICENOW_PREVIEW")
+        fi
         if [ -n "$PFO_JIRA" ]; then
           args+=(--jira "$PFO_JIRA")
         fi
@@ -267,6 +309,11 @@ runs:
           echo "html-report-path=$PFO_HTML"
           echo "github-comment-path=$PFO_GITHUB_COMMENT"
           echo "scanner-scope=$scope"
+          if [ "$servicenow_dry_run" = "true" ]; then
+            echo "servicenow-preview-path=$PFO_SERVICENOW_PREVIEW"
+          else
+            echo "servicenow-preview-path="
+          fi
         } >> "$GITHUB_OUTPUT"
 
         echo "PreflightOps risk: $level ($score/100)"

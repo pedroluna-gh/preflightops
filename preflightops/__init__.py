@@ -4,9 +4,13 @@ from ._version import __version__ as __version__
 from .changed_files import classify_changed_files, load_changed_files
 from .integrations import (
     IntegrationError,
+    build_servicenow_evidence,
     correlation_id,
+    load_servicenow_mapping,
+    prepare_servicenow_payload,
     push_to_jira,
     push_to_servicenow,
+    validate_servicenow_instance_url,
 )
 from .monitoring import validate_monitoring_evidence
 from .policy import load_policy_pack
@@ -53,6 +57,10 @@ __all__ = [
     "load_changed_files",
     "generate_ticket_markdown",
     "push_to_servicenow",
+    "prepare_servicenow_payload",
+    "build_servicenow_evidence",
+    "load_servicenow_mapping",
+    "validate_servicenow_instance_url",
     "push_to_jira",
     "correlation_id",
     "IntegrationError",
