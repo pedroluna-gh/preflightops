@@ -7,8 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-28
+
 ### Added
 
+- Compact GitHub pull-request comments with a prominent risk badge, summary
+  table, grouped findings, top remediation actions, and optional full-report link.
+- Metadata-only GitHub PR changed-file discovery with pagination, scanner-scope
+  classification, and safe automatic loading of structured Terraform plans and
+  Kubernetes manifests.
+- Dependency-free static HTML reports for CAB reviewers and non-technical
+  stakeholders.
 - Structured `terraform show -json` parsing with per-resource lifecycle,
   provider-type, public-exposure, and replacement-versus-destroy evidence.
 - Multi-document Kubernetes object parsing with per-container probe and
@@ -29,8 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Package development version advanced to 0.2.0 for the additive public CLI,
-  Python, Action, schema, and report contracts.
+- Package version advanced to 0.3.0 for the additive structured evidence, reporting,
+  changed-file, Python, CLI, Action, and JSON report contracts.
 - Package metadata, Python API, CLI, and reports now use one version source.
 - Documentation now distinguishes the source repository's manual smoke workflow
   from consumer pull-request integrations and accurately describes opt-in API
@@ -94,6 +103,7 @@ Initial public release.
 - **pytest suite** covering the engine, validators, scanners, reports, CLI,
   web app, and the documented example scenarios.
 
-[Unreleased]: https://github.com/pedroluna-gh/preflightops/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/pedroluna-gh/preflightops/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/pedroluna-gh/preflightops/compare/v0.1.2...v0.3.0
 [0.1.2]: https://github.com/pedroluna-gh/preflightops/compare/v0.1.1...v0.1.2
 [0.1.0]: https://github.com/pedroluna-gh/preflightops/releases/tag/v0.1.0

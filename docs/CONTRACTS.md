@@ -1,6 +1,6 @@
 # Public Contracts
 
-This document inventories the public interfaces shipped by PreflightOps 0.2.x.
+This document inventories the public interfaces shipped by PreflightOps 0.3.x.
 The contract inventory itself is versioned as **Contract Set v1**. The JSON
 schemas under [`schemas/`](../schemas/) are the machine-readable definitions for
 the current file inputs and JSON report.
@@ -25,8 +25,13 @@ Console command: `preflightops` (equivalent to `python -m preflightops.cli`).
 | `--k8s` | no | none | Kubernetes manifest text path |
 | `--policy` | no | `default` | Built-in policy name or versioned policy YAML path |
 | `--monitors` | no | none | Offline monitor inventory YAML path |
+| `--changed-files` | no | none | Newline/JSON changed-file manifest for scanner inference |
+| `--repository-root` | no | `.` | Checkout root for safely resolving changed paths |
 | `--output` | no | `report.md` | Markdown report path |
 | `--json-output` | no | none | JSON report path |
+| `--html-output` | no | none | Dependency-free static HTML report path |
+| `--github-comment-output` | no | none | Compact GitHub PR comment path |
+| `--full-report-url` | no | none | HTTP(S) workflow/artifact link for human reports |
 | `--ticket-output` | no | none | Offline Markdown ticket path |
 | `--ticket-template` | no | none | YAML/JSON ticket template path |
 | `--servicenow` | no | none | Opt-in ServiceNow base URL |
@@ -49,6 +54,8 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 `is_validation_plan_valid`, `scan_terraform`, `scan_kubernetes`,
 `scan_terraform_json`, `load_policy_pack`, `validate_monitoring_evidence`,
 `generate_markdown_report`, `generate_json_report`,
+`generate_github_comment`, `generate_html_report`, `classify_changed_files`,
+`load_changed_files`,
 `generate_ticket_markdown`, `push_to_servicenow`, `push_to_jira`,
 `correlation_id`, and `IntegrationError`.
 
@@ -78,8 +85,14 @@ semantics.
 Structured Terraform JSON, policy packs, and monitor inventories are optional
 Action inputs. They remain offline and add no credential requirements.
 
-Outputs: `risk-level`, `risk-score`, `report-path`, `json-report-path`, and
-`ticket-path`.
+Changed-file detection is enabled by default only in pull-request contexts. It
+uses the run-scoped GitHub token for metadata-only `filename` / `status` reads,
+requires `pull-requests: read`, is bounded to 3,000 files, and degrades to the
+explicit scanner inputs if the API is unavailable.
+
+Outputs: `risk-level`, `risk-score`, `report-path`, `json-report-path`,
+`ticket-path`, `html-report-path`, `github-comment-path`,
+`changed-files-path`, and `scanner-scope`.
 
 The workflow in `.github/workflows/preflightops.yml` belongs to this source
 repository and is a manually dispatched smoke/demo workflow. A consuming
@@ -90,7 +103,8 @@ adds its own service and change files.
 
 The Markdown report is a human-readable interface. The JSON report is the
 machine-readable interface described by `risk-report-v1.schema.json`. In 0.2.0
-both include the PreflightOps version. New optional metadata may be added in
+both include the PreflightOps version. When changed-file inference is enabled,
+JSON also contains optional `change_scope` evidence. New optional metadata may be added in
 future compatible releases; consumers must ignore unknown fields.
 
 ## Offline and integration behavior

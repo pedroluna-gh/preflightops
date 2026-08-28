@@ -76,6 +76,23 @@
         "providers": {"type": "array", "items": {"type": "string"}}
       },
       "additionalProperties": true
+    },
+    "change_scope": {
+      "type": "object",
+      "required": ["changed_file_count", "scanners", "categories", "auto_inputs", "warnings", "selected_inputs"],
+      "properties": {
+        "changed_file_count": {"type": "integer", "minimum": 0},
+        "scanners": {
+          "type": "array",
+          "items": {"enum": ["terraform", "kubernetes", "service-catalog", "change-request"]},
+          "uniqueItems": true
+        },
+        "categories": {"type": "object"},
+        "auto_inputs": {"type": "object"},
+        "selected_inputs": {"type": "object"},
+        "warnings": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": true
     }
   },
   "additionalProperties": true

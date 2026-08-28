@@ -32,6 +32,14 @@ inputs:
     description: "Optional offline observability monitor inventory YAML file."
     required: false
     default: ""
+  changed-files:
+    description: "Optional newline/JSON changed-file manifest. In pull requests this is detected automatically when blank."
+    required: false
+    default: ""
+  auto-detect-changes:
+    description: "Fetch pull-request filenames with the GitHub token and infer scanner scope."
+    required: false
+    default: "true"
   output:
     description: "Path to write the Markdown report."
     required: false
@@ -40,6 +48,18 @@ inputs:
     description: "Path to write the JSON report."
     required: false
     default: "preflightops-report.json"
+  html-output:
+    description: "Optional path to write a static HTML report."
+    required: false
+    default: ""
+  github-comment-output:
+    description: "Path to write a compact Markdown pull-request comment."
+    required: false
+    default: "preflightops-comment.md"
+  full-report-url:
+    description: "Optional workflow or artifact URL linked from human-readable reports."
+    required: false
+    default: ""
   ticket-output:
     description: "Optional path to write a ServiceNow/Jira-ready change ticket summary."
     required: false
@@ -85,6 +105,18 @@ outputs:
   ticket-path:
     description: "Path to the generated change ticket summary (empty when ticket-output was not set)."
     value: ${{ steps.assess.outputs.ticket-path }}
+  html-report-path:
+    description: "Path to the static HTML report (empty when html-output was not set)."
+    value: ${{ steps.assess.outputs.html-report-path }}
+  github-comment-path:
+    description: "Path to the compact pull-request comment Markdown."
+    value: ${{ steps.assess.outputs.github-comment-path }}
+  changed-files-path:
+    description: "Path to the detected or caller-provided changed-file manifest."
+    value: ${{ steps.changes.outputs.path }}
+  scanner-scope:
+    description: "Comma-separated scanners inferred from pull-request filenames."
+    value: ${{ steps.assess.outputs.scanner-scope }}
 
 runs:
   using: "composite"
@@ -98,6 +130,35 @@ runs:
       shell: bash
       run: pip install "${{ github.action_path }}"
 
+    - name: Detect pull request files
+      id: changes
+      shell: bash
+      env:
+        PFO_CHANGED_FILES: ${{ inputs.changed-files }}
+        PFO_AUTO_DETECT: ${{ inputs.auto-detect-changes }}
+        GITHUB_TOKEN: ${{ github.token }}
+      run: |
+        set -uo pipefail
+        path=""
+        if [ -n "$PFO_CHANGED_FILES" ]; then
+          if [ ! -f "$PFO_CHANGED_FILES" ]; then
+            echo "::error::changed-files does not exist: $PFO_CHANGED_FILES"
+            exit 2
+          fi
+          path="$PFO_CHANGED_FILES"
+        else
+          auto_detect=$(echo "$PFO_AUTO_DETECT" | tr '[:upper:]' '[:lower:]')
+          if [ "$auto_detect" = "true" ] && { [ "$GITHUB_EVENT_NAME" = "pull_request" ] || [ "$GITHUB_EVENT_NAME" = "pull_request_target" ]; }; then
+            generated="${RUNNER_TEMP}/preflightops-changed-files.json"
+            if python -m preflightops.changed_files --output "$generated"; then
+              path="$generated"
+            else
+              echo "::warning::Changed-file detection was unavailable; continuing with explicit scanner inputs. Grant pull-requests: read to enable it."
+            fi
+          fi
+        fi
+        echo "path=$path" >> "$GITHUB_OUTPUT"
+
     - name: Run PreflightOps risk assessment
       id: assess
       shell: bash
@@ -109,8 +170,12 @@ runs:
         PFO_K8S: ${{ inputs.k8s }}
         PFO_POLICY: ${{ inputs.policy }}
         PFO_MONITORS: ${{ inputs.monitors }}
+        PFO_CHANGED_FILES: ${{ steps.changes.outputs.path }}
         PFO_OUTPUT: ${{ inputs.output }}
         PFO_JSON: ${{ inputs.json-output }}
+        PFO_HTML: ${{ inputs.html-output }}
+        PFO_GITHUB_COMMENT: ${{ inputs.github-comment-output }}
+        PFO_FULL_REPORT_URL: ${{ inputs.full-report-url }}
         PFO_TICKET: ${{ inputs.ticket-output }}
         PFO_TICKET_TEMPLATE: ${{ inputs.ticket-template }}
         PFO_SERVICENOW: ${{ inputs.servicenow }}
@@ -136,7 +201,23 @@ runs:
         if [ -n "$PFO_MONITORS" ] && [ -f "$PFO_MONITORS" ]; then
           args+=(--monitors "$PFO_MONITORS")
         fi
+        if [ -n "$PFO_CHANGED_FILES" ] && [ -f "$PFO_CHANGED_FILES" ]; then
+          args+=(--changed-files "$PFO_CHANGED_FILES" --repository-root "$GITHUB_WORKSPACE")
+        fi
         args+=(--output "$PFO_OUTPUT" --json-output "$PFO_JSON")
+        if [ -n "$PFO_HTML" ]; then
+          args+=(--html-output "$PFO_HTML")
+        fi
+        if [ -n "$PFO_GITHUB_COMMENT" ]; then
+          args+=(--github-comment-output "$PFO_GITHUB_COMMENT")
+        fi
+        full_report_url="$PFO_FULL_REPORT_URL"
+        if [ -z "$full_report_url" ] && [ -n "${GITHUB_SERVER_URL:-}" ] && [ -n "${GITHUB_REPOSITORY:-}" ] && [ -n "${GITHUB_RUN_ID:-}" ]; then
+          full_report_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+        fi
+        if [ -n "$full_report_url" ]; then
+          args+=(--full-report-url "$full_report_url")
+        fi
 
         # Optional, copy/paste-ready change ticket summary (offline; no network).
         if [ -n "$PFO_TICKET" ]; then
@@ -173,8 +254,9 @@ runs:
           exit 2
         fi
 
-        level=$(python -c "import json; print(json.load(open('$PFO_JSON'))['risk_level'])")
-        score=$(python -c "import json; print(json.load(open('$PFO_JSON'))['risk_score'])")
+        level=$(python -c "import json, os; print(json.load(open(os.environ['PFO_JSON']))['risk_level'])")
+        score=$(python -c "import json, os; print(json.load(open(os.environ['PFO_JSON']))['risk_score'])")
+        scope=$(python -c "import json, os; print(','.join(json.load(open(os.environ['PFO_JSON'])).get('change_scope', {}).get('scanners', [])))")
 
         {
           echo "risk-level=$level"
@@ -182,6 +264,9 @@ runs:
           echo "report-path=$PFO_OUTPUT"
           echo "json-report-path=$PFO_JSON"
           echo "ticket-path=$PFO_TICKET"
+          echo "html-report-path=$PFO_HTML"
+          echo "github-comment-path=$PFO_GITHUB_COMMENT"
+          echo "scanner-scope=$scope"
         } >> "$GITHUB_OUTPUT"
 
         echo "PreflightOps risk: $level ($score/100)"

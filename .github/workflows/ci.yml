@@ -136,6 +136,7 @@ jobs:
           test "${{ steps.low.outputs.risk-level }}" = "LOW"
           test -s low-report.md
           test -s low-report.json
+          test -s "${{ steps.low.outputs.github-comment-path }}"
 
       - name: CRITICAL risk must fail the risk gate
         id: critical
@@ -157,6 +158,7 @@ jobs:
           test "${{ steps.critical.outputs.risk-level }}" = "CRITICAL"
           test -s critical-report.md
           test -s critical-report.json
+          test -s "${{ steps.critical.outputs.github-comment-path }}"
 
 
   required:
