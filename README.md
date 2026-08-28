@@ -173,7 +173,13 @@ shipped in `examples/`. Engineering quality gates run separately in
 The complete pull-request workflow for consuming repositories is documented in
 [`docs/GITHUB_ACTION.md`](docs/GITHUB_ACTION.md).
 
-![PreflightOps pull request comment](docs/screenshots/github-pr-comment.png)
+A completed public example is available in
+[`pedroluna-gh/preflightops-demo` PR #1](https://github.com/pedroluna-gh/preflightops-demo/pull/1).
+It shows `v0.3.0` detecting the changed Terraform/Kubernetes inputs, returning
+`HIGH 75/100`, publishing the grouped bot comment, uploading all report formats,
+and passing the configured `CRITICAL` gate.
+
+![PreflightOps v0.3.0 in a real pull request](docs/screenshots/preflightops-demo-pr.png)
 
 Run the manual source workflow and choose a scenario to inspect the result in
 the job summary. It has only `contents: read`; it does not comment on pull
