@@ -63,6 +63,9 @@ The goal is to help teams enter formal change approval with better context, clea
 - Incomplete monitoring plans and missing post-deploy validation
 - Risky Terraform signals: IAM/role changes, security groups, firewalls, DNS, KMS, database instances, public IP exposure, and `destroy` / `delete` actions
 - Risky Kubernetes signals: Ingress, Secret, NetworkPolicy, StatefulSet, LoadBalancer exposure, `replicas: 0`, and Deployments missing readiness / liveness probes
+- Structured Terraform JSON resource/action evidence and multi-document Kubernetes object parsing
+- Versioned policy packs for SaaS, fintech, ecommerce, healthcare, critical platforms, and lightweight startup governance
+- Offline Datadog, Grafana, Prometheus, Zabbix, and GCP Cloud Monitoring inventory validation
 
 ## Quick demo
 
@@ -137,7 +140,10 @@ preflightops \
   --services examples/services-critical-risk.yaml \
   --change examples/change-critical-risk.yaml \
   --terraform examples/terraform-critical.txt \
+  --terraform-json examples/tfplan.json \
   --k8s examples/k8s-risk.yaml \
+  --policy fintech \
+  --monitors examples/monitors.yaml \
   --output report.md \
   --json-output report.json
 ```
@@ -145,6 +151,9 @@ preflightops \
 (The equivalent `python -m preflightops.cli ...` also works.)
 
 The CLI prints the score and level, writes a Markdown report to `--output` (and an optional JSON report to `--json-output`), and **exits with code `1` when the risk level is `CRITICAL`** (otherwise `0`) — so you can fail a pipeline on critical risk.
+
+Structured inputs, policy packs, and the secrets-free observability inventory
+are documented in [`docs/POLICY_AND_EVIDENCE.md`](docs/POLICY_AND_EVIDENCE.md).
 
 ### GitHub Action (PR risk gate)
 
@@ -448,10 +457,8 @@ PreflightOps is **offline by default**: the risk assessment makes no outbound ne
 - Copy/paste ServiceNow/Jira-ready change ticket summary (`--ticket-output`) — **available now**
 - Opt-in ServiceNow API integration and Jira API integration (`--servicenow` / `--jira`), from the CLI, GitHub Action, and web app — **available now**
 - Configurable / custom ticket templates (`--ticket-template`) — **available now**
-- Real Terraform plan JSON parser
-- Real Kubernetes YAML object parser
+- Live provider adapters layered on the offline observability evidence contract
 - PagerDuty / Opsgenie incident-history connector
-- Datadog / Grafana dashboard link validation
 - Static HTML dashboard export
 - Policy-as-code approval workflows
 

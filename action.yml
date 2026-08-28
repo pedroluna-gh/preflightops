@@ -16,8 +16,20 @@ inputs:
     description: "Optional path to a Terraform plan/diff text file."
     required: false
     default: ""
+  terraform-json:
+    description: "Optional structured Terraform plan from 'terraform show -json'."
+    required: false
+    default: ""
   k8s:
     description: "Optional path to a Kubernetes manifest YAML file."
+    required: false
+    default: ""
+  policy:
+    description: "Built-in policy pack name or path to a versioned policy YAML file."
+    required: false
+    default: ""
+  monitors:
+    description: "Optional offline observability monitor inventory YAML file."
     required: false
     default: ""
   output:
@@ -93,7 +105,10 @@ runs:
         PFO_SERVICES: ${{ inputs.services }}
         PFO_CHANGE: ${{ inputs.change }}
         PFO_TERRAFORM: ${{ inputs.terraform }}
+        PFO_TERRAFORM_JSON: ${{ inputs.terraform-json }}
         PFO_K8S: ${{ inputs.k8s }}
+        PFO_POLICY: ${{ inputs.policy }}
+        PFO_MONITORS: ${{ inputs.monitors }}
         PFO_OUTPUT: ${{ inputs.output }}
         PFO_JSON: ${{ inputs.json-output }}
         PFO_TICKET: ${{ inputs.ticket-output }}
@@ -109,8 +124,17 @@ runs:
         if [ -n "$PFO_TERRAFORM" ] && [ -f "$PFO_TERRAFORM" ]; then
           args+=(--terraform "$PFO_TERRAFORM")
         fi
+        if [ -n "$PFO_TERRAFORM_JSON" ] && [ -f "$PFO_TERRAFORM_JSON" ]; then
+          args+=(--terraform-json "$PFO_TERRAFORM_JSON")
+        fi
         if [ -n "$PFO_K8S" ] && [ -f "$PFO_K8S" ]; then
           args+=(--k8s "$PFO_K8S")
+        fi
+        if [ -n "$PFO_POLICY" ]; then
+          args+=(--policy "$PFO_POLICY")
+        fi
+        if [ -n "$PFO_MONITORS" ] && [ -f "$PFO_MONITORS" ]; then
+          args+=(--monitors "$PFO_MONITORS")
         fi
         args+=(--output "$PFO_OUTPUT" --json-output "$PFO_JSON")
 
