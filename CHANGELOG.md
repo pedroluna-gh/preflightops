@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Signed hierarchical Policy Bundle v2 with effective dates, ownership,
+  mandatory non-reducible controls, deterministic context overlays, lineage,
+  explicit failure modes, lint, diff, simulation, signing and rollback.
+- Signed Waiver Contract v1 with policy/context scope, expiry, requester/approver
+  separation, reason/evidence/compensating controls, and fail-closed verification.
+- A governance decision record that keeps the technical recommendation,
+  verified exception and external CAB/Change decision separate; waivers never
+  lower the risk score or grant automatic approval.
+
 - Evidence Contract v2 as an Ed25519-signed DSSE envelope carrying an in-toto
   Statement with repository, commit, workflow, policy and input provenance.
 - Offline `evidence generate` / `evidence verify` commands, machine-readable

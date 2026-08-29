@@ -163,6 +163,20 @@ auto-loads unambiguous structured Terraform plans and Kubernetes manifests.
 Structured inputs, policy packs, and the secrets-free observability inventory
 are documented in [`docs/POLICY_AND_EVIDENCE.md`](docs/POLICY_AND_EVIDENCE.md).
 
+### Governed policy and verified exceptions
+
+Enterprise Policy Bundle v2 adds signed, effective-dated, hierarchical rules
+for environment, service tier, normal/standard/emergency classification, and
+technical change type. Teams can lint, diff, and simulate a draft before an
+independent owner activates it. Mandatory controls cannot be weakened by an
+overlay and ambiguous precedence fails closed.
+
+Waiver Contract v1 verifies a scoped, expiring exception with separate
+requester/approver identities, evidence, compensating controls, and an Ed25519
+signature. A waiver never lowers the technical score or approves a change;
+ServiceNow/Jira and CAB remain authoritative. See
+[`docs/POLICY_GOVERNANCE_V2.md`](docs/POLICY_GOVERNANCE_V2.md).
+
 ### Authenticated pre-CAB evidence
 
 Evidence Contract v2 signs the exact assessment and its repository, commit,

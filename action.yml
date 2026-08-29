@@ -28,6 +28,18 @@ inputs:
     description: "Built-in policy pack name or path to a versioned policy YAML file."
     required: false
     default: ""
+  policy-public-key:
+    description: "Trusted Ed25519 public-key path for an active Policy Bundle v2. Public material only."
+    required: false
+    default: ""
+  waiver:
+    description: "Optional signed Waiver Contract v1 path. It records an exception but never approves the change or lowers technical risk."
+    required: false
+    default: ""
+  waiver-public-key:
+    description: "Trusted Ed25519 public-key path for waiver verification. Public material only."
+    required: false
+    default: ""
   monitors:
     description: "Optional offline observability monitor inventory YAML file."
     required: false
@@ -210,6 +222,9 @@ runs:
         PFO_TERRAFORM_JSON: ${{ inputs.terraform-json }}
         PFO_K8S: ${{ inputs.k8s }}
         PFO_POLICY: ${{ inputs.policy }}
+        PFO_POLICY_PUBLIC_KEY: ${{ inputs.policy-public-key }}
+        PFO_WAIVER: ${{ inputs.waiver }}
+        PFO_WAIVER_PUBLIC_KEY: ${{ inputs.waiver-public-key }}
         PFO_MONITORS: ${{ inputs.monitors }}
         PFO_CHANGED_FILES: ${{ steps.changes.outputs.path }}
         PFO_OUTPUT: ${{ inputs.output }}
@@ -246,6 +261,27 @@ runs:
         fi
         if [ -n "$PFO_POLICY" ]; then
           args+=(--policy "$PFO_POLICY")
+        fi
+        if [ -n "$PFO_POLICY_PUBLIC_KEY" ]; then
+          if [ ! -f "$PFO_POLICY_PUBLIC_KEY" ]; then
+            echo "::error::policy-public-key does not exist: $PFO_POLICY_PUBLIC_KEY"
+            exit 2
+          fi
+          args+=(--policy-public-key "$PFO_POLICY_PUBLIC_KEY")
+        fi
+        if [ -n "$PFO_WAIVER" ]; then
+          if [ ! -f "$PFO_WAIVER" ]; then
+            echo "::error::waiver does not exist: $PFO_WAIVER"
+            exit 2
+          fi
+          args+=(--waiver "$PFO_WAIVER")
+        fi
+        if [ -n "$PFO_WAIVER_PUBLIC_KEY" ]; then
+          if [ ! -f "$PFO_WAIVER_PUBLIC_KEY" ]; then
+            echo "::error::waiver-public-key does not exist: $PFO_WAIVER_PUBLIC_KEY"
+            exit 2
+          fi
+          args+=(--waiver-public-key "$PFO_WAIVER_PUBLIC_KEY")
         fi
         if [ -n "$PFO_MONITORS" ] && [ -f "$PFO_MONITORS" ]; then
           args+=(--monitors "$PFO_MONITORS")
