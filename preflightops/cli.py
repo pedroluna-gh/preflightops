@@ -39,6 +39,14 @@ from .integrations import (
     validate_servicenow_instance_url,
 )
 from .policy import load_policy_pack
+from .policy_governance import (
+    apply_verified_waivers,
+    governance_cli,
+    load_governance_document,
+    read_governance_key,
+    validate_waiver,
+    waiver_cli,
+)
 from .report import (
     generate_github_comment,
     generate_html_report,
@@ -114,6 +122,10 @@ def main(argv=None) -> int:
     effective_argv = list(sys.argv[1:] if argv is None else argv)
     if effective_argv[:1] == ["evidence"]:
         return evidence_cli(effective_argv[1:])
+    if effective_argv[:1] == ["policy"]:
+        return governance_cli(effective_argv[1:])
+    if effective_argv[:1] == ["waiver"]:
+        return waiver_cli(effective_argv[1:])
 
     parser = argparse.ArgumentParser(
         prog="preflightops",
@@ -144,6 +156,34 @@ def main(argv=None) -> int:
         help=(
             "Built-in policy pack (saas, fintech, ecommerce, healthcare, "
             "critical-platform, startup) or a versioned policy YAML file."
+        ),
+    )
+    parser.add_argument(
+        "--policy-public-key",
+        default=None,
+        metavar="PEM_OR_PATH",
+        help=(
+            "Trusted Ed25519 public-key path for an active Policy Bundle v2. "
+            "May also be supplied by PREFLIGHTOPS_POLICY_PUBLIC_KEY."
+        ),
+    )
+    parser.add_argument(
+        "--waiver",
+        action="append",
+        default=[],
+        metavar="WAIVER_YAML",
+        help=(
+            "Optional signed Waiver Contract v1. Repeat for multiple waivers. "
+            "Verified waivers annotate risk but never reduce the score or approve a change."
+        ),
+    )
+    parser.add_argument(
+        "--waiver-public-key",
+        default=None,
+        metavar="PEM_OR_PATH",
+        help=(
+            "Trusted Ed25519 waiver public-key path; may also be supplied by "
+            "PREFLIGHTOPS_WAIVER_PUBLIC_KEY."
         ),
     )
     parser.add_argument(
@@ -299,7 +339,7 @@ def main(argv=None) -> int:
         if not k8s_text:
             k8s_text = auto_inputs["kubernetes_text"]
         monitor_inventory = _load_yaml(args.monitors) if args.monitors else None
-        policy = load_policy_pack(args.policy)
+        policy = load_policy_pack(args.policy, public_key=args.policy_public_key)
     except (OSError, yaml.YAMLError, json.JSONDecodeError, ValueError) as exc:
         print(f"Error loading input files: {exc}", file=sys.stderr)
         return 2
@@ -314,6 +354,30 @@ def main(argv=None) -> int:
             policy=policy,
             monitor_inventory=monitor_inventory,
         )
+        if args.waiver:
+            waiver_key = read_governance_key(
+                args.waiver_public_key, "PREFLIGHTOPS_WAIVER_PUBLIC_KEY"
+            )
+            waiver_context = {
+                "service": str(result.get("service", "")),
+                "environment": str(result.get("environment", "")),
+                "change_class": str(
+                    (change.get("change") or {}).get("change_class")
+                    or (change.get("change") or {}).get("classification")
+                    or "normal"
+                ),
+                "change_type": str(result.get("change_type", "")),
+            }
+            verified_waivers = [
+                validate_waiver(
+                    load_governance_document(path),
+                    public_key=waiver_key,
+                    policy_digest=str(result["policy_pack"]["digest"]),
+                    context=waiver_context,
+                )
+                for path in args.waiver
+            ]
+            result = apply_verified_waivers(result, verified_waivers)
         if changed_scope is not None:
             changed_scope["selected_inputs"] = {
                 "terraform_text": [args.terraform] if args.terraform else [],
