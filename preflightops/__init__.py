@@ -2,6 +2,12 @@
 
 from ._version import __version__ as __version__
 from .changed_files import classify_changed_files, load_changed_files
+from .evidence import (
+    EvidenceError,
+    build_statement_v2,
+    generate_evidence_v2,
+    verify_evidence_v2,
+)
 from .integrations import (
     IntegrationError,
     build_servicenow_evidence,
@@ -64,4 +70,8 @@ __all__ = [
     "push_to_jira",
     "correlation_id",
     "IntegrationError",
+    "EvidenceError",
+    "build_statement_v2",
+    "generate_evidence_v2",
+    "verify_evidence_v2",
 ]

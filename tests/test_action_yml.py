@@ -42,6 +42,9 @@ def test_action_yml_exists():
         "servicenow-preview-output",
         "jira",
         "assume-yes",
+        "evidence-v2-output",
+        "evidence-v1-output",
+        "evidence-data-classification",
     ],
 )
 def test_new_optional_inputs_present(action, name):
@@ -74,6 +77,17 @@ def test_servicenow_preview_output_added(action):
 
 def test_ticket_path_output_added(action):
     assert "ticket-path" in action["outputs"]
+
+
+def test_authenticated_evidence_outputs_are_present(action):
+    assert "evidence-v2-path" in action["outputs"]
+    assert "evidence-v1-path" in action["outputs"]
+
+
+def test_action_never_accepts_private_key_as_an_input(action, action_text):
+    assert "evidence-private-key" not in action["inputs"]
+    assert "--private-key" not in action_text
+    assert "PREFLIGHTOPS_EVIDENCE_PRIVATE_KEY" in action_text
 
 
 @pytest.mark.parametrize(

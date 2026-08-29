@@ -28,6 +28,7 @@ from .changed_files import (
     load_auto_scanner_inputs,
     load_changed_files,
 )
+from .evidence import evidence_cli
 from .integrations import (
     IntegrationError,
     correlation_id,
@@ -110,6 +111,10 @@ def _load_json(path):
 
 
 def main(argv=None) -> int:
+    effective_argv = list(sys.argv[1:] if argv is None else argv)
+    if effective_argv[:1] == ["evidence"]:
+        return evidence_cli(effective_argv[1:])
+
     parser = argparse.ArgumentParser(
         prog="preflightops",
         description="Pre-deployment risk assessment for SRE and Platform teams.",
@@ -269,7 +274,7 @@ def main(argv=None) -> int:
         ),
     )
 
-    args = parser.parse_args(argv)
+    args = parser.parse_args(effective_argv)
 
     try:
         services = _load_yaml(args.services)

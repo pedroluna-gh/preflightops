@@ -121,7 +121,8 @@ pip install -e ".[app]"      # editable install with the web UI extras
 ### Requirements
 
 - Python 3.9+
-- Core dependency: `pyyaml`. The web UI extras add `streamlit` and `pandas`.
+- Core dependencies: `pyyaml` and `cryptography` (Ed25519 authenticated
+  evidence). The web UI extras add `streamlit` and `pandas`.
 
 ## Usage
 
@@ -161,6 +162,37 @@ auto-loads unambiguous structured Terraform plans and Kubernetes manifests.
 
 Structured inputs, policy packs, and the secrets-free observability inventory
 are documented in [`docs/POLICY_AND_EVIDENCE.md`](docs/POLICY_AND_EVIDENCE.md).
+
+### Authenticated pre-CAB evidence
+
+Evidence Contract v2 signs the exact assessment and its repository, commit,
+workflow, policy digest and named input digests as an in-toto Statement inside a
+DSSE envelope. Verification is offline and machine-readable; it does not grant
+approval or modify the authoritative ServiceNow/Jira workflow.
+
+```bash
+preflightops evidence generate \
+  --assessment report.json \
+  --change change.yaml \
+  --policy policy.yaml \
+  --input services=services.yaml \
+  --input change=change.yaml \
+  --output evidence-v2.dsse.json \
+  --legacy-output evidence-v1.json
+
+preflightops evidence verify \
+  --evidence evidence-v2.dsse.json \
+  --public-key trusted-ed25519.pub.pem \
+  --expected-repository acme/payments-api \
+  --expected-commit "$GITHUB_SHA" \
+  --max-age-seconds 3600 \
+  --output verification.json
+```
+
+Private-key material comes from a protected PEM file or
+`PREFLIGHTOPS_EVIDENCE_PRIVATE_KEY`; the GitHub Action never accepts it as an
+input. See [`docs/EVIDENCE_CONTRACT_V2.md`](docs/EVIDENCE_CONTRACT_V2.md) for
+trust distribution, dual-output migration, verification pins and rollback.
 
 ### GitHub Action (PR risk gate)
 

@@ -34,6 +34,8 @@ def _schema(name):
         "monitor-inventory-v1.schema.json",
         "servicenow-mapping-v1.schema.json",
         "servicenow-evidence-v1.schema.json",
+        "evidence-statement-v2.schema.json",
+        "evidence-dsse-v1.schema.json",
     ],
 )
 def test_schemas_are_valid_draft_2020_12(name):

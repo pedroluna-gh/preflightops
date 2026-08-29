@@ -1,0 +1,11 @@
+{
+  "service": "payments-api",
+  "environment": "production",
+  "change_type": "normal",
+  "risk_score": 42,
+  "risk_level": "MEDIUM",
+  "recommendation": "Proceed through the authoritative change workflow.",
+  "policy_pack": {"name": "fintech", "version": "1"},
+  "triggered_rules": [],
+  "api_token": "must-never-enter-evidence"
+}

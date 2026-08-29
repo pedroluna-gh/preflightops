@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Evidence Contract v2 as an Ed25519-signed DSSE envelope carrying an in-toto
+  Statement with repository, commit, workflow, policy and input provenance.
+- Offline `evidence generate` / `evidence verify` commands, machine-readable
+  fail-closed verification, deterministic redaction and a v1/v2 dual-output
+  compatibility path.
+- Tamper, policy-trust, input-digest, identity and replay regression tests plus
+  public schemas and an enterprise key-lifecycle runbook.
+
 - Enterprise product charter, authority boundary, RACI, threat model, data
   governance, Definition of Done, and release-management controls.
 - CodeQL, dependency review, OpenSSF Scorecard, Dependabot, CODEOWNERS, and a

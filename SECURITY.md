@@ -90,6 +90,9 @@ PreflightOps currently:
   cross-origin redirects, and requires an explicit allowlist for custom hosts;
 - restricts ServiceNow mappings to pre-change evidence fields, verifies live
   writes, and never maps workflow state or approvals;
+- can generate an opt-in Ed25519-signed DSSE Evidence Contract v2 locally and
+  verify its signature, policy/input digests, identity pins and freshness
+  without a network call;
 - does not send data to AI services;
 - does not require authentication;
 - produces local Markdown, JSON, static HTML, and PR-comment reports.
@@ -133,3 +136,8 @@ current through reviewed dependency pull requests.
 - Preview ServiceNow payloads with `--servicenow-dry-run` before live publication.
 - Treat generated evidence as operational data and apply appropriate retention
   and access controls in ServiceNow.
+- Keep `PREFLIGHTOPS_EVIDENCE_PRIVATE_KEY` only in a protected environment or
+  approved secret broker, restrict it to the signing job, rotate it, and
+  distribute the public trust key independently from evaluated repositories.
+- Pin repository, commit, workflow, policy digest and freshness when verifying
+  evidence; signature validity alone does not authorize CAB approval.

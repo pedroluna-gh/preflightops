@@ -31,6 +31,7 @@ keywords = [
     "cloud-operations",
 ]
 dependencies = [
+    "cryptography>=45,<51",
     "pyyaml>=6,<7",
 ]
 
