@@ -13,6 +13,12 @@ Evidence Contract v2 is additive. During the v0.6 compatibility window,
 `--legacy-output` can emit the existing v1 package beside the signed v2 DSSE
 envelope. Existing ServiceNow v1 attachment behavior remains the default.
 
+Policy Pack v1 remains valid and preserves its historical scoring behavior.
+Policy Bundle v2 is additive and opt-in. Active v2 bundles require an Ed25519
+trust pin; unsigned drafts are accepted only by lint/diff/simulation. Waiver
+Contract v1 adds annotations and a decision record but never changes the risk
+score, the CLI critical-risk exit code, or the Action `fail-on` result.
+
 ## Compatible changes
 
 Patch or minor releases may:

@@ -69,6 +69,7 @@ change:
   service: checkout-api
   environment: production
   change_type: deployment
+  change_class: normal
   requested_by: pedro
   description: Deploy new checkout API version with payment timeout improvements
   rollback_plan: >-
@@ -99,6 +100,7 @@ change:
 | `service` | Yes | Must match a service in `services.yaml`. |
 | `environment` | Recommended | `production`, `staging`, etc. |
 | `change_type` | Recommended | `deployment`, `infrastructure`, `database`, `security`, or `network`. |
+| `change_class` | Recommended for Policy v2 | External ITSM classification: `normal`, `standard`, or `emergency`. PreflightOps does not reclassify or approve it. |
 | `requested_by` | Recommended | Person or team requesting the change. |
 | `description` | Recommended | What is being changed and why. |
 | `rollback_plan` | Required for production quality | Clear rollback action, trigger, owner, and estimated time. |

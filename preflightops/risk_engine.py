@@ -10,7 +10,7 @@ and a list of missing operational controls.
 from typing import Optional
 
 from .monitoring import validate_monitoring_evidence
-from .policy import load_policy_pack
+from .policy import load_policy_pack, resolve_policy
 from .scanners import scan_kubernetes, scan_terraform, scan_terraform_json
 from .validators import (
     is_bad_rollback_plan,
@@ -293,7 +293,13 @@ def assess_risk(
     triggered.extend(scan_terraform_json(terraform_json))
     triggered.extend(scan_kubernetes(k8s_text))
 
-    active_policy = policy or load_policy_pack()
+    policy_context = {
+        "environment": str(environment or ""),
+        "tier": str(service.get("tier") or service.get("criticality") or ""),
+        "change_class": str(change.get("change_class") or change.get("classification") or "normal"),
+        "change_type": str(change_type or ""),
+    }
+    active_policy = resolve_policy(policy or load_policy_pack(), policy_context)
     monitor_findings, monitor_validation = validate_monitoring_evidence(
         change,
         monitor_inventory,
@@ -328,6 +334,27 @@ def assess_risk(
         "policy_pack": {
             "version": active_policy["version"],
             "name": active_policy["name"],
+            "owner": active_policy.get("owner"),
+            "digest": active_policy.get("digest"),
+            "lineage": active_policy.get("lineage", []),
+            "failure_modes": active_policy.get("failure_modes", {}),
+            "context": active_policy.get("context", policy_context),
+            "effective_from": active_policy.get("effective_from"),
+            "expires_at": active_policy.get("expires_at"),
+            "verified_key_id": active_policy.get("verified_key_id"),
         },
         "monitor_validation": monitor_validation,
+        "decision_record": {
+            "technical_recommendation": {
+                "risk_score": risk_score,
+                "risk_level": risk_level,
+                "recommendation": RECOMMENDATIONS[risk_level],
+            },
+            "verified_exception_count": 0,
+            "human_decision": {
+                "status": "not_recorded",
+                "authority": "external_cab_or_change_management",
+            },
+            "automatic_approval": False,
+        },
     }

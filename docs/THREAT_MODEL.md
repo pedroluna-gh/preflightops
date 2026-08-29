@@ -22,6 +22,7 @@ and all parsed manifests are untrusted.
 | --- | --- | --- |
 | Untrusted PR executes with secrets | No `pull_request_target`; live publication is manual/environment protected | Workflow contract tests |
 | Policy weakened by evaluated team | Signed central bundle, independent CODEOWNERS and mandatory rules | Policy lineage and negative tests |
+| Waiver used as self-approval or replayed outside scope | Independent requester/approver, policy/context binding, expiry, signature, score preservation | Self-approval, expiry, wrong-policy and wrong-context tests |
 | Evidence altered after assessment | Ed25519-signed DSSE/in-toto statement bound to commit/workflow/policy/inputs | Offline verification and byte-tamper tests |
 | Replay against another Change | Change/service/environment scope, expected identity pins and freshness limit | Replay and wrong-context fixtures |
 | Evidence signing key compromised | Independent key ownership, protected CI secret/broker, key id, rotation and revocation | Key lifecycle exercise and wrong-key tests |

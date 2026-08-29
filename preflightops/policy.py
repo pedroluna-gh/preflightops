@@ -6,6 +6,14 @@ from typing import Any, Optional, cast
 
 import yaml
 
+from .policy_governance import (
+    POLICY_API_VERSION,
+    governance_digest,
+    read_governance_key,
+    resolve_policy_bundle,
+    validate_policy_bundle,
+)
+
 POLICY_FORMAT_VERSION = "1"
 
 BUILTIN_POLICY_PACKS = {
@@ -149,10 +157,24 @@ def _validate_policy(policy: Any) -> dict:
         "minimum_enabled_monitors": minimum,
         "required_providers": [provider.lower() for provider in providers],
     }
+    normalized["digest"] = governance_digest(normalized)
+    normalized["owner"] = str(normalized.get("owner", "local-policy-owner"))
+    normalized["lineage"] = ["v1"]
+    normalized["failure_modes"] = {
+        "policy_validation": "closed",
+        "signature": "closed",
+        "context_conflict": "closed",
+        "evidence_unavailable": "open",
+    }
     return normalized
 
 
-def load_policy_pack(value: Optional[str] = None) -> dict:
+def load_policy_pack(
+    value: Optional[str] = None,
+    *,
+    public_key: Optional[str] = None,
+    for_assessment: bool = True,
+) -> dict:
     """Load a built-in policy by name or a versioned YAML file."""
     if not value:
         return _validate_policy(deepcopy(BUILTIN_POLICY_PACKS["default"]))
@@ -170,4 +192,20 @@ def load_policy_pack(value: Optional[str] = None) -> dict:
             policy = yaml.safe_load(handle)
     except (OSError, yaml.YAMLError) as exc:
         raise ValueError(f"Could not load policy pack: {exc}") from exc
+    if isinstance(policy, dict) and policy.get("api_version") == POLICY_API_VERSION:
+        trusted_key = read_governance_key(public_key, "PREFLIGHTOPS_POLICY_PUBLIC_KEY")
+        return validate_policy_bundle(
+            policy,
+            public_key=trusted_key,
+            for_assessment=for_assessment,
+        )
     return _validate_policy(policy)
+
+
+def resolve_policy(policy: dict, context: dict[str, str]) -> dict:
+    """Resolve Policy Bundle v2 overlays; keep Policy Pack v1 behavior stable."""
+    if policy.get("api_version") == POLICY_API_VERSION:
+        return resolve_policy_bundle(policy, context)
+    resolved = deepcopy(policy)
+    resolved["context"] = dict(context)
+    return resolved

@@ -1,0 +1,51 @@
+api_version: preflightops.dev/policy/v2
+kind: PolicyBundle
+metadata:
+  name: enterprise-example
+  version: 2.0.0-draft.1
+  owner: change-governance@example.test
+  effective_from: "2026-01-01T00:00:00Z"
+  status: draft
+spec:
+  failure_modes:
+    policy_validation: closed
+    signature: closed
+    context_conflict: closed
+    evidence_unavailable: closed
+  mandatory_controls:
+    - missing-rollback-plan
+    - missing-monitoring-plan
+  base:
+    risk_weights:
+      missing-rollback-plan: 40
+      missing-monitoring-plan: 35
+      production-change: 20
+    risk_level_thresholds: {low: 30, medium: 60, high: 80}
+    monitoring:
+      minimum_enabled_monitors: 1
+      required_providers: []
+  overlays:
+    - id: production
+      priority: 10
+      match: {environment: production}
+      apply:
+        risk_weights: {production-change: 35}
+        monitoring:
+          minimum_enabled_monitors: 2
+          required_providers: []
+    - id: tier-zero-normal
+      priority: 20
+      match:
+        tier: [critical, tier-0]
+        change_class: normal
+      apply:
+        risk_weights:
+          missing-rollback-plan: 55
+          missing-monitoring-plan: 45
+    - id: emergency-evidence
+      priority: 30
+      match: {change_class: emergency}
+      apply:
+        monitoring:
+          minimum_enabled_monitors: 2
+          required_providers: []
