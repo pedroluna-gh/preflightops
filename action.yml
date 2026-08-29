@@ -48,6 +48,18 @@ inputs:
     description: "Path to write the JSON report."
     required: false
     default: "preflightops-report.json"
+  evidence-v2-output:
+    description: "Optional path for signed DSSE Evidence Contract v2. Requires PREFLIGHTOPS_EVIDENCE_PRIVATE_KEY in the step environment."
+    required: false
+    default: ""
+  evidence-v1-output:
+    description: "Optional compatibility v1 evidence path, emitted together with v2 during migration."
+    required: false
+    default: ""
+  evidence-data-classification:
+    description: "Evidence data classification: public, internal, confidential, or restricted."
+    required: false
+    default: "internal"
   html-output:
     description: "Optional path to write a static HTML report."
     required: false
@@ -122,6 +134,12 @@ outputs:
   json-report-path:
     description: "Path to the generated JSON report."
     value: ${{ steps.assess.outputs.json-report-path }}
+  evidence-v2-path:
+    description: "Path to signed DSSE Evidence Contract v2 when requested."
+    value: ${{ steps.assess.outputs.evidence-v2-path }}
+  evidence-v1-path:
+    description: "Path to compatibility Evidence Contract v1 when requested."
+    value: ${{ steps.assess.outputs.evidence-v1-path }}
   ticket-path:
     description: "Path to the generated change ticket summary (empty when ticket-output was not set)."
     value: ${{ steps.assess.outputs.ticket-path }}
@@ -196,6 +214,9 @@ runs:
         PFO_CHANGED_FILES: ${{ steps.changes.outputs.path }}
         PFO_OUTPUT: ${{ inputs.output }}
         PFO_JSON: ${{ inputs.json-output }}
+        PFO_EVIDENCE_V2: ${{ inputs.evidence-v2-output }}
+        PFO_EVIDENCE_V1: ${{ inputs.evidence-v1-output }}
+        PFO_EVIDENCE_CLASSIFICATION: ${{ inputs.evidence-data-classification }}
         PFO_HTML: ${{ inputs.html-output }}
         PFO_GITHUB_COMMENT: ${{ inputs.github-comment-output }}
         PFO_FULL_REPORT_URL: ${{ inputs.full-report-url }}
@@ -300,11 +321,46 @@ runs:
         score=$(python -c "import json, os; print(json.load(open(os.environ['PFO_JSON']))['risk_score'])")
         scope=$(python -c "import json, os; print(','.join(json.load(open(os.environ['PFO_JSON'])).get('change_scope', {}).get('scanners', [])))")
 
+        # Authenticated evidence is opt-in and signed only in memory from the
+        # caller-provided PREFLIGHTOPS_EVIDENCE_PRIVATE_KEY secret. The secret
+        # is never accepted as an Action input or command-line value.
+        if [ -n "$PFO_EVIDENCE_V2" ]; then
+          evidence_args=(evidence generate --assessment "$PFO_JSON" --change "$PFO_CHANGE" --output "$PFO_EVIDENCE_V2" --classification "$PFO_EVIDENCE_CLASSIFICATION")
+          evidence_args+=(--input "services=$PFO_SERVICES" --input "change=$PFO_CHANGE")
+          if [ -n "$PFO_POLICY" ] && [ -f "$PFO_POLICY" ]; then
+            evidence_args+=(--policy "$PFO_POLICY" --input "policy=$PFO_POLICY")
+          fi
+          if [ -n "$PFO_TERRAFORM" ] && [ -f "$PFO_TERRAFORM" ]; then
+            evidence_args+=(--input "terraform=$PFO_TERRAFORM")
+          fi
+          if [ -n "$PFO_TERRAFORM_JSON" ] && [ -f "$PFO_TERRAFORM_JSON" ]; then
+            evidence_args+=(--input "terraform-json=$PFO_TERRAFORM_JSON")
+          fi
+          if [ -n "$PFO_K8S" ] && [ -f "$PFO_K8S" ]; then
+            evidence_args+=(--input "kubernetes=$PFO_K8S")
+          fi
+          if [ -n "$PFO_MONITORS" ] && [ -f "$PFO_MONITORS" ]; then
+            evidence_args+=(--input "monitors=$PFO_MONITORS")
+          fi
+          if [ -n "$PFO_EVIDENCE_V1" ]; then
+            evidence_args+=(--legacy-output "$PFO_EVIDENCE_V1")
+          fi
+          if ! preflightops "${evidence_args[@]}"; then
+            echo "::error::Authenticated evidence generation failed closed."
+            exit 2
+          fi
+        elif [ -n "$PFO_EVIDENCE_V1" ]; then
+          echo "::error::evidence-v1-output requires evidence-v2-output during the compatibility window."
+          exit 2
+        fi
+
         {
           echo "risk-level=$level"
           echo "risk-score=$score"
           echo "report-path=$PFO_OUTPUT"
           echo "json-report-path=$PFO_JSON"
+          echo "evidence-v2-path=$PFO_EVIDENCE_V2"
+          echo "evidence-v1-path=$PFO_EVIDENCE_V1"
           echo "ticket-path=$PFO_TICKET"
           echo "html-report-path=$PFO_HTML"
           echo "github-comment-path=$PFO_GITHUB_COMMENT"

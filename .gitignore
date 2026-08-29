@@ -18,6 +18,7 @@ ENV/
 htmlcov/
 .quality-venv/
 .uv-cache/
+.pip-audit-cache/
 .runtime-requirements.txt
 .dependency-audit.txt
 .tox/
