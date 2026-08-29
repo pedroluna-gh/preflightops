@@ -22,8 +22,10 @@ and all parsed manifests are untrusted.
 | --- | --- | --- |
 | Untrusted PR executes with secrets | No `pull_request_target`; live publication is manual/environment protected | Workflow contract tests |
 | Policy weakened by evaluated team | Signed central bundle, independent CODEOWNERS and mandatory rules | Policy lineage and negative tests |
-| Evidence altered after assessment | Digest plus signed attestation bound to commit/workflow/policy | Offline verification and tamper tests |
-| Replay against another Change | Change/service/environment scope and issued/expiry metadata | Replay fixtures |
+| Evidence altered after assessment | Ed25519-signed DSSE/in-toto statement bound to commit/workflow/policy/inputs | Offline verification and byte-tamper tests |
+| Replay against another Change | Change/service/environment scope, expected identity pins and freshness limit | Replay and wrong-context fixtures |
+| Evidence signing key compromised | Independent key ownership, protected CI secret/broker, key id, rotation and revocation | Key lifecycle exercise and wrong-key tests |
+| Self-asserted workflow identity trusted blindly | Verifier pins trusted public key plus expected repository, commit and workflow | Machine-readable verification policy tests |
 | SSRF or credential forwarding | HTTPS origin validation, custom-host allowlist and cross-origin redirect refusal | Integration security tests |
 | Unauthorized CAB mutation | Evidence-field allowlist and explicit denylist | Negative mapping tests and ServiceNow ATF/E2E |
 | Duplicate/racing publication | Stable external id, ambiguity rejection, read-back and attachment digest | Concurrent integration tests |
@@ -37,8 +39,10 @@ and all parsed manifests are untrusted.
 PreflightOps is decision support, not a security boundary and cannot prove a
 change is safe. A malicious repository administrator can alter local workflows;
 enterprise enforcement therefore belongs in organization rulesets and reusable
-workflows. Hashes provide integrity comparison but not producer authenticity;
-Evidence Contract v2 must add signed attestations. Basic Auth remains test-only.
+workflows. Evidence Contract v2 authenticates the producer key but cannot by
+itself prove the claims are authorized; public-key distribution, workflow
+protection and revocation remain enterprise controls. Basic Auth remains
+test-only.
 
 Review this document for every change involving parsing, policy, workflow
 permissions, credentials, external writes, evidence or release infrastructure.

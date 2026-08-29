@@ -1,6 +1,6 @@
 # Public Contracts
 
-This document inventories the public interfaces shipped by PreflightOps 0.4.x.
+This document inventories the public interfaces shipped by PreflightOps.
 The contract inventory itself is versioned as **Contract Set v1**. The JSON
 schemas under [`schemas/`](../schemas/) are the machine-readable definitions for
 the current file inputs and JSON report.
@@ -44,6 +44,16 @@ Console command: `preflightops` (equivalent to `python -m preflightops.cli`).
 | `--yes`, `--assume-yes` | no | false | Waive interactive live-push confirmation |
 | `--version` | no | — | Print the package version and exit |
 
+Authenticated evidence uses a non-breaking subcommand namespace:
+
+| Command | Contract |
+| --- | --- |
+| `preflightops evidence generate` | Create a signed DSSE/in-toto Evidence Contract v2 envelope; optional `--legacy-output` preserves v1 in parallel |
+| `preflightops evidence verify` | Verify signature, policy/input digests, execution identity and freshness; write a machine-readable verdict |
+
+Evidence verification exits `0` when verified, `3` when cryptographic or trust
+checks reject the envelope, and `2` for invalid arguments, files or keys.
+
 Exit codes:
 
 - `0`: assessment completed and level is not `CRITICAL`;
@@ -64,7 +74,8 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 `generate_ticket_markdown`, `push_to_servicenow`, `push_to_jira`,
 `prepare_servicenow_payload`, `build_servicenow_evidence`,
 `load_servicenow_mapping`, `validate_servicenow_instance_url`,
-`correlation_id`, and `IntegrationError`.
+`correlation_id`, `IntegrationError`, `EvidenceError`, `build_statement_v2`,
+`generate_evidence_v2`, and `verify_evidence_v2`.
 
 `preflightops.__version__` is also public. It is sourced from
 `preflightops._version` and drives package metadata, CLI output, and reports.
@@ -79,6 +90,8 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 - [`monitor-inventory-v1.schema.json`](../schemas/monitor-inventory-v1.schema.json)
 - [`servicenow-mapping-v1.schema.json`](../schemas/servicenow-mapping-v1.schema.json)
 - [`servicenow-evidence-v1.schema.json`](../schemas/servicenow-evidence-v1.schema.json)
+- [`evidence-statement-v2.schema.json`](../schemas/evidence-statement-v2.schema.json)
+- [`evidence-dsse-v1.schema.json`](../schemas/evidence-dsse-v1.schema.json)
 
 Schemas intentionally allow additional properties so existing organization-
 specific metadata remains valid. Fields documented as recommended rather than
@@ -103,6 +116,11 @@ Outputs: `risk-level`, `risk-score`, `report-path`, `json-report-path`,
 `ticket-path`, `html-report-path`, `github-comment-path`,
 `changed-files-path`, `scanner-scope`, and `servicenow-preview-path`.
 
+Optional authenticated-evidence outputs are `evidence-v2-path` and
+`evidence-v1-path`. The Action never accepts a private key as an input; an
+explicit v2 output requires `PREFLIGHTOPS_EVIDENCE_PRIVATE_KEY` in the protected
+step environment.
+
 The workflow in `.github/workflows/preflightops.yml` belongs to this source
 repository and is a manually dispatched smoke/demo workflow. A consuming
 repository can configure the composite action as a pull-request gate after it
@@ -126,3 +144,7 @@ Assessment, report, and ticket generation are offline by default. Network calls
 occur only when `--servicenow` or `--jira` is explicitly supplied, or their
 equivalent application/Action configuration is enabled. Credential environment
 variables are not part of report output and must not be logged.
+
+Evidence v2 generation and verification are offline. See
+[`EVIDENCE_CONTRACT_V2.md`](EVIDENCE_CONTRACT_V2.md) for the trust model,
+migration window and fail-closed verification contract.

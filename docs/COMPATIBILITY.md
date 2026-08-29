@@ -9,6 +9,10 @@ Compatibility applies to documented CLI flags and exit codes, exported Python
 symbols, valid v1 input documents, JSON report fields, composite Action inputs
 and outputs, and the offline-by-default behavior.
 
+Evidence Contract v2 is additive. During the v0.6 compatibility window,
+`--legacy-output` can emit the existing v1 package beside the signed v2 DSSE
+envelope. Existing ServiceNow v1 attachment behavior remains the default.
+
 ## Compatible changes
 
 Patch or minor releases may:
@@ -47,4 +51,3 @@ A vulnerable interface may be disabled sooner when continued compatibility
 would expose credentials, sensitive evidence, or unsafe remote writes. The
 release must document the security reason, affected versions, mitigation, and
 rollback limitations.
-

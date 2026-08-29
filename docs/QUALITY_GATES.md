@@ -12,6 +12,7 @@ test, packaging, or dependency failures.
 | Quality gates | Frozen lock, formatting, lint, types, coverage, dependency audit, build and clean install | The change is not releasable |
 | Compatibility (matrix) | Full regression suite on Python 3.9-3.13 and smoke coverage on Linux, Windows and macOS | A declared platform is incompatible |
 | Composite action contract | LOW passes; CRITICAL deliberately trips only the configured risk threshold | The public action contract regressed |
+| Evidence contract | DSSE/Ed25519 signature, schemas, policy/input/identity pins, tamper and replay rejection | Authenticated evidence is unsafe or incompatible |
 
 Security controls run in a separate `Security` workflow so their permissions
 remain isolated: CodeQL on pushes/pull requests/schedule, and dependency review

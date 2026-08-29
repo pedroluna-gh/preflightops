@@ -36,6 +36,20 @@ Contract v2, signed hierarchical policy/waiver verification, production-grade
 CMDB context and organization-scale delivery. PreflightOps remains evidence-only
 and never becomes the CAB or ITSM workflow authority.
 
+## v0.6 — Authenticated Evidence Contract v2 (implemented, unreleased)
+
+- Ed25519-signed DSSE envelope with an in-toto Statement.
+- Signed organization, repository, commit, ref, workflow/run/actor, service,
+  environment, product version, policy digest, assessment and input digests.
+- Offline `evidence generate` and `evidence verify` commands with a
+  machine-readable verdict.
+- Deterministic redaction, 1 MiB bound, classification and no embedded raw
+  input content.
+- Optional Action output backed by a protected environment secret; no private
+  key Action input.
+- v1/v2 dual output, schemas, golden inputs, tamper/trust/input/replay tests,
+  migration guidance and rollback.
+
 ## v0.1 — Initial release
 
 - Rule-based risk engine with a `0–100` score and four risk levels.
@@ -80,10 +94,11 @@ and never becomes the CAB or ITSM workflow authority.
 - Attach structured evidence and verify both records and attachments.
 - Support a network-free preview and environment-protected live demo.
 
-## Next — Reporting depth
+## Next — Policy governance and verified exceptions
 
-- Historical trend view across multiple assessments.
-- SARIF output for code-scanning integrations.
+- Signed hierarchical policy bundles with mandatory/non-reducible controls.
+- Offline, scoped and expiring Waiver Contract v1 verification.
+- Policy lint, test, diff, explain, lineage and rollback.
 
 ## Ecosystem integrations (optional, opt-in)
 

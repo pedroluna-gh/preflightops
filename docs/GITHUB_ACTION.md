@@ -177,6 +177,9 @@ assessment, and gates the job on `fail-on`.
 | `auto-detect-changes` | no | `true` | Fetch PR filenames and infer scanner scope. |
 | `output` | no | `preflightops-report.md` | Path to write the Markdown report. |
 | `json-output` | no | `preflightops-report.json` | Path to write the JSON report. |
+| `evidence-v2-output` | no | `""` | Signed DSSE Evidence Contract v2 path; requires the protected `PREFLIGHTOPS_EVIDENCE_PRIVATE_KEY` environment secret. |
+| `evidence-v1-output` | no | `""` | Optional compatibility v1 output emitted beside v2. |
+| `evidence-data-classification` | no | `internal` | `public`, `internal`, `confidential`, or `restricted`. |
 | `html-output` | no | `""` | Optional dependency-free static HTML report path. |
 | `github-comment-output` | no | `preflightops-comment.md` | Compact PR comment Markdown path. |
 | `full-report-url` | no | current run | Optional HTTP(S) workflow/artifact link. |
@@ -198,7 +201,37 @@ assessment, and gates the job on `fail-on`.
 `risk-level`, `risk-score`, `report-path`, `json-report-path`, `ticket-path`,
 `html-report-path`, `github-comment-path`, `changed-files-path`, and
 `scanner-scope` (a comma-separated list such as `terraform,kubernetes`), and
-`servicenow-preview-path`.
+`servicenow-preview-path`, `evidence-v2-path`, and `evidence-v1-path`.
+
+### Authenticated evidence output
+
+Evidence v2 is opt-in. Put the Ed25519 private PEM in a protected environment
+secret and expose it as `PREFLIGHTOPS_EVIDENCE_PRIVATE_KEY`. The Action does not
+accept key material as an input or command-line argument.
+
+```yaml
+jobs:
+  evidence:
+    environment: preflightops-evidence
+    env:
+      PREFLIGHTOPS_EVIDENCE_PRIVATE_KEY: ${{ secrets.PREFLIGHTOPS_EVIDENCE_PRIVATE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pedroluna-gh/preflightops@v0.6.0
+        with:
+          services: services.yaml
+          change: change.yaml
+          policy: policy.yaml
+          json-output: assessment.json
+          evidence-v2-output: evidence-v2.dsse.json
+          evidence-v1-output: evidence-v1.json
+          evidence-data-classification: internal
+```
+
+Upload both outputs during the migration window. Verify v2 in a separate trust
+boundary with the public key and the expected repository, commit, workflow,
+policy digest and relevant inputs. Full guidance is in
+[`EVIDENCE_CONTRACT_V2.md`](EVIDENCE_CONTRACT_V2.md).
 
 ### Automatic pull-request scope detection
 
