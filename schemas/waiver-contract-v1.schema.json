@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pedroluna-gh/preflightops/schemas/waiver-contract-v1.schema.json",
+  "title": "PreflightOps Waiver Contract v1",
+  "type": "object",
+  "required": [
+    "api_version", "kind", "metadata", "scope", "requester", "approver",
+    "reason_code", "justification", "evidence_references",
+    "compensating_controls", "signature"
+  ],
+  "properties": {
+    "api_version": {"const": "preflightops.dev/waiver/v1"},
+    "kind": {"const": "Waiver"},
+    "metadata": {
+      "type": "object",
+      "required": ["id", "issued_at", "expires_at"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "issued_at": {"type": "string", "format": "date-time"},
+        "expires_at": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": false
+    },
+    "scope": {
+      "type": "object",
+      "required": ["policy_digest", "rules", "service", "environment", "change_class", "change_type"],
+      "properties": {
+        "policy_digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        "rules": {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": true},
+        "service": {"type": "string", "minLength": 1},
+        "environment": {"type": "string", "minLength": 1},
+        "change_class": {"enum": ["normal", "standard", "emergency", "*"]},
+        "change_type": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "requester": {"type": "string", "minLength": 1},
+    "approver": {"type": "string", "minLength": 1},
+    "reason_code": {"type": "string", "minLength": 1},
+    "justification": {"type": "string", "minLength": 1},
+    "evidence_references": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+    "compensating_controls": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+    "signature": {
+      "type": "object",
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": {"const": "ed25519"},
+        "key_id": {"type": "string", "minLength": 1},
+        "value": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

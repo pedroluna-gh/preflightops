@@ -60,9 +60,40 @@
     "policy_pack": {
       "type": "object",
       "required": ["version", "name"],
-      "properties": {"version": {"type": "string"}, "name": {"type": "string"}},
+      "properties": {
+        "version": {"type": "string"},
+        "name": {"type": "string"},
+        "owner": {"type": ["string", "null"]},
+        "digest": {"type": ["string", "null"]},
+        "lineage": {"type": "array", "items": {"type": "string"}},
+        "failure_modes": {"type": "object"},
+        "context": {"type": "object"},
+        "effective_from": {"type": ["string", "null"]},
+        "expires_at": {"type": ["string", "null"]},
+        "verified_key_id": {"type": ["string", "null"]}
+      },
       "additionalProperties": true
     },
+    "decision_record": {
+      "type": "object",
+      "required": ["technical_recommendation", "verified_exception_count", "human_decision", "automatic_approval"],
+      "properties": {
+        "technical_recommendation": {"type": "object"},
+        "verified_exception_count": {"type": "integer", "minimum": 0},
+        "human_decision": {
+          "type": "object",
+          "required": ["status", "authority"],
+          "properties": {
+            "status": {"const": "not_recorded"},
+            "authority": {"const": "external_cab_or_change_management"}
+          },
+          "additionalProperties": false
+        },
+        "automatic_approval": {"const": false}
+      },
+      "additionalProperties": true
+    },
+    "verified_waivers": {"type": "array", "items": {"type": "object"}},
     "monitor_validation": {
       "type": "object",
       "required": ["status", "dashboard_count", "valid_dashboard_count", "inventory_monitor_count", "enabled_monitor_count", "referenced_monitor_ids", "providers"],
