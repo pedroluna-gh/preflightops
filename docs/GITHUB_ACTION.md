@@ -172,6 +172,9 @@ assessment, and gates the job on `fail-on`.
 | `terraform-json` | no | `""` | Optional structured `terraform show -json` plan. |
 | `k8s` | no | `""` | Optional Kubernetes manifest YAML file. |
 | `policy` | no | `""` | Built-in policy pack name or policy YAML path. |
+| `policy-public-key` | Policy v2 only | `""` | Trusted Ed25519 public-key file for an active Policy Bundle v2. |
+| `waiver` | no | `""` | Signed Waiver Contract v1 file; records an exception without lowering risk or approving. |
+| `waiver-public-key` | Waiver only | `""` | Trusted Ed25519 waiver public-key file. |
 | `monitors` | no | `""` | Optional offline monitor inventory YAML path. |
 | `changed-files` | no | `""` | Optional newline/JSON file manifest; auto-detected in PR runs when blank. |
 | `auto-detect-changes` | no | `true` | Fetch PR filenames and infer scanner scope. |

@@ -58,6 +58,11 @@ weight as `default_score` when an override applies. Invalid weights or unordered
 thresholds fail closed with exit code 2. Omitting `--policy` selects `default`,
 which preserves the historical scoring model.
 
+Policy Pack v1 remains the compatibility format. Enterprises that need signed
+ownership, effective dates, hierarchical context, mandatory controls,
+pre-activation diff/simulation, or independently verified waivers should use
+the additive [Policy Bundle v2 governance contract](POLICY_GOVERNANCE_V2.md).
+
 ## Offline monitor inventory
 
 Reference monitor ids from the change request:

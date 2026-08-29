@@ -94,11 +94,13 @@ and never becomes the CAB or ITSM workflow authority.
 - Attach structured evidence and verify both records and attachments.
 - Support a network-free preview and environment-protected live demo.
 
-## Next — Policy governance and verified exceptions
+## Next — Policy governance and verified exceptions (implemented, unreleased)
 
 - Signed hierarchical policy bundles with mandatory/non-reducible controls.
 - Offline, scoped and expiring Waiver Contract v1 verification.
 - Policy lint, test, diff, explain, lineage and rollback.
+- Non-authoritative candidate simulation, explicit failure modes, context
+  conflict rejection and an external-authority decision record.
 
 ## Ecosystem integrations (optional, opt-in)
 

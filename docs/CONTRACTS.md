@@ -24,6 +24,9 @@ Console command: `preflightops` (equivalent to `python -m preflightops.cli`).
 | `--terraform-json` | no | none | Structured `terraform show -json` plan path |
 | `--k8s` | no | none | Kubernetes manifest text path |
 | `--policy` | no | `default` | Built-in policy name or versioned policy YAML path |
+| `--policy-public-key` | Policy v2 only | env/path | Trusted Ed25519 public key for an active Policy Bundle v2 |
+| `--waiver` | no | none | Repeatable signed Waiver Contract v1 path; annotation only, never approval |
+| `--waiver-public-key` | Waiver only | env/path | Trusted Ed25519 public key for waiver verification |
 | `--monitors` | no | none | Offline monitor inventory YAML path |
 | `--changed-files` | no | none | Newline/JSON changed-file manifest for scanner inference |
 | `--repository-root` | no | `.` | Checkout root for safely resolving changed paths |
@@ -50,6 +53,12 @@ Authenticated evidence uses a non-breaking subcommand namespace:
 | --- | --- |
 | `preflightops evidence generate` | Create a signed DSSE/in-toto Evidence Contract v2 envelope; optional `--legacy-output` preserves v1 in parallel |
 | `preflightops evidence verify` | Verify signature, policy/input digests, execution identity and freshness; write a machine-readable verdict |
+| `preflightops policy lint` | Validate dates, ownership, failure modes, hierarchy and active signature; `--draft` never activates |
+| `preflightops policy diff` | Compare resolved base/candidate policies for a supplied context and identify weakening |
+| `preflightops policy simulate` | Compare deterministic assessment score/level without activation or approval |
+| `preflightops policy sign` | Sign the reviewed bundle from `PREFLIGHTOPS_POLICY_PRIVATE_KEY` |
+| `preflightops waiver sign` | Sign a complete scoped waiver from `PREFLIGHTOPS_WAIVER_PRIVATE_KEY` |
+| `preflightops waiver verify` | Verify scope, policy digest, dates, separation of duties and signature |
 
 Evidence verification exits `0` when verified, `3` when cryptographic or trust
 checks reject the envelope, and `2` for invalid arguments, files or keys.
@@ -92,6 +101,8 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 - [`servicenow-evidence-v1.schema.json`](../schemas/servicenow-evidence-v1.schema.json)
 - [`evidence-statement-v2.schema.json`](../schemas/evidence-statement-v2.schema.json)
 - [`evidence-dsse-v1.schema.json`](../schemas/evidence-dsse-v1.schema.json)
+- [`policy-bundle-v2.schema.json`](../schemas/policy-bundle-v2.schema.json)
+- [`waiver-contract-v1.schema.json`](../schemas/waiver-contract-v1.schema.json)
 
 Schemas intentionally allow additional properties so existing organization-
 specific metadata remains valid. Fields documented as recommended rather than
@@ -106,6 +117,11 @@ semantics.
 
 Structured Terraform JSON, policy packs, and monitor inventories are optional
 Action inputs. They remain offline and add no credential requirements.
+
+Policy Bundle v2 adds `policy-public-key`, `waiver`, and `waiver-public-key` as
+optional public-file inputs. Private policy/waiver signing keys are never
+accepted by the Action. Verified waivers preserve the technical score and do
+not change the `fail-on` result.
 
 Changed-file detection is enabled by default only in pull-request contexts. It
 uses the run-scoped GitHub token for metadata-only `filename` / `status` reads,
@@ -138,6 +154,10 @@ both include the PreflightOps version. When changed-file inference is enabled,
 JSON also contains optional `change_scope` evidence. New optional metadata may be added in
 future compatible releases; consumers must ignore unknown fields.
 
+Policy governance adds optional policy owner/digest/lineage, verified waiver
+metadata, and a decision record with `automatic_approval: false`. The human
+decision remains `not_recorded` because CAB/ITSM is authoritative.
+
 ## Offline and integration behavior
 
 Assessment, report, and ticket generation are offline by default. Network calls
@@ -148,3 +168,6 @@ variables are not part of report output and must not be logged.
 Evidence v2 generation and verification are offline. See
 [`EVIDENCE_CONTRACT_V2.md`](EVIDENCE_CONTRACT_V2.md) for the trust model,
 migration window and fail-closed verification contract.
+
+Policy signing, diff/simulation, waiver verification, expiry and rollback are
+defined in [`POLICY_GOVERNANCE_V2.md`](POLICY_GOVERNANCE_V2.md).
