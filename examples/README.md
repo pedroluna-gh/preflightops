@@ -64,3 +64,15 @@ preflightops \
 ```
 
 The CLI should return exit code `1` for `CRITICAL` risk.
+
+---
+
+## Policy governance examples
+
+`policy-context-production.yaml` is a sanitized overlay-resolution context.
+The governed draft bundle is under
+`policy-packs/enterprise-example-v2.yaml`; lint, diff and simulate it before
+signing. `waiver-example-v1.draft.yaml` is intentionally unsigned and contains
+only demo identities, references and a placeholder policy digest. Replace every
+scope value, obtain an independent approver, then sign and verify it as
+documented in `docs/POLICY_GOVERNANCE_V2.md`.
