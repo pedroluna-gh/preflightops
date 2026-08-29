@@ -36,6 +36,8 @@ def _schema(name):
         "servicenow-evidence-v1.schema.json",
         "evidence-statement-v2.schema.json",
         "evidence-dsse-v1.schema.json",
+        "policy-bundle-v2.schema.json",
+        "waiver-contract-v1.schema.json",
     ],
 )
 def test_schemas_are_valid_draft_2020_12(name):
@@ -54,10 +56,16 @@ def test_shipped_examples_match_input_schemas():
     monitors = yaml.safe_load((ROOT / "examples" / "monitors.yaml").read_text(encoding="utf-8"))
     jsonschema.validate(monitors, _schema("monitor-inventory-v1.schema.json"))
     for policy in (ROOT / "policy-packs").glob("*.yaml"):
+        if policy.name == "enterprise-example-v2.yaml":
+            continue
         jsonschema.validate(
             yaml.safe_load(policy.read_text(encoding="utf-8")),
             _schema("policy-pack-v1.schema.json"),
         )
+    policy_v2 = yaml.safe_load(
+        (ROOT / "policy-packs" / "enterprise-example-v2.yaml").read_text(encoding="utf-8")
+    )
+    jsonschema.validate(policy_v2, _schema("policy-bundle-v2.schema.json"))
     servicenow_mapping = yaml.safe_load(
         (ROOT / "examples" / "servicenow-field-map.yaml").read_text(encoding="utf-8")
     )
