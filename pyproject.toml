@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools==80.9.0"]
+requires = ["setuptools==83.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -49,7 +49,7 @@ app = [
 ]
 # Extras needed only to run the automated test suite (`pytest`).
 test = [
-    "pytest>=8,<9",
+    "pytest>=9.0.3,<10",
     "jsonschema>=4.23,<5",
 ]
 
@@ -60,7 +60,7 @@ quality = [
     "pip-audit>=2.9,<3",
     "pytest-cov>=6,<8",
     "ruff>=0.11,<1",
-    "setuptools==80.9.0",
+    "setuptools==83.0.0",
     "twine>=6,<7",
     "types-pyyaml>=6,<7",
     "wheel>=0.45,<1",
@@ -78,7 +78,15 @@ version = { attr = "preflightops._version.__version__" }
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-extend-exclude = [".package-check", ".package-check-2", ".uv-cache", ".venv-checks"]
+extend-exclude = [
+    ".package-check",
+    ".package-check-2",
+    ".pytest-cache-*",
+    ".pytest-run-*",
+    ".tooling",
+    ".uv-cache",
+    ".venv-checks",
+]
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I", "B", "UP"]

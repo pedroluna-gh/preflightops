@@ -69,11 +69,15 @@ def test_release_audits_every_supported_python_before_publish():
     audit = workflow["jobs"]["dependency-audit"]
     assert set(audit["strategy"]["matrix"]["python"]) == {"3.11", "3.12", "3.13"}
     steps = {step["name"]: step for step in audit["steps"]}
-    assert (
-        '--python "${{ matrix.python }}"'
-        in steps["Export dependencies for Python ${{ matrix.python }}"]["run"]
-    )
-    assert "pip-audit" in steps["Audit dependencies for Python ${{ matrix.python }}"]["run"]
+    export = steps["Export runtime and toolchain dependencies for Python ${{ matrix.python }}"][
+        "run"
+    ]
+    assert '--python "${{ matrix.python }}"' in export
+    assert "--all-groups --all-extras" in export
+    audit_run = steps["Audit runtime and toolchain dependencies for Python ${{ matrix.python }}"][
+        "run"
+    ]
+    assert audit_run.count("pip-audit") == 2
 
 
 def test_enterprise_governance_artifacts_exist():

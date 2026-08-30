@@ -41,7 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Minimum supported Python is now 3.11; EOL Python 3.9 and near-EOL Python 3.10
   were removed from the package contract and compatibility matrix.
 - Dependency auditing now resolves and scans the locked CLI and web dependency
-  graph independently on Python 3.11, 3.12 and 3.13 in CI and before release.
+  graph plus the complete test/build toolchain independently on Python 3.11,
+  3.12 and 3.13 in CI and before release.
+- Test and build tooling now require patched `pytest>=9.0.3` and
+  `setuptools==83.0.0` baselines.
 - Every external GitHub Action reference is pinned to a full commit SHA with a
   human-readable release comment, and checkout credentials are not persisted.
 
