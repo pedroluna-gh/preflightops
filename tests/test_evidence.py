@@ -25,7 +25,7 @@ from preflightops.evidence import (
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "tests" / "fixtures" / "evidence"
 SCHEMAS = ROOT / "schemas"
-NOW = dt.datetime(2026, 8, 28, 20, 0, tzinfo=dt.timezone.utc)
+NOW = dt.datetime(2026, 8, 28, 20, 0, tzinfo=dt.UTC)
 PROVENANCE = {
     "organization": "acme",
     "repository": "acme/payments-api",

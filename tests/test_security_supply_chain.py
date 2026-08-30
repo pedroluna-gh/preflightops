@@ -49,6 +49,7 @@ def test_security_workflow_is_least_privilege_and_fail_closed():
 def test_release_builds_once_and_attests_exact_bundle():
     workflow = _load("release.yml")
     job = workflow["jobs"]["build-attest-release"]
+    assert job["needs"] == "dependency-audit"
     assert job["environment"] == "release"
     assert job["permissions"] == {
         "contents": "write",
@@ -61,6 +62,18 @@ def test_release_builds_once_and_attests_exact_bundle():
     assert "actions/attest@" in text
     assert "sha256sum * > SHA256SUMS" in text
     assert "gh release create" in text
+
+
+def test_release_audits_every_supported_python_before_publish():
+    workflow = _load("release.yml")
+    audit = workflow["jobs"]["dependency-audit"]
+    assert set(audit["strategy"]["matrix"]["python"]) == {"3.11", "3.12", "3.13"}
+    steps = {step["name"]: step for step in audit["steps"]}
+    assert (
+        '--python "${{ matrix.python }}"'
+        in steps["Export dependencies for Python ${{ matrix.python }}"]["run"]
+    )
+    assert "pip-audit" in steps["Audit dependencies for Python ${{ matrix.python }}"]["run"]
 
 
 def test_enterprise_governance_artifacts_exist():
