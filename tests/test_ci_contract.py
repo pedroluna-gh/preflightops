@@ -98,4 +98,3 @@ def test_ci_exposes_stable_required_check_contract():
             "ACTION_CONTRACT_RESULT",
         )
     )
-
