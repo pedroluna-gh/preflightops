@@ -23,7 +23,7 @@ It runs as a **Streamlit web app** for interactive reviews and as a **CLI / GitH
 
 [![CI](https://github.com/pedroluna-gh/preflightops/actions/workflows/ci.yml/badge.svg)](https://github.com/pedroluna-gh/preflightops/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.9%2B-3776ab?logo=python&logoColor=white)](#requirements)
+[![Python](https://img.shields.io/badge/python-3.11%2B-3776ab?logo=python&logoColor=white)](#requirements)
 
 ![PreflightOps web app](docs/screenshots/app-overview.png)
 
@@ -120,7 +120,7 @@ pip install -e ".[app]"      # editable install with the web UI extras
 
 ### Requirements
 
-- Python 3.9+
+- Python 3.11+
 - Core dependencies: `pyyaml` and `cryptography` (Ed25519 authenticated
   evidence). The web UI extras add `streamlit` and `pandas`.
 

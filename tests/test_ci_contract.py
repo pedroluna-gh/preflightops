@@ -24,7 +24,6 @@ def test_ci_has_minimum_permissions_and_no_skipped_quality_steps():
         "Lint",
         "Type check",
         "Test with branch coverage",
-        "Audit runtime dependencies",
         "Build distributions",
         "Test clean wheel installation and CLI",
     } <= names
@@ -35,8 +34,20 @@ def test_ci_covers_declared_python_floor_and_current_versions():
     workflow = _load(CI_PATH)
     entries = workflow["jobs"]["compatibility"]["strategy"]["matrix"]["include"]
     linux_versions = {entry["python"] for entry in entries if entry["os"] == "ubuntu-24.04"}
-    assert linux_versions == {"3.9", "3.10", "3.11", "3.12", "3.13"}
+    assert linux_versions == {"3.11", "3.12", "3.13"}
     assert {entry["os"] for entry in entries} >= {"windows-2025", "macos-15"}
+
+
+def test_ci_audits_every_supported_python_version():
+    workflow = _load(CI_PATH)
+    audit = workflow["jobs"]["dependency-audit"]
+    assert set(audit["strategy"]["matrix"]["python"]) == {"3.11", "3.12", "3.13"}
+    steps = {step["name"]: step for step in audit["steps"]}
+    assert (
+        '--python "${{ matrix.python }}"'
+        in steps["Export dependencies for Python ${{ matrix.python }}"]["run"]
+    )
+    assert "pip-audit" in steps["Audit dependencies for Python ${{ matrix.python }}"]["run"]
 
 
 def test_ci_distinguishes_product_risk_from_pipeline_failure():
@@ -65,11 +76,21 @@ def test_ci_exposes_stable_required_check_contract():
     workflow = _load(CI_PATH)
     required = workflow["jobs"]["required"]
     assert required["name"] == "Required"
-    assert set(required["needs"]) == {"quality", "compatibility", "action-contract"}
+    assert set(required["needs"]) == {
+        "quality",
+        "compatibility",
+        "dependency-audit",
+        "action-contract",
+    }
     assert required["if"] == "${{ always() }}"
     step = required["steps"][0]
     assert step["name"] == "Verify required CI contracts"
     assert all(
         result in step["run"]
-        for result in ("QUALITY_RESULT", "COMPATIBILITY_RESULT", "ACTION_CONTRACT_RESULT")
+        for result in (
+            "QUALITY_RESULT",
+            "COMPATIBILITY_RESULT",
+            "DEPENDENCY_AUDIT_RESULT",
+            "ACTION_CONTRACT_RESULT",
+        )
     )

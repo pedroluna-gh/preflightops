@@ -53,13 +53,8 @@ jobs:
       - name: Test with branch coverage
         run: uv run pytest --cov=preflightops --cov-report=term-missing --cov-fail-under=85
 
-      - name: Export locked dependency sets
-        run: |
-          uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file .runtime-requirements.txt
-          uv export --locked --no-dev --extra app --no-emit-project --format requirements-txt --output-file .dependency-audit.txt
-
-      - name: Audit runtime dependencies
-        run: uv run pip-audit --requirement .dependency-audit.txt
+      - name: Export locked runtime dependencies
+        run: uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file .runtime-requirements.txt
 
       - name: Build distributions
         run: uv run python -m build --no-isolation
@@ -78,10 +73,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-24.04
-            python: "3.9"
-          - os: ubuntu-24.04
-            python: "3.10"
           - os: ubuntu-24.04
             python: "3.11"
           - os: ubuntu-24.04
@@ -115,6 +106,41 @@ jobs:
 
       - name: Run regression suite
         run: uv run --no-dev pytest
+
+  dependency-audit:
+    name: Dependency audit (Python ${{ matrix.python }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install locked audit tooling
+        run: uv sync --locked --group quality --no-install-project
+
+      - name: Export dependencies for Python ${{ matrix.python }}
+        run: uv export --python "${{ matrix.python }}" --locked --no-dev --extra app --no-emit-project --format requirements-txt --output-file ".dependency-audit-${{ matrix.python }}.txt"
+
+      - name: Audit dependencies for Python ${{ matrix.python }}
+        run: uv run pip-audit --requirement ".dependency-audit-${{ matrix.python }}.txt"
 
   action-contract:
     name: Composite action contract
@@ -169,7 +195,7 @@ jobs:
 
   required:
     name: Required
-    needs: [quality, compatibility, action-contract]
+    needs: [quality, compatibility, dependency-audit, action-contract]
     if: ${{ always() }}
     runs-on: ubuntu-24.04
     timeout-minutes: 5
@@ -178,9 +204,11 @@ jobs:
         env:
           QUALITY_RESULT: ${{ needs.quality.result }}
           COMPATIBILITY_RESULT: ${{ needs.compatibility.result }}
+          DEPENDENCY_AUDIT_RESULT: ${{ needs.dependency-audit.result }}
           ACTION_CONTRACT_RESULT: ${{ needs.action-contract.result }}
         shell: bash
         run: |
           test "$QUALITY_RESULT" = "success"
           test "$COMPATIBILITY_RESULT" = "success"
+          test "$DEPENDENCY_AUDIT_RESULT" = "success"
           test "$ACTION_CONTRACT_RESULT" = "success"

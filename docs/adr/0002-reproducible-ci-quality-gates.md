@@ -49,8 +49,8 @@ cannot be added solely to satisfy the threshold.
   the product action contract.
 - Dependency updates must regenerate and review `uv.lock`.
 - CI runtime increases because the declared compatibility claim is now tested.
-- Python 3.9 cannot run the quality toolchain itself; it remains covered as a
-  runtime target in the compatibility job.
+- Python compatibility follows the active support decision recorded in ADR 0003;
+  dependency auditing is mandatory for every supported interpreter.
 - Enterprise provenance and organizational policy enforcement remain future,
   separately reviewed work.
 

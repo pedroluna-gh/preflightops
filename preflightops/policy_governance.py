@@ -15,7 +15,7 @@ import json
 import os
 import sys
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 
@@ -58,14 +58,14 @@ def _parse_time(value: Any, field: str) -> datetime:
         raise ValueError(f"{field} must be an RFC 3339 timestamp.") from exc
     if parsed.tzinfo is None:
         raise ValueError(f"{field} must include a timezone.")
-    return parsed.astimezone(timezone.utc)
+    return parsed.astimezone(UTC)
 
 
 def _now(value: datetime | None = None) -> datetime:
-    current = value or datetime.now(timezone.utc)
+    current = value or datetime.now(UTC)
     if current.tzinfo is None:
         raise ValueError("Validation time must include a timezone.")
-    return current.astimezone(timezone.utc)
+    return current.astimezone(UTC)
 
 
 def _load_document(path: str | Path) -> dict:

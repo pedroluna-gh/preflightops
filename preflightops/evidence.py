@@ -87,14 +87,14 @@ def _normalize_digest(value: str) -> str:
 
 
 def _utc_now() -> dt.datetime:
-    return dt.datetime.now(dt.timezone.utc)
+    return dt.datetime.now(dt.UTC)
 
 
 def _timestamp(value: dt.datetime | None) -> str:
     moment = value or _utc_now()
     if moment.tzinfo is None:
         raise EvidenceError("Evidence timestamps must include a timezone.")
-    return moment.astimezone(dt.timezone.utc).isoformat().replace("+00:00", "Z")
+    return moment.astimezone(dt.UTC).isoformat().replace("+00:00", "Z")
 
 
 def _parse_timestamp(value: Any) -> dt.datetime:
@@ -106,7 +106,7 @@ def _parse_timestamp(value: Any) -> dt.datetime:
         raise EvidenceError("Evidence generated_at is not a valid RFC 3339 timestamp.") from exc
     if parsed.tzinfo is None:
         raise EvidenceError("Evidence generated_at must include a timezone.")
-    return parsed.astimezone(dt.timezone.utc)
+    return parsed.astimezone(dt.UTC)
 
 
 def _load_document(path: str | Path) -> Any:
@@ -448,7 +448,7 @@ def verify_evidence_v2(
             current = now or _utc_now()
             if current.tzinfo is None:
                 raise EvidenceError("Verification time must include a timezone.")
-            age = (current.astimezone(dt.timezone.utc) - generated).total_seconds()
+            age = (current.astimezone(dt.UTC) - generated).total_seconds()
             checks["freshness"] = -300 <= age <= max_age_seconds
             if not checks["freshness"]:
                 errors.append("Evidence is outside the accepted freshness window.")

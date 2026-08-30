@@ -2,7 +2,7 @@
 
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 import yaml
 
@@ -170,9 +170,9 @@ def _validate_policy(policy: Any) -> dict:
 
 
 def load_policy_pack(
-    value: Optional[str] = None,
+    value: str | None = None,
     *,
-    public_key: Optional[str] = None,
+    public_key: str | None = None,
     for_assessment: bool = True,
 ) -> dict:
     """Load a built-in policy by name or a versioned YAML file."""

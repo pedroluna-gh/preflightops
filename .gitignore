@@ -19,8 +19,9 @@ htmlcov/
 .quality-venv/
 .uv-cache/
 .pip-audit-cache/
+.package-security-check/
 .runtime-requirements.txt
-.dependency-audit.txt
+.dependency-audit*.txt
 .tox/
 .nox/
 

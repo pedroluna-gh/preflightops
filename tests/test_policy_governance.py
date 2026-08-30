@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 import yaml
@@ -23,7 +23,7 @@ from preflightops.policy_governance import (
     validate_waiver,
 )
 
-NOW = datetime(2026, 8, 28, 12, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 8, 28, 12, 0, tzinfo=UTC)
 
 
 def _keys() -> tuple[str, str]:

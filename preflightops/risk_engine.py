@@ -7,8 +7,6 @@ into a single 0-100 risk score with a level, recommendation, triggered rules,
 and a list of missing operational controls.
 """
 
-from typing import Optional
-
 from .monitoring import validate_monitoring_evidence
 from .policy import load_policy_pack, resolve_policy
 from .scanners import scan_kubernetes, scan_terraform, scan_terraform_json
@@ -51,7 +49,7 @@ RECOMMENDATIONS = {
 }
 
 
-def score_to_level(score: int, thresholds: Optional[dict] = None) -> str:
+def score_to_level(score: int, thresholds: dict | None = None) -> str:
     """Map a numeric score to a risk level label."""
     if thresholds:
         if score <= thresholds["low"]:
