@@ -14,6 +14,7 @@ test, packaging, or dependency failures.
 | Dependency audit (matrix) | Audit both the locked runtime/web graph and the complete test/build toolchain independently for Python 3.11, 3.12 and 3.13 | A supported runtime or delivery tool resolves a known vulnerability |
 | Composite action contract | LOW passes; CRITICAL deliberately trips only the configured risk threshold | The public action contract regressed |
 | Evidence contract | DSSE/Ed25519 signature, schemas, policy/input/identity pins, tamper and replay rejection | Authenticated evidence is unsafe or incompatible |
+| ClusterFuzzLite | Coverage-guided fuzzing of URL, mapping and monitoring trust boundaries on internal PRs, main and schedule | A parser or validator can crash on untrusted input |
 
 Security controls run in a separate `Security` workflow so their permissions
 remain isolated: CodeQL on pushes/pull requests/schedule, and dependency review
@@ -21,6 +22,11 @@ on pull requests. OpenSSF Scorecard continuously evaluates repository and
 supply-chain posture. Enterprise rulesets require `CI / Required` and
 `Security / CodeQL`; dependency review is required whenever the GitHub plan and
 repository settings support it.
+
+ClusterFuzzLite runs without ServiceNow, Jira, monitoring-provider or cloud
+credentials. Pull-request fuzzing is restricted to branches in this repository;
+forks remain untrusted and do not receive a write-capable security token. Scheduled
+batch runs extend the corpus search while PR runs stay bounded to three minutes.
 
 No mandatory quality step uses `continue-on-error`. The only tolerated failure
 is the deliberately CRITICAL action-contract scenario, immediately followed by
@@ -95,4 +101,3 @@ Repository protection requires the stable `CI / Required` check. This fan-in job
 Treat required check names as a public release-management API. A rename or replacement must use a two-phase migration: publish and validate the new check first, then update the ruleset, and remove the previous requirement only after every open pull request has a reported replacement check. Never leave a ruleset waiting for a check that no active workflow emits.
 
 `tests/test_ci_contract.py` enforces the stable job name, dependencies, always-run behavior, and fan-in assertions.
-

@@ -80,6 +80,39 @@ def test_release_audits_every_supported_python_before_publish():
     assert audit_run.count("pip-audit") == 2
 
 
+def test_fuzzing_workflow_is_bounded_pinned_and_least_privilege():
+    workflow = _load("fuzzing.yml")
+    job = workflow["jobs"]["clusterfuzzlite"]
+    assert workflow["permissions"] == "read-all"
+    assert job["permissions"] == {
+        "contents": "read",
+        "security-events": "write",
+    }
+    assert job["timeout-minutes"] == "25"
+    assert "head.repo.full_name == github.repository" in job["if"]
+    actions = [step["uses"] for step in job["steps"]]
+    assert all(FULL_SHA.fullmatch(action.rsplit("@", 1)[1]) for action in actions)
+    run = next(step for step in job["steps"] if step["name"] == "Run fuzz targets")
+    assert run["with"]["output-sarif"] == "true"
+    assert run["with"]["mode"] == (
+        "${{ github.event_name == 'pull_request' && 'code-change' || 'batch' }}"
+    )
+
+
+def test_clusterfuzzlite_python_contract_exists():
+    project = yaml.safe_load((ROOT / ".clusterfuzzlite" / "project.yaml").read_text())
+    dockerfile = (ROOT / ".clusterfuzzlite" / "Dockerfile").read_text()
+    build = (ROOT / ".clusterfuzzlite" / "build.sh").read_text()
+    target = (ROOT / "fuzz" / "preflightops_fuzzer.py").read_text()
+    assert project == {"language": "python"}
+    assert "base-builder-python" in dockerfile
+    assert "pyinstaller" in build
+    assert "atheris.Setup" in target
+    assert "validate_instance_url" in target
+    assert "load_mapping" in target
+    assert "validate_monitoring_evidence" in target
+
+
 def test_enterprise_governance_artifacts_exist():
     required = [
         ROOT / ".github" / "CODEOWNERS",
