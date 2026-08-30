@@ -45,6 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   3.12 and 3.13 in CI and before release.
 - Test and build tooling now require patched `pytest>=9.0.3` and
   `setuptools==83.0.0` baselines.
+- ClusterFuzzLite now exercises URL, mapping and observability trust boundaries
+  on internal pull requests, main and a bounded weekly schedule.
+- CodeQL URL validation coverage now uses an exact output-line assertion instead
+  of an ambiguous URL substring check.
 - Every external GitHub Action reference is pinned to a full commit SHA with a
   human-readable release comment, and checkout credentials are not persisted.
 
