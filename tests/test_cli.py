@@ -374,7 +374,9 @@ class TestLivePushConfirmation:
         )
 
         out = capsys.readouterr().out
-        assert "https://org.atlassian.net" in out
+        assert any(
+            line == "  Target:         https://org.atlassian.net" for line in out.splitlines()
+        )
         # The deterministic correlation id is shown in the preview.
         assert "Correlation id:" in out
         assert "updated if it exists" in out
