@@ -14,12 +14,15 @@ ENV/
 
 # Test / coverage
 .pytest_cache/
+.pytest-cache-*/
+.pytest-run-*/
 .coverage
 htmlcov/
 .quality-venv/
 .uv-cache/
 .pip-audit-cache/
 .package-security-check/
+.tooling/
 .runtime-requirements.txt
 .dependency-audit*.txt
 .tox/
