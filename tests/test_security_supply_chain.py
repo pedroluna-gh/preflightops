@@ -98,4 +98,3 @@ def test_cab_boundary_is_explicit_in_governance():
     text = (ROOT / "docs" / "ENTERPRISE_GOVERNANCE.md").read_text(encoding="utf-8")
     for prohibited in ("approval", "assignment", "scheduling", "state transitions", "closure"):
         assert prohibited in text
-
