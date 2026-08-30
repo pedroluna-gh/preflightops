@@ -314,7 +314,7 @@ def build_evidence(
             hash_input["provenance"].pop(volatile, None)
     canonical = json.dumps(hash_input, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     semantic["evidence_hash"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-    semantic["generated_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
+    semantic["generated_at"] = dt.datetime.now(dt.UTC).isoformat()
     return semantic
 
 

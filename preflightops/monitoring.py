@@ -4,7 +4,7 @@ The validator deliberately uses configuration only. It never calls provider
 APIs or requires secrets, making it safe for pull requests from forks.
 """
 
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 SUPPORTED_PROVIDERS = {
@@ -35,7 +35,7 @@ def _finding(rule_id: str, description: str, score: int, severity: str = "medium
 
 
 def validate_monitoring_evidence(
-    change: dict, inventory: Any = None, policy: Optional[dict] = None
+    change: dict, inventory: Any = None, policy: dict | None = None
 ) -> tuple[list[dict], dict]:
     """Validate dashboard links and optional monitor inventory references."""
     plan = change.get("monitoring_plan") or {}
