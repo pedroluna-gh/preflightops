@@ -1,6 +1,13 @@
 #!/bin/bash -eu
 
-pip3 install --no-cache-dir .
+python3 -m pip install \
+  --no-cache-dir \
+  --require-hashes \
+  --requirement "$SRC/preflightops/.clusterfuzzlite/requirements.lock"
+
+# Import the checked-out project directly. The only packages downloaded during
+# the build are the hash-pinned runtime dependencies above.
+export PYTHONPATH="$SRC/preflightops${PYTHONPATH:+:$PYTHONPATH}"
 
 for fuzzer in "$SRC"/preflightops/fuzz/*_fuzzer.py; do
   fuzzer_basename=$(basename -s .py "$fuzzer")
@@ -16,4 +23,3 @@ exec "\$this_dir/$fuzzer_package" "\$@"
 EOF
   chmod +x "$OUT/$fuzzer_basename"
 done
-
