@@ -11,7 +11,7 @@ test, packaging, or dependency failures.
 | --- | --- | --- |
 | Quality gates | Frozen lock, formatting, lint, types, coverage, build and clean install | The change is not releasable |
 | Compatibility (matrix) | Full regression suite on Python 3.11-3.13 and smoke coverage on Linux, Windows and macOS | A declared platform is incompatible |
-| Dependency audit (matrix) | Audit the locked CLI and web dependency graph independently for Python 3.11, 3.12 and 3.13 | A supported runtime resolves a known vulnerability |
+| Dependency audit (matrix) | Audit both the locked runtime/web graph and the complete test/build toolchain independently for Python 3.11, 3.12 and 3.13 | A supported runtime or delivery tool resolves a known vulnerability |
 | Composite action contract | LOW passes; CRITICAL deliberately trips only the configured risk threshold | The public action contract regressed |
 | Evidence contract | DSSE/Ed25519 signature, schemas, policy/input/identity pins, tamper and replay rejection | Authenticated evidence is unsafe or incompatible |
 
@@ -37,12 +37,12 @@ uv run ruff check .
 uv run mypy preflightops
 uv run pytest --cov=preflightops --cov-report=term-missing --cov-fail-under=85
 uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file .runtime-requirements.txt
-uv export --python 3.11 --locked --no-dev --extra app --no-emit-project --format requirements-txt --output-file .dependency-audit-3.11.txt
-uv run pip-audit --requirement .dependency-audit-3.11.txt
-uv export --python 3.12 --locked --no-dev --extra app --no-emit-project --format requirements-txt --output-file .dependency-audit-3.12.txt
-uv run pip-audit --requirement .dependency-audit-3.12.txt
-uv export --python 3.13 --locked --no-dev --extra app --no-emit-project --format requirements-txt --output-file .dependency-audit-3.13.txt
-uv run pip-audit --requirement .dependency-audit-3.13.txt
+for py in 3.11 3.12 3.13; do
+  uv export --python "$py" --locked --no-dev --extra app --no-emit-project --format requirements-txt --output-file ".dependency-audit-runtime-$py.txt"
+  uv export --python "$py" --locked --all-groups --all-extras --no-emit-project --format requirements-txt --output-file ".dependency-audit-toolchain-$py.txt"
+  uv tool run --python "$py" pip-audit --requirement ".dependency-audit-runtime-$py.txt"
+  uv tool run --python "$py" pip-audit --requirement ".dependency-audit-toolchain-$py.txt"
+done
 uv run python -m build --no-isolation
 uv run twine check dist/*
 uv run python scripts/package_smoke.py --requirements .runtime-requirements.txt dist
@@ -59,10 +59,11 @@ environment and run `uv sync --locked --all-extras --no-dev` followed by
 ## Dependency and false-positive policy
 
 - `uv.lock` is authoritative. CI uses frozen resolution and fails on drift.
-- Runtime and optional application dependencies are audited from an interpreter-
-  specific export of that lockfile for every supported Python version; the
-  editable project itself is intentionally omitted. The clean wheel smoke installs
-  only mandatory runtime dependencies, matching the CLI.
+- Runtime/application dependencies and the complete test/build toolchain are
+  audited from separate interpreter-specific exports for every supported Python
+  version; the editable project itself is intentionally omitted. This prevents
+  a safe runtime graph from masking a vulnerable delivery dependency. The clean
+  wheel smoke installs only mandatory runtime dependencies, matching the CLI.
 - A vulnerability finding fails the gate. Suppression requires a time-bounded,
   reviewed entry that names the advisory, affected path, compensating control,
   owner and expiry date. There are currently no suppressions.
@@ -94,3 +95,4 @@ Repository protection requires the stable `CI / Required` check. This fan-in job
 Treat required check names as a public release-management API. A rename or replacement must use a two-phase migration: publish and validate the new check first, then update the ruleset, and remove the previous requirement only after every open pull request has a reported replacement check. Never leave a ruleset waiting for a check that no active workflow emits.
 
 `tests/test_ci_contract.py` enforces the stable job name, dependencies, always-run behavior, and fan-in assertions.
+
