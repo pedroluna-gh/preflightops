@@ -103,9 +103,15 @@ def test_clusterfuzzlite_python_contract_exists():
     project = yaml.safe_load((ROOT / ".clusterfuzzlite" / "project.yaml").read_text())
     dockerfile = (ROOT / ".clusterfuzzlite" / "Dockerfile").read_text()
     build = (ROOT / ".clusterfuzzlite" / "build.sh").read_text()
+    requirements = ROOT / ".clusterfuzzlite" / "requirements.lock"
     target = (ROOT / "fuzz" / "preflightops_fuzzer.py").read_text()
     assert project == {"language": "python"}
-    assert "base-builder-python" in dockerfile
+    assert re.search(r"base-builder-python@sha256:[0-9a-f]{64}", dockerfile)
+    assert requirements.is_file()
+    assert "--require-hashes" in build
+    assert "requirements.lock" in build
+    assert "pip3 install --no-cache-dir ." not in build
+    assert "--hash=sha256:" in requirements.read_text(encoding="utf-8")
     assert "pyinstaller" in build
     assert "atheris.Setup" in target
     assert "validate_instance_url" in target
