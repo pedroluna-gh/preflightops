@@ -43,11 +43,15 @@ def test_ci_audits_every_supported_python_version():
     audit = workflow["jobs"]["dependency-audit"]
     assert set(audit["strategy"]["matrix"]["python"]) == {"3.11", "3.12", "3.13"}
     steps = {step["name"]: step for step in audit["steps"]}
-    assert (
-        '--python "${{ matrix.python }}"'
-        in steps["Export dependencies for Python ${{ matrix.python }}"]["run"]
-    )
-    assert "pip-audit" in steps["Audit dependencies for Python ${{ matrix.python }}"]["run"]
+    export = steps["Export runtime and toolchain dependencies for Python ${{ matrix.python }}"][
+        "run"
+    ]
+    assert '--python "${{ matrix.python }}"' in export
+    assert "--all-groups --all-extras" in export
+    audit_run = steps["Audit runtime and toolchain dependencies for Python ${{ matrix.python }}"][
+        "run"
+    ]
+    assert audit_run.count("pip-audit") == 2
 
 
 def test_ci_distinguishes_product_risk_from_pipeline_failure():
@@ -94,3 +98,4 @@ def test_ci_exposes_stable_required_check_contract():
             "ACTION_CONTRACT_RESULT",
         )
     )
+
