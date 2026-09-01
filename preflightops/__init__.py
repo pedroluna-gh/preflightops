@@ -1,6 +1,19 @@
 """PreflightOps: pre-deployment risk assessment for SRE and Platform teams."""
 
 from ._version import __version__ as __version__
+from .assessment import (
+    AssessmentContext,
+    AssessmentContractError,
+    ControlObservation,
+    HumanDecision,
+    InputDigest,
+    PolicyIdentity,
+    TrustKernel,
+    WaiverReference,
+    adapt_legacy_assessment,
+    serialize_assessment_v1,
+    validate_assessment_v1,
+)
 from .changed_files import classify_changed_files, load_changed_files
 from .evidence import (
     EvidenceError,
@@ -42,6 +55,17 @@ from .validators import (
 )
 
 __all__ = [
+    "AssessmentContext",
+    "AssessmentContractError",
+    "ControlObservation",
+    "HumanDecision",
+    "InputDigest",
+    "PolicyIdentity",
+    "TrustKernel",
+    "WaiverReference",
+    "adapt_legacy_assessment",
+    "serialize_assessment_v1",
+    "validate_assessment_v1",
     "assess_risk",
     "find_service",
     "RISK_LEVELS",
@@ -75,3 +99,4 @@ __all__ = [
     "generate_evidence_v2",
     "verify_evidence_v2",
 ]
+
