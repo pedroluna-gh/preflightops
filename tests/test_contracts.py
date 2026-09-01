@@ -120,4 +120,3 @@ def test_security_policy_acknowledges_opt_in_network_calls():
     policy = (ROOT / "SECURITY.md").read_text(encoding="utf-8")
     assert "calls ServiceNow or Jira only when" in policy
     assert "does not call external APIs;" not in policy
-
