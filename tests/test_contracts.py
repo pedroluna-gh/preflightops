@@ -23,6 +23,11 @@ def _schema(name):
     return json.loads((SCHEMAS / name).read_text(encoding="utf-8"))
 
 
+def test_assessment_golden_contract_forces_lf_line_endings():
+    attributes = (ROOT / ".gitattributes").read_text(encoding="utf-8")
+    assert "tests/fixtures/assessment/*.golden.json text eol=lf" in attributes
+
+
 @pytest.mark.parametrize(
     "name",
     [
