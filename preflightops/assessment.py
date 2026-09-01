@@ -1213,4 +1213,3 @@ def serialize_assessment_v1(contract: Mapping[str, Any]) -> bytes:
 
     validate_assessment_v1(contract)
     return canonical_json(dict(contract)) + b"\n"
-
