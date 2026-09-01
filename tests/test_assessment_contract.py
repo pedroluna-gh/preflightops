@@ -586,4 +586,3 @@ def test_strict_validator_rejects_cross_field_invariant_mutations(mutation, matc
     mutation(contract)
     with pytest.raises(AssessmentContractError, match=match):
         validate_assessment_v1(contract)
-
