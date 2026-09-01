@@ -23,6 +23,11 @@ def _schema(name):
     return json.loads((SCHEMAS / name).read_text(encoding="utf-8"))
 
 
+def test_assessment_golden_contract_forces_lf_line_endings():
+    attributes = (ROOT / ".gitattributes").read_text(encoding="utf-8")
+    assert "tests/fixtures/assessment/*.golden.json text eol=lf" in attributes
+
+
 @pytest.mark.parametrize(
     "name",
     [
@@ -38,6 +43,7 @@ def _schema(name):
         "evidence-dsse-v1.schema.json",
         "policy-bundle-v2.schema.json",
         "waiver-contract-v1.schema.json",
+        "assessment-contract-v1.schema.json",
     ],
 )
 def test_schemas_are_valid_draft_2020_12(name):

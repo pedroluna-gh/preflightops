@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Deterministic Assessment Contract v1 and offline Trust Kernel with immutable
+  models, strict validation, canonical serialization, reproducible IDs/hashes,
+  independent risk/confidence scoring, and an explicit human-decision boundary.
+- Additive risk-report-v1 adapter, golden/schema/adversarial compatibility tests,
+  and documented privacy, migration, invariants, and rollback controls.
+
 - Signed hierarchical Policy Bundle v2 with effective dates, ownership,
   mandatory non-reducible controls, deterministic context overlays, lineage,
   explicit failure modes, lint, diff, simulation, signing and rollback.
@@ -205,3 +211,4 @@ Initial public release.
 [0.3.0]: https://github.com/pedroluna-gh/preflightops/compare/v0.1.2...v0.3.0
 [0.1.2]: https://github.com/pedroluna-gh/preflightops/compare/v0.1.1...v0.1.2
 [0.1.0]: https://github.com/pedroluna-gh/preflightops/releases/tag/v0.1.0
+

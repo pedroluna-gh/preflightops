@@ -19,6 +19,13 @@ trust pin; unsigned drafts are accepted only by lint/diff/simulation. Waiver
 Contract v1 adds annotations and a decision record but never changes the risk
 score, the CLI critical-risk exit code, or the Action `fail-on` result.
 
+Assessment Contract v1 is additive. `adapt_legacy_assessment()` consumes but
+does not mutate `risk-report-v1`; the legacy JSON, CLI, Action outputs,
+ServiceNow evidence, and Evidence Contract v2 remain available. The assessment
+adapter has its own version and records `legacy_output_preserved: true`.
+Consumers may migrate independently and roll back by disabling only the new
+contract path.
+
 ## Compatible changes
 
 Patch or minor releases may:
@@ -57,3 +64,4 @@ A vulnerable interface may be disabled sooner when continued compatibility
 would expose credentials, sensitive evidence, or unsafe remote writes. The
 release must document the security reason, affected versions, mitigation, and
 rollback limitations.
+
