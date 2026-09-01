@@ -84,7 +84,11 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 `prepare_servicenow_payload`, `build_servicenow_evidence`,
 `load_servicenow_mapping`, `validate_servicenow_instance_url`,
 `correlation_id`, `IntegrationError`, `EvidenceError`, `build_statement_v2`,
-`generate_evidence_v2`, and `verify_evidence_v2`.
+`generate_evidence_v2`, `verify_evidence_v2`, `AssessmentContext`,
+`AssessmentContractError`, `ControlObservation`, `HumanDecision`,
+`InputDigest`, `PolicyIdentity`, `TrustKernel`, `WaiverReference`,
+`adapt_legacy_assessment`, `serialize_assessment_v1`, and
+`validate_assessment_v1`.
 
 `preflightops.__version__` is also public. It is sourced from
 `preflightops._version` and drives package metadata, CLI output, and reports.
@@ -103,10 +107,13 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 - [`evidence-dsse-v1.schema.json`](../schemas/evidence-dsse-v1.schema.json)
 - [`policy-bundle-v2.schema.json`](../schemas/policy-bundle-v2.schema.json)
 - [`waiver-contract-v1.schema.json`](../schemas/waiver-contract-v1.schema.json)
+- [`assessment-contract-v1.schema.json`](../schemas/assessment-contract-v1.schema.json)
 
-Schemas intentionally allow additional properties so existing organization-
-specific metadata remains valid. Fields documented as recommended rather than
-required are not promoted to schema requirements in v1.
+Legacy schemas intentionally allow additional properties so existing
+organization-specific metadata remains valid. Assessment Contract v1 is strict
+and rejects unknown fields because its integrity digest and audit semantics must
+not vary by consumer. Fields documented as recommended rather than required are
+not promoted to requirements in legacy v1 input schemas.
 
 ## GitHub Action
 
@@ -169,5 +176,10 @@ Evidence v2 generation and verification are offline. See
 [`EVIDENCE_CONTRACT_V2.md`](EVIDENCE_CONTRACT_V2.md) for the trust model,
 migration window and fail-closed verification contract.
 
+Assessment Contract v1 and its Trust Kernel are also offline and additive. See
+[`ASSESSMENT_CONTRACT_V1.md`](ASSESSMENT_CONTRACT_V1.md) for deterministic
+identity, risk/confidence separation, privacy, migration, and rollback.
+
 Policy signing, diff/simulation, waiver verification, expiry and rollback are
 defined in [`POLICY_GOVERNANCE_V2.md`](POLICY_GOVERNANCE_V2.md).
+
