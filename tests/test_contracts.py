@@ -38,6 +38,7 @@ def _schema(name):
         "evidence-dsse-v1.schema.json",
         "policy-bundle-v2.schema.json",
         "waiver-contract-v1.schema.json",
+        "assessment-contract-v1.schema.json",
     ],
 )
 def test_schemas_are_valid_draft_2020_12(name):
@@ -119,3 +120,4 @@ def test_security_policy_acknowledges_opt_in_network_calls():
     policy = (ROOT / "SECURITY.md").read_text(encoding="utf-8")
     assert "calls ServiceNow or Jira only when" in policy
     assert "does not call external APIs;" not in policy
+
