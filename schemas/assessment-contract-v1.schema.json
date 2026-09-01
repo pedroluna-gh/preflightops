@@ -1,0 +1,382 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pedroluna-gh/preflightops/schemas/assessment-contract-v1.schema.json",
+  "title": "PreflightOps Assessment Contract v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "assessment_id",
+    "change_id",
+    "timestamp",
+    "context",
+    "producer",
+    "policy",
+    "inputs",
+    "controls",
+    "evidence",
+    "scores",
+    "verdict",
+    "blockers",
+    "warnings",
+    "passed_controls",
+    "errors",
+    "waivers",
+    "evidence_links",
+    "recommendation",
+    "human_decision",
+    "compatibility",
+    "data",
+    "integrity"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "assessment_id": {
+      "type": "string",
+      "pattern": "^urn:preflightops:assessment:sha256:[0-9a-f]{64}$"
+    },
+    "change_id": {"$ref": "#/$defs/identifier"},
+    "timestamp": {"$ref": "#/$defs/timestamp"},
+    "context": {
+      "type": "object",
+      "required": ["actor", "run", "repository", "pull_request", "commit", "pipeline"],
+      "properties": {
+        "actor": {
+          "type": "object",
+          "required": ["id", "type"],
+          "properties": {
+            "id": {"$ref": "#/$defs/identifier"},
+            "type": {"enum": ["human", "service", "automation", "unknown"]}
+          },
+          "additionalProperties": false
+        },
+        "run": {
+          "type": "object",
+          "required": ["id", "attempt"],
+          "properties": {
+            "id": {"$ref": "#/$defs/identifier"},
+            "attempt": {"type": "integer", "minimum": 1}
+          },
+          "additionalProperties": false
+        },
+        "repository": {"type": "string", "minLength": 1, "maxLength": 512},
+        "pull_request": {"type": ["string", "null"], "maxLength": 128},
+        "commit": {"type": "string", "minLength": 1, "maxLength": 128},
+        "pipeline": {
+          "type": "object",
+          "required": ["name", "url"],
+          "properties": {
+            "name": {"type": "string", "minLength": 1, "maxLength": 256},
+            "url": {"oneOf": [{"$ref": "#/$defs/httpsUrl"}, {"type": "null"}]}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "producer": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": {"const": "PreflightOps"},
+        "version": {"type": "string", "minLength": 1, "maxLength": 128}
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "required": ["name", "version", "hash"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1, "maxLength": 256},
+        "version": {"type": "string", "minLength": 1, "maxLength": 128},
+        "hash": {"$ref": "#/$defs/hash"}
+      },
+      "additionalProperties": false
+    },
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "hash"],
+        "properties": {
+          "name": {"$ref": "#/$defs/identifier"},
+          "hash": {
+            "type": "object",
+            "required": ["algorithm", "value", "profile"],
+            "properties": {
+              "algorithm": {"const": "sha256"},
+              "value": {"$ref": "#/$defs/sha256"},
+              "profile": {"const": "caller-supplied-sha256-v1"}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "controls": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "execution_id",
+          "control_id",
+          "status",
+          "risk_points",
+          "summary",
+          "source",
+          "evidence_ids"
+        ],
+        "properties": {
+          "execution_id": {
+            "type": "string",
+            "pattern": "^urn:preflightops:control:sha256:[0-9a-f]{64}$"
+          },
+          "control_id": {"$ref": "#/$defs/identifier"},
+          "status": {"enum": ["PASS", "FAIL", "ERROR", "UNKNOWN"]},
+          "risk_points": {"type": "integer", "minimum": 0},
+          "summary": {"type": "string", "minLength": 1, "maxLength": 512},
+          "source": {"type": "string", "minLength": 1, "maxLength": 256},
+          "evidence_ids": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^urn:preflightops:evidence:sha256:[0-9a-f]{64}$"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "evidence_id",
+          "control_id",
+          "kind",
+          "source",
+          "collected_at",
+          "valid_until",
+          "freshness",
+          "hash",
+          "links"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "pattern": "^urn:preflightops:evidence:sha256:[0-9a-f]{64}$"
+          },
+          "control_id": {"$ref": "#/$defs/identifier"},
+          "kind": {"$ref": "#/$defs/identifier"},
+          "source": {"type": "string", "minLength": 1, "maxLength": 256},
+          "collected_at": {"$ref": "#/$defs/timestamp"},
+          "valid_until": {"oneOf": [{"$ref": "#/$defs/timestamp"}, {"type": "null"}]},
+          "freshness": {"enum": ["FRESH", "STALE", "UNKNOWN"]},
+          "hash": {"$ref": "#/$defs/hash"},
+          "links": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"$ref": "#/$defs/httpsUrl"}
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "scores": {
+      "type": "object",
+      "required": ["risk", "confidence"],
+      "properties": {
+        "risk": {
+          "type": "object",
+          "required": ["value", "level"],
+          "properties": {
+            "value": {"type": "integer", "minimum": 0, "maximum": 100},
+            "level": {"enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]}
+          },
+          "additionalProperties": false
+        },
+        "confidence": {
+          "type": "object",
+          "required": ["value", "level", "basis"],
+          "properties": {
+            "value": {"type": "integer", "minimum": 0, "maximum": 100},
+            "level": {"enum": ["LOW", "MEDIUM", "HIGH"]},
+            "basis": {"const": "fresh-digest-pinned-control-observations-v1"}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "verdict": {
+      "enum": ["BLOCK", "INDETERMINATE", "READY_FOR_HUMAN_REVIEW", "REVIEW_REQUIRED"]
+    },
+    "blockers": {"$ref": "#/$defs/issues"},
+    "warnings": {"$ref": "#/$defs/issues"},
+    "passed_controls": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/identifier"}
+    },
+    "errors": {"$ref": "#/$defs/issues"},
+    "waivers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "waiver_id",
+          "hash",
+          "policy_hash",
+          "control_ids",
+          "status",
+          "valid_until",
+          "reason_code",
+          "evidence_links"
+        ],
+        "properties": {
+          "waiver_id": {"$ref": "#/$defs/identifier"},
+          "hash": {"$ref": "#/$defs/hash"},
+          "policy_hash": {"$ref": "#/$defs/hash"},
+          "control_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"$ref": "#/$defs/identifier"}
+          },
+          "status": {"enum": ["VERIFIED", "EXPIRED", "REJECTED"]},
+          "valid_until": {"$ref": "#/$defs/timestamp"},
+          "reason_code": {"$ref": "#/$defs/identifier"},
+          "evidence_links": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"$ref": "#/$defs/httpsUrl"}
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "evidence_links": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/httpsUrl"}
+    },
+    "recommendation": {
+      "type": "object",
+      "required": ["action", "summary", "basis", "grants_approval"],
+      "properties": {
+        "action": {
+          "enum": ["BLOCK", "DO_NOT_PROCEED", "PROCEED", "PROCEED_WITH_CAUTION", "REVIEW"]
+        },
+        "summary": {"type": "string", "minLength": 1, "maxLength": 1024},
+        "basis": {"const": "technical_only"},
+        "grants_approval": {"const": false}
+      },
+      "additionalProperties": false
+    },
+    "human_decision": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["status", "decision", "actor_id", "decided_at", "rationale_code", "authority"],
+          "properties": {
+            "status": {"const": "NOT_RECORDED"},
+            "decision": {"type": "null"},
+            "actor_id": {"type": "null"},
+            "decided_at": {"type": "null"},
+            "rationale_code": {"type": "null"},
+            "authority": {"const": "external_cab_or_change_management"}
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["status", "decision", "actor_id", "decided_at", "rationale_code", "authority"],
+          "properties": {
+            "status": {"const": "RECORDED"},
+            "decision": {"enum": ["APPROVE", "REJECT", "DEFER"]},
+            "actor_id": {"$ref": "#/$defs/identifier"},
+            "decided_at": {"$ref": "#/$defs/timestamp"},
+            "rationale_code": {"$ref": "#/$defs/identifier"},
+            "authority": {"const": "external_cab_or_change_management"}
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "compatibility": {
+      "type": "object",
+      "required": ["source_contract", "adapter_version", "legacy_output_preserved"],
+      "properties": {
+        "source_contract": {"$ref": "#/$defs/identifier"},
+        "adapter_version": {"const": "1.0"},
+        "legacy_output_preserved": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "data": {
+      "type": "object",
+      "required": ["classification", "content_embedded", "redaction_profile", "input_hash_profile"],
+      "properties": {
+        "classification": {"enum": ["public", "internal", "confidential", "restricted"]},
+        "content_embedded": {"const": false},
+        "redaction_profile": {"const": "preflightops-assessment-metadata-v1"},
+        "input_hash_profile": {"const": "caller-supplied-sha256-v1"}
+      },
+      "additionalProperties": false
+    },
+    "integrity": {
+      "type": "object",
+      "required": ["algorithm", "value", "canonicalization"],
+      "properties": {
+        "algorithm": {"const": "sha256"},
+        "value": {"$ref": "#/$defs/sha256"},
+        "canonicalization": {"const": "preflightops-canonical-json-v1"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "identifier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$"
+    },
+    "timestamp": {"type": "string", "format": "date-time"},
+    "httpsUrl": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://[^?#]+$",
+      "maxLength": 2048
+    },
+    "hash": {
+      "type": "object",
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": {"const": "sha256"},
+        "value": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "control_id", "message"],
+        "properties": {
+          "code": {"$ref": "#/$defs/identifier"},
+          "control_id": {"$ref": "#/$defs/identifier"},
+          "message": {"type": "string", "minLength": 1, "maxLength": 512}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
+
