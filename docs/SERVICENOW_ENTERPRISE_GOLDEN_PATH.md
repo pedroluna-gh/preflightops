@@ -6,8 +6,9 @@ Este diseño mantiene ServiceNow como system of record y a CAB/Change Management
 única autoridad de aprobación y workflow. PreflightOps prepara y entrega evidencia
 técnica pre-CAB; no decide, aprueba, asigna, agenda, implementa ni cierra cambios.
 
-La etapa 09 es diseño puro. Los schemas v2 y ejemplos describen el target de la etapa 10,
-pero el runtime actual sigue siendo v1 y no se añade ninguna llamada de red.
+La etapa 09 aprobó el diseño y la etapa 10 implementa su API Python aditiva. El runtime
+v2 permanece offline/dry-run por defecto; no sustituye automáticamente al CLI, Action,
+web ni conector v1.
 
 El [diagrama del flujo](diagrams/servicenow-enterprise-golden-path.mmd) muestra los tres
 trust boundaries y el punto exacto donde un write se habilita externamente.
@@ -19,7 +20,7 @@ trust boundaries y el punto exacto donde un write se habilita externamente.
    digests, precondiciones y efectos esperados.
 3. Default `enrich_existing`: resolver exactamente un Change por number o sys_id.
 4. Verificar capability attestation, mapping digest y `expected_sys_mod_count`.
-5. Sólo con autorización externa, obtener un token corto y ejecutar contra el Evidence
+5. Sólo con confirmación del caller y autorización externa, obtener un token corto y ejecutar contra el Evidence
    Gateway; no se siguen redirects.
 6. El gateway valida field allowlist, delivery key única y compare-and-set atómico.
 7. Aplicar summary y, opcionalmente, attachment o enlace allowlisted.
@@ -139,6 +140,11 @@ Seguir el [plan de migración v2](SERVICENOW_MIGRATION_V2.md) y el
 [plan de pruebas](SERVICENOW_TEST_PLAN_V2.md). En un abort, deshabilitar write v2,
 conservar evidencia y volver a v1 exclusivamente dry-run/read-only. No borrar ni mutar
 automáticamente el Change para “deshacer” una evidencia ya auditada.
+
+La operación diaria está en el [runbook](SERVICENOW_ENTERPRISE_RUNBOOK.md). Los pasos
+que requieren una instancia y autorización independiente están aislados en
+[`SERVICENOW_SANDBOX_VALIDATION.md`](SERVICENOW_SANDBOX_VALIDATION.md); no se ejecutaron
+contra sandbox ni producción durante la implementación.
 
 ## Referencias oficiales
 
