@@ -68,6 +68,8 @@ The goal is to help teams enter formal change approval with better context, clea
 - Offline Datadog, Grafana, Prometheus, Zabbix, and GCP Cloud Monitoring inventory validation
 - Structured semantic validation of rollback, monitoring, and validation plans,
   with explicit PASS/FAIL/UNKNOWN/ERROR/N/A, confidence components, and expiry
+- Canonical Assessment Report v1 JSON plus bounded Markdown, PR and ticket views
+  that keep risk, confidence, technical recommendation and human approval separate
 
 ## Quick demo
 
@@ -91,6 +93,21 @@ preflightops \
   --change examples/change-high-risk.yaml \
   --output report.md
 ```
+
+Render an existing Assessment Contract v1 into additive auditable outputs without
+network calls or replacing legacy reports:
+
+```bash
+preflightops report render \
+  --assessment assessment-v1.json \
+  --json-output assessment-report-v1.json \
+  --markdown-output assessment-report-v1.md \
+  --pr-summary-output assessment-pr-summary.md \
+  --ticket-summary-output assessment-ticket-summary.md
+```
+
+See [`docs/AUDITABLE_REPORTS_V1.md`](docs/AUDITABLE_REPORTS_V1.md) for invariants,
+redaction, Automation Details, Action inputs, migration and rollback.
 
 ![PreflightOps risk assessment results](docs/screenshots/risk-results.png)
 
