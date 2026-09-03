@@ -1,0 +1,15 @@
+{
+  "schema_version": "servicenow-adapter-result-v2",
+  "request_id": "snreq-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "idempotency_key": "snv2-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "operation": "enrich_existing",
+  "outcome": "DRY_RUN",
+  "verified": false,
+  "attempts": 0,
+  "audit": {
+    "mapping_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "payload_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "assessment_id": "urn:preflightops:assessment:sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "completed_at": "2026-09-03T16:00:01Z"
+  }
+}

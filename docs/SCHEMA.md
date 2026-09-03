@@ -196,3 +196,19 @@ defines the strict canonical output derived from Assessment Contract v1. It cont
 audit metadata, separated decision concepts, all control states, freshness,
 content-free provenance, next actions, rendering limits and integrity. See
 [`AUDITABLE_REPORTS_V1.md`](AUDITABLE_REPORTS_V1.md).
+
+---
+
+## ServiceNow enterprise adapter v2 design
+
+The strict design schemas
+[`servicenow-mapping-v2.schema.json`](../schemas/servicenow-mapping-v2.schema.json),
+[`servicenow-adapter-request-v2.schema.json`](../schemas/servicenow-adapter-request-v2.schema.json),
+and
+[`servicenow-adapter-result-v2.schema.json`](../schemas/servicenow-adapter-result-v2.schema.json)
+define the target enterprise boundary for stage 10. They keep enrich-existing
+separate from model-authorized draft creation and reject live writes without the
+production Evidence Gateway profile. They are documentation contracts only in
+stage 09; the current v1 runtime remains unchanged.
+
+See [`SERVICENOW_ENTERPRISE_GOLDEN_PATH.md`](SERVICENOW_ENTERPRISE_GOLDEN_PATH.md).

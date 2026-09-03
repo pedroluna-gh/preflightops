@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pedroluna-gh/preflightops/schemas/servicenow-adapter-result-v2.schema.json",
+  "title": "PreflightOps ServiceNow adapter result v2",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "request_id",
+    "idempotency_key",
+    "operation",
+    "outcome",
+    "verified",
+    "attempts",
+    "audit"
+  ],
+  "properties": {
+    "schema_version": {"const": "servicenow-adapter-result-v2"},
+    "request_id": {"type": "string", "pattern": "^snreq-[0-9a-f]{32}$"},
+    "idempotency_key": {"type": "string", "pattern": "^snv2-[0-9a-f]{64}$"},
+    "operation": {"enum": ["enrich_existing", "create_draft"]},
+    "outcome": {
+      "enum": [
+        "DRY_RUN",
+        "READ_ONLY",
+        "UNCHANGED",
+        "UPDATED",
+        "CREATED_DRAFT",
+        "CONFLICT",
+        "FAILED",
+        "PARTIAL_FAILURE_UNKNOWN"
+      ]
+    },
+    "verified": {"type": "boolean"},
+    "target": {
+      "type": "object",
+      "required": ["number", "sys_id", "sys_mod_count"],
+      "properties": {
+        "number": {"type": "string", "pattern": "^CHG[0-9]{7,12}$"},
+        "sys_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+        "sys_mod_count": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "attempts": {"type": "integer", "minimum": 0, "maximum": 5},
+    "retry_after_seconds": {"type": "integer", "minimum": 0, "maximum": 300},
+    "error": {
+      "type": "object",
+      "required": ["code", "retryable", "write_state"],
+      "properties": {
+        "code": {
+          "enum": [
+            "AUTHENTICATION_FAILED",
+            "AUTHORIZATION_DENIED",
+            "CAPABILITY_MISSING",
+            "CONCURRENCY_CONFLICT",
+            "INVALID_MAPPING",
+            "MODEL_NOT_ALLOWED",
+            "PARTIAL_FAILURE_UNKNOWN",
+            "RATE_LIMITED",
+            "REDIRECT_REJECTED",
+            "REPLAY_MISMATCH",
+            "RESPONSE_INVALID",
+            "TARGET_AMBIGUOUS",
+            "TARGET_NOT_FOUND",
+            "TIMEOUT",
+            "UNTRUSTED_DESTINATION",
+            "VERIFICATION_MISMATCH"
+          ]
+        },
+        "retryable": {"type": "boolean"},
+        "write_state": {"enum": ["NOT_ATTEMPTED", "NOT_APPLIED", "APPLIED", "UNKNOWN"]},
+        "message": {"type": "string", "maxLength": 320}
+      },
+      "additionalProperties": false
+    },
+    "audit": {
+      "type": "object",
+      "required": ["mapping_sha256", "payload_sha256", "assessment_id", "completed_at"],
+      "properties": {
+        "mapping_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "payload_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "assessment_id": {"type": "string", "pattern": "^urn:preflightops:assessment:sha256:[0-9a-f]{64}$"},
+        "completed_at": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"outcome": {"enum": ["UNCHANGED", "UPDATED", "CREATED_DRAFT"]}}},
+      "then": {"required": ["target"], "properties": {"verified": {"const": true}}, "not": {"required": ["error"]}}
+    },
+    {
+      "if": {"properties": {"outcome": {"enum": ["CONFLICT", "FAILED", "PARTIAL_FAILURE_UNKNOWN"]}}},
+      "then": {"required": ["error"], "properties": {"verified": {"const": false}}}
+    }
+  ],
+  "additionalProperties": false
+}

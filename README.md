@@ -381,6 +381,10 @@ An existing Change reference is fail-closed: PreflightOps never creates a
 replacement when that reference is missing. Every live write is read back and
 verified, while evidence attachments are deduplicated by semantic SHA-256.
 See [ServiceNow pre-change evidence integration](docs/SERVICENOW_INTEGRATION.md).
+The production target is documented separately in the
+[ServiceNow enterprise golden path](docs/SERVICENOW_ENTERPRISE_GOLDEN_PATH.md).
+Its v2 schemas are design contracts for the next implementation stage; they do
+not enable network access or replace the current v1 connector.
 
 The protected reference workflow validates the request, renders a credential-free
 preview, and publishes only after the `servicenow-demo` GitHub Environment is

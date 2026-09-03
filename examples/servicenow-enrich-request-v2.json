@@ -1,0 +1,38 @@
+{
+  "schema_version": "servicenow-adapter-request-v2",
+  "request_id": "snreq-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "operation": "enrich_existing",
+  "dry_run": true,
+  "write_enabled": false,
+  "transport_profile": "evidence_gateway_v1",
+  "instance": {
+    "alias": "enterprise-sandbox",
+    "origin": "https://dev00000.service-now.com"
+  },
+  "target": {
+    "number": "CHG0000001"
+  },
+  "assessment": {
+    "assessment_id": "urn:preflightops:assessment:sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "report_id": "urn:preflightops:assessment-report:sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "verdict": "INDETERMINATE",
+    "risk_level": "HIGH",
+    "confidence_level": "MEDIUM",
+    "policy_name": "production",
+    "policy_version": "3.0.0",
+    "commit": "cccccccccccccccccccccccccccccccccccccccc",
+    "assessed_at": "2026-09-03T16:00:00Z"
+  },
+  "delivery": {
+    "mapping_profile_id": "enterprise-evidence-default",
+    "mapping_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "idempotency_key": "snv2-eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "payload_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "evidence_mode": "attachment"
+  },
+  "preconditions": {
+    "expected_sys_mod_count": 7,
+    "capability_attestation_sha256": "9999999999999999999999999999999999999999999999999999999999999999"
+  }
+}

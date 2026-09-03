@@ -95,6 +95,19 @@ and never becomes the CAB or ITSM workflow authority.
 - Attach structured evidence and verify both records and attachments.
 - Support a network-free preview and environment-protected live demo.
 
+## Designed next — ServiceNow enterprise adapter v2
+
+- Default to enriching an existing Change by number/sys_id.
+- Use an instance-side Evidence Gateway with field allowlist, unique delivery
+  key and atomic concurrency control for production.
+- Keep direct Change Management API for sandbox/pilot and Table API as a legacy
+  read-only rollback path.
+- Gate optional draft creation on an explicitly allowed change model and a
+  separate enterprise policy decision.
+
+This is an approved architecture design, not yet a runtime capability. See the
+[enterprise golden path](SERVICENOW_ENTERPRISE_GOLDEN_PATH.md).
+
 ## Next — Policy governance and verified exceptions (implemented, unreleased)
 
 - Signed hierarchical policy bundles with mandatory/non-reducible controls.

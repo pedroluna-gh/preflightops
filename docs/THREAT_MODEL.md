@@ -35,6 +35,23 @@ and all parsed manifests are untrusted.
 | Compromised release | Protected tag, build-once workflow, SBOM, checksums and GitHub attestation | `gh attestation verify` |
 | Gate unavailable | Explicit failure classification, timeouts, retry policy and emergency external break-glass | Resilience exercises |
 
+## ServiceNow enterprise adapter v2
+
+The design-only v2 delta adds an instance-side Evidence Gateway for production.
+It applies a server-side evidence-field allowlist, a unique delivery key and an
+atomic `sys_mod_count` compare-and-set. Direct Change Management API access is
+limited to sandbox/pilot, while Table API remains legacy read-only during
+migration. The dedicated analysis and verification matrix cover SSRF/DNS
+rebinding, redirect credential leakage, secret-bearing logs, wrong-record
+updates, privilege escalation, replay and partial failure:
+
+- [`SERVICENOW_ENTERPRISE_GOLDEN_PATH.md`](SERVICENOW_ENTERPRISE_GOLDEN_PATH.md)
+- [`SERVICENOW_TEST_PLAN_V2.md`](SERVICENOW_TEST_PLAN_V2.md)
+- [`SERVICENOW_MIGRATION_V2.md`](SERVICENOW_MIGRATION_V2.md)
+
+The gateway, custom role/ACL, unique field and allowed change models remain
+customer-controlled ServiceNow configuration and require independent review.
+
 ## Assumptions and residual risks
 
 PreflightOps is decision support, not a security boundary and cannot prove a

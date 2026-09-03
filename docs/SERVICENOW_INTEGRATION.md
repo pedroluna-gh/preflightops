@@ -4,6 +4,13 @@ PreflightOps enriches a `change_request` with deterministic technical evidence.
 It does not replace ServiceNow Change Management, authorize implementation, or
 act as a CAB approver.
 
+> This page documents the current v1 runtime. The separately versioned
+> [enterprise golden path](SERVICENOW_ENTERPRISE_GOLDEN_PATH.md),
+> [adapter contract v2](SERVICENOW_ADAPTER_CONTRACT_V2.md),
+> [test plan](SERVICENOW_TEST_PLAN_V2.md), and
+> [migration plan](SERVICENOW_MIGRATION_V2.md) are design artifacts only. They
+> do not change v1 behavior or enable live writes.
+
 ## Safety boundary
 
 - Network access remains opt-in.
