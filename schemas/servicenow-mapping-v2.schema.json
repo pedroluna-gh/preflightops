@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pedroluna-gh/preflightops/schemas/servicenow-mapping-v2.schema.json",
+  "title": "PreflightOps ServiceNow enterprise mapping v2",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "profile_id",
+    "api",
+    "operations",
+    "fields",
+    "creation",
+    "concurrency",
+    "evidence",
+    "limits"
+  ],
+  "properties": {
+    "schema_version": {"const": "servicenow-mapping-v2"},
+    "profile_id": {"type": "string", "pattern": "^[a-z][a-z0-9._-]{2,63}$"},
+    "api": {
+      "type": "object",
+      "required": ["production_profile", "sandbox_profile", "version", "table_api_legacy_mode"],
+      "properties": {
+        "production_profile": {"const": "evidence_gateway_v1"},
+        "sandbox_profile": {"const": "change_management_v1"},
+        "version": {"const": "v1"},
+        "table_api_legacy_mode": {"const": "read_only"}
+      },
+      "additionalProperties": false
+    },
+    "operations": {
+      "type": "object",
+      "required": ["enrich_existing", "create_draft"],
+      "properties": {
+        "enrich_existing": {"const": true},
+        "create_draft": {"type": "boolean", "default": false}
+      },
+      "additionalProperties": false
+    },
+    "fields": {
+      "type": "object",
+      "required": [
+        "assessment_status",
+        "risk",
+        "confidence",
+        "assessment_id",
+        "policy",
+        "blockers",
+        "risk_impact",
+        "automation_details",
+        "evidence_url",
+        "commit",
+        "timestamp"
+      ],
+      "properties": {
+        "assessment_status": {"$ref": "#/$defs/rule"},
+        "risk": {"$ref": "#/$defs/rule"},
+        "confidence": {"$ref": "#/$defs/rule"},
+        "assessment_id": {"$ref": "#/$defs/rule"},
+        "policy": {"$ref": "#/$defs/rule"},
+        "blockers": {"$ref": "#/$defs/rule"},
+        "risk_impact": {"$ref": "#/$defs/rule"},
+        "automation_details": {"$ref": "#/$defs/rule"},
+        "evidence_url": {"$ref": "#/$defs/rule"},
+        "commit": {"$ref": "#/$defs/rule"},
+        "timestamp": {"$ref": "#/$defs/rule"}
+      },
+      "additionalProperties": false
+    },
+    "creation": {
+      "type": "object",
+      "required": ["allowed_model_sys_ids", "require_external_confirmation", "require_capability_attestation"],
+      "properties": {
+        "allowed_model_sys_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+          "uniqueItems": true,
+          "maxItems": 32
+        },
+        "require_external_confirmation": {"const": true},
+        "require_capability_attestation": {"const": true}
+      },
+      "additionalProperties": false
+    },
+    "concurrency": {
+      "type": "object",
+      "required": ["strategy", "version_field", "delivery_field", "require_unique_delivery"],
+      "properties": {
+        "strategy": {"const": "server_compare_and_set"},
+        "version_field": {"const": "sys_mod_count"},
+        "delivery_field": {"type": "string", "pattern": "^u_[a-z0-9_]{1,77}$"},
+        "require_unique_delivery": {"const": true}
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["mode", "attachment_max_bytes", "allowed_link_hosts", "deduplicate_by_digest"],
+      "properties": {
+        "mode": {"enum": ["attachment", "https_link", "attachment_or_link"]},
+        "attachment_max_bytes": {"type": "integer", "minimum": 1024, "maximum": 10485760},
+        "allowed_link_hosts": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^[a-z0-9.-]+$"},
+          "uniqueItems": true,
+          "maxItems": 32
+        },
+        "deduplicate_by_digest": {"const": true}
+      },
+      "additionalProperties": false
+    },
+    "limits": {
+      "type": "object",
+      "required": ["summary_characters", "blocker_count", "attempts", "elapsed_seconds"],
+      "properties": {
+        "summary_characters": {"type": "integer", "minimum": 256, "maximum": 16000},
+        "blocker_count": {"type": "integer", "minimum": 1, "maximum": 50},
+        "attempts": {"type": "integer", "minimum": 1, "maximum": 5},
+        "elapsed_seconds": {"type": "integer", "minimum": 1, "maximum": 300}
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "rule": {
+      "type": "object",
+      "required": ["source", "destination", "max_length"],
+      "properties": {
+        "source": {
+          "enum": [
+            "decision.verdict",
+            "scores.risk",
+            "scores.confidence",
+            "audit.assessment_id",
+            "audit.policy",
+            "controls.top_blockers",
+            "decision.technical_recommendation.summary",
+            "automation_details",
+            "delivery.evidence_url",
+            "audit.commit",
+            "audit.assessment_timestamp"
+          ]
+        },
+        "destination": {
+          "type": "string",
+          "pattern": "^(short_description|description|risk|impact|u_[a-z0-9_]{1,77})$"
+        },
+        "max_length": {"type": "integer", "minimum": 1, "maximum": 16000},
+        "omit_empty": {"type": "boolean", "default": true}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
