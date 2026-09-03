@@ -186,3 +186,13 @@ The content-free result follows
 [`semantic-validation-v1.schema.json`](../schemas/semantic-validation-v1.schema.json).
 See [`SEMANTIC_VALIDATION_V1.md`](SEMANTIC_VALIDATION_V1.md) for the status model,
 confidence formula, privacy boundary, migration, and rollback.
+
+---
+
+## Assessment Report v1
+
+[`assessment-report-v1.schema.json`](../schemas/assessment-report-v1.schema.json)
+defines the strict canonical output derived from Assessment Contract v1. It contains
+audit metadata, separated decision concepts, all control states, freshness,
+content-free provenance, next actions, rendering limits and integrity. See
+[`AUDITABLE_REPORTS_V1.md`](AUDITABLE_REPORTS_V1.md).
