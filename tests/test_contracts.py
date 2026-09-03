@@ -26,6 +26,7 @@ def _schema(name):
 def test_assessment_golden_contract_forces_lf_line_endings():
     attributes = (ROOT / ".gitattributes").read_text(encoding="utf-8")
     assert "tests/fixtures/assessment/*.golden.json text eol=lf" in attributes
+    assert "tests/fixtures/reports/*.golden.json text eol=lf" in attributes
 
 
 @pytest.mark.parametrize(
@@ -46,6 +47,7 @@ def test_assessment_golden_contract_forces_lf_line_endings():
         "assessment-contract-v1.schema.json",
         "semantic-change-controls-v1.schema.json",
         "semantic-validation-v1.schema.json",
+        "assessment-report-v1.schema.json",
     ],
 )
 def test_schemas_are_valid_draft_2020_12(name):

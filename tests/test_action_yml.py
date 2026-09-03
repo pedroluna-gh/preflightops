@@ -45,6 +45,12 @@ def test_action_yml_exists():
         "evidence-v2-output",
         "evidence-v1-output",
         "evidence-data-classification",
+        "assessment-contract",
+        "assessment-report-json-output",
+        "assessment-report-markdown-output",
+        "assessment-pr-summary-output",
+        "assessment-ticket-summary-output",
+        "assessment-automation-details",
     ],
 )
 def test_new_optional_inputs_present(action, name):
@@ -82,6 +88,19 @@ def test_ticket_path_output_added(action):
 def test_authenticated_evidence_outputs_are_present(action):
     assert "evidence-v2-path" in action["outputs"]
     assert "evidence-v1-path" in action["outputs"]
+
+
+def test_assessment_report_outputs_are_additive_and_explicit(action, action_text):
+    for name in (
+        "assessment-report-json-path",
+        "assessment-report-markdown-path",
+        "assessment-pr-summary-path",
+        "assessment-ticket-summary-path",
+    ):
+        assert name in action["outputs"]
+    assert "assessment_args=(report render --assessment" in action_text
+    assert "assessment-contract requires at least one explicit" in action_text
+    assert "Assessment Report outputs require assessment-contract" in action_text
 
 
 def test_action_never_accepts_private_key_as_an_input(action, action_text):

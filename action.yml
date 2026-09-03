@@ -80,6 +80,30 @@ inputs:
     description: "Path to write a compact Markdown pull-request comment."
     required: false
     default: "preflightops-comment.md"
+  assessment-contract:
+    description: "Optional Assessment Contract v1 JSON path rendered into additive auditable outputs."
+    required: false
+    default: ""
+  assessment-report-json-output:
+    description: "Explicit path for canonical Assessment Report v1 JSON. Requires assessment-contract."
+    required: false
+    default: ""
+  assessment-report-markdown-output:
+    description: "Explicit path for the full Assessment Report v1 Markdown. Requires assessment-contract."
+    required: false
+    default: ""
+  assessment-pr-summary-output:
+    description: "Explicit path for the bounded Assessment Contract PR summary. Requires assessment-contract."
+    required: false
+    default: ""
+  assessment-ticket-summary-output:
+    description: "Explicit path for the bounded Assessment Contract ticket summary. Requires assessment-contract."
+    required: false
+    default: ""
+  assessment-automation-details:
+    description: "Include bounded Automation Details in Assessment Contract reports."
+    required: false
+    default: "true"
   full-report-url:
     description: "Optional workflow or artifact URL linked from human-readable reports."
     required: false
@@ -161,6 +185,18 @@ outputs:
   github-comment-path:
     description: "Path to the compact pull-request comment Markdown."
     value: ${{ steps.assess.outputs.github-comment-path }}
+  assessment-report-json-path:
+    description: "Path to canonical Assessment Report v1 JSON when requested."
+    value: ${{ steps.assess.outputs.assessment-report-json-path }}
+  assessment-report-markdown-path:
+    description: "Path to the full Assessment Report v1 Markdown when requested."
+    value: ${{ steps.assess.outputs.assessment-report-markdown-path }}
+  assessment-pr-summary-path:
+    description: "Path to the bounded Assessment Contract PR summary when requested."
+    value: ${{ steps.assess.outputs.assessment-pr-summary-path }}
+  assessment-ticket-summary-path:
+    description: "Path to the bounded Assessment Contract ticket summary when requested."
+    value: ${{ steps.assess.outputs.assessment-ticket-summary-path }}
   changed-files-path:
     description: "Path to the detected or caller-provided changed-file manifest."
     value: ${{ steps.changes.outputs.path }}
@@ -234,6 +270,12 @@ runs:
         PFO_EVIDENCE_CLASSIFICATION: ${{ inputs.evidence-data-classification }}
         PFO_HTML: ${{ inputs.html-output }}
         PFO_GITHUB_COMMENT: ${{ inputs.github-comment-output }}
+        PFO_ASSESSMENT_CONTRACT: ${{ inputs.assessment-contract }}
+        PFO_ASSESSMENT_REPORT_JSON: ${{ inputs.assessment-report-json-output }}
+        PFO_ASSESSMENT_REPORT_MARKDOWN: ${{ inputs.assessment-report-markdown-output }}
+        PFO_ASSESSMENT_PR_SUMMARY: ${{ inputs.assessment-pr-summary-output }}
+        PFO_ASSESSMENT_TICKET_SUMMARY: ${{ inputs.assessment-ticket-summary-output }}
+        PFO_ASSESSMENT_AUTOMATION_DETAILS: ${{ inputs.assessment-automation-details }}
         PFO_FULL_REPORT_URL: ${{ inputs.full-report-url }}
         PFO_TICKET: ${{ inputs.ticket-output }}
         PFO_TICKET_TEMPLATE: ${{ inputs.ticket-template }}
@@ -353,6 +395,51 @@ runs:
           exit 2
         fi
 
+        # Additive Assessment Contract reporting. No network call or publication
+        # is performed; consumers explicitly provide both the contract and paths.
+        if [ -n "$PFO_ASSESSMENT_CONTRACT" ]; then
+          if [ ! -f "$PFO_ASSESSMENT_CONTRACT" ]; then
+            echo "::error::assessment-contract does not exist: $PFO_ASSESSMENT_CONTRACT"
+            exit 2
+          fi
+          assessment_args=(report render --assessment "$PFO_ASSESSMENT_CONTRACT")
+          requested_assessment_output=false
+          if [ -n "$PFO_ASSESSMENT_REPORT_JSON" ]; then
+            assessment_args+=(--json-output "$PFO_ASSESSMENT_REPORT_JSON")
+            requested_assessment_output=true
+          fi
+          if [ -n "$PFO_ASSESSMENT_REPORT_MARKDOWN" ]; then
+            assessment_args+=(--markdown-output "$PFO_ASSESSMENT_REPORT_MARKDOWN")
+            requested_assessment_output=true
+          fi
+          if [ -n "$PFO_ASSESSMENT_PR_SUMMARY" ]; then
+            assessment_args+=(--pr-summary-output "$PFO_ASSESSMENT_PR_SUMMARY")
+            requested_assessment_output=true
+          fi
+          if [ -n "$PFO_ASSESSMENT_TICKET_SUMMARY" ]; then
+            assessment_args+=(--ticket-summary-output "$PFO_ASSESSMENT_TICKET_SUMMARY")
+            requested_assessment_output=true
+          fi
+          if [ "$requested_assessment_output" != "true" ]; then
+            echo "::error::assessment-contract requires at least one explicit Assessment Report output path."
+            exit 2
+          fi
+          automation_details=$(echo "$PFO_ASSESSMENT_AUTOMATION_DETAILS" | tr '[:upper:]' '[:lower:]')
+          if [ "$automation_details" != "true" ]; then
+            assessment_args+=(--without-automation-details)
+          fi
+          if [ -n "$full_report_url" ]; then
+            assessment_args+=(--full-report-url "$full_report_url")
+          fi
+          if ! preflightops "${assessment_args[@]}"; then
+            echo "::error::Assessment Contract reporting failed closed."
+            exit 2
+          fi
+        elif [ -n "$PFO_ASSESSMENT_REPORT_JSON$PFO_ASSESSMENT_REPORT_MARKDOWN$PFO_ASSESSMENT_PR_SUMMARY$PFO_ASSESSMENT_TICKET_SUMMARY" ]; then
+          echo "::error::Assessment Report outputs require assessment-contract."
+          exit 2
+        fi
+
         level=$(python -c "import json, os; print(json.load(open(os.environ['PFO_JSON']))['risk_level'])")
         score=$(python -c "import json, os; print(json.load(open(os.environ['PFO_JSON']))['risk_score'])")
         scope=$(python -c "import json, os; print(','.join(json.load(open(os.environ['PFO_JSON'])).get('change_scope', {}).get('scanners', [])))")
@@ -400,6 +487,10 @@ runs:
           echo "ticket-path=$PFO_TICKET"
           echo "html-report-path=$PFO_HTML"
           echo "github-comment-path=$PFO_GITHUB_COMMENT"
+          echo "assessment-report-json-path=$PFO_ASSESSMENT_REPORT_JSON"
+          echo "assessment-report-markdown-path=$PFO_ASSESSMENT_REPORT_MARKDOWN"
+          echo "assessment-pr-summary-path=$PFO_ASSESSMENT_PR_SUMMARY"
+          echo "assessment-ticket-summary-path=$PFO_ASSESSMENT_TICKET_SUMMARY"
           echo "scanner-scope=$scope"
           if [ "$servicenow_dry_run" = "true" ]; then
             echo "servicenow-preview-path=$PFO_SERVICENOW_PREVIEW"
