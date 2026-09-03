@@ -20,11 +20,18 @@ no se modificaron umbrales globales ni el scanner Kubernetes.
 - Twine check: wheel y sdist exitosos.
 - Instalación `--no-index --no-deps` e import desde target limpio: exitosos.
 - OpenSpec `validate --strict`: exitoso antes de implementación; se repite al cierre.
+- Publicación aislada: PR #42 desde `stage-05-terraform-plan-json` hacia `main`,
+  head `1efef866ba586d722905a5bdf79f8e4a9839125c`, 26 archivos y 10 commits.
+- CI remoto: 15 de 15 checks exitosos, incluidos tests Windows/macOS/Ubuntu,
+  Python 3.11-3.13, quality gates, auditorías de dependencias, CodeQL,
+  contrato de la Action y ClusterFuzzLite.
+- Revisión remota: cero comentarios, cero reviews, cero hilos pendientes y estado
+  mergeable `clean` antes de integrar.
 
 El primer build aislado no pudo descargar `setuptools==83.0.0` porque el sandbox
 bloqueó PyPI. No fue un fallo de build: la repetición sin aislamiento usó la misma
-versión fijada ya instalada y produjo ambos artefactos. CI remoto continúa siendo el
-gate independiente antes de integrar/publicar.
+versión fijada ya instalada y produjo ambos artefactos. El CI remoto independiente
+confirmó posteriormente todos los gates sobre el PR #42.
 
 ## Invariantes demostrados
 
@@ -52,4 +59,3 @@ Deshabilitar la entrada `--terraform-json` o restaurar el delegador anterior de
 `scan_terraform_json`. `scan_terraform`, outputs legacy, scores y umbrales globales
 permanecen intactos. Conservar fixtures y evidencia de evaluaciones emitidas para
 auditoría; no hay escrituras externas ni reparación de datos.
-
