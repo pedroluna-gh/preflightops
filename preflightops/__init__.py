@@ -14,6 +14,16 @@ from .assessment import (
     serialize_assessment_v1,
     validate_assessment_v1,
 )
+from .auditable_report import (
+    AuditableReportConfig,
+    AuditableReportError,
+    build_auditable_report_v1,
+    render_assessment_markdown_v1,
+    render_pr_summary_v1,
+    render_ticket_summary_v1,
+    serialize_auditable_report_v1,
+    validate_auditable_report_v1,
+)
 from .changed_files import classify_changed_files, load_changed_files
 from .evidence import (
     EvidenceError,
@@ -92,6 +102,14 @@ __all__ = [
     "adapt_legacy_assessment",
     "serialize_assessment_v1",
     "validate_assessment_v1",
+    "AuditableReportConfig",
+    "AuditableReportError",
+    "build_auditable_report_v1",
+    "render_assessment_markdown_v1",
+    "render_pr_summary_v1",
+    "render_ticket_summary_v1",
+    "serialize_auditable_report_v1",
+    "validate_auditable_report_v1",
     "assess_risk",
     "find_service",
     "RISK_LEVELS",
