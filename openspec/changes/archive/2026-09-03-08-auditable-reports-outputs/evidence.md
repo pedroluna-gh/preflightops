@@ -27,6 +27,12 @@ ejecutaron APIs externas ni se modificaron outputs legacy.
 - Security `33776320855`: CodeQL y dependency review exitosos.
 - Fuzzing `33776320792`: ClusterFuzzLite exitoso en 4m56s.
 - Code scanning del commit inicial: exitoso, sin hallazgos bloqueantes.
+- Cierre OpenSpec en commit `c76e471`: cambio activo retirado, copia fechada
+  preservada y `auditable-assessment-reporting` promovida a especificación vigente.
+- CI final de archivo `33777444341`: todos los quality gates, plataformas,
+  auditorías y contrato de Action exitosos.
+- Security final `33777444337`: CodeQL y dependency review exitosos.
+- Fuzzing final `33777444345`: ClusterFuzzLite exitoso; code scanning aprobado.
 
 ## Invariantes demostrados
 
