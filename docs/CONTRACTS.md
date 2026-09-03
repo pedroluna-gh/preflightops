@@ -94,7 +94,10 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 `AssessmentContractError`, `ControlObservation`, `HumanDecision`,
 `InputDigest`, `PolicyIdentity`, `TrustKernel`, `WaiverReference`,
 `adapt_legacy_assessment`, `serialize_assessment_v1`, and
-`validate_assessment_v1`.
+`validate_assessment_v1`, `SemanticEvidenceReference`,
+`SemanticValidationError`, `SemanticValidationPolicy`, `SemanticValidator`,
+`adapt_legacy_change_request`, `serialize_semantic_validation_v1`, and
+`validate_semantic_validation_v1`.
 
 `preflightops.__version__` is also public. It is sourced from
 `preflightops._version` and drives package metadata, CLI output, and reports.
@@ -114,6 +117,8 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 - [`policy-bundle-v2.schema.json`](../schemas/policy-bundle-v2.schema.json)
 - [`waiver-contract-v1.schema.json`](../schemas/waiver-contract-v1.schema.json)
 - [`assessment-contract-v1.schema.json`](../schemas/assessment-contract-v1.schema.json)
+- [`semantic-change-controls-v1.schema.json`](../schemas/semantic-change-controls-v1.schema.json)
+- [`semantic-validation-v1.schema.json`](../schemas/semantic-validation-v1.schema.json)
 
 Legacy schemas intentionally allow additional properties so existing
 organization-specific metadata remains valid. Assessment Contract v1 is strict
@@ -195,6 +200,11 @@ migration window and fail-closed verification contract.
 Assessment Contract v1 and its Trust Kernel are also offline and additive. See
 [`ASSESSMENT_CONTRACT_V1.md`](ASSESSMENT_CONTRACT_V1.md) for deterministic
 identity, risk/confidence separation, privacy, migration, and rollback.
+
+Semantic Validation Contract v1 is an additive offline layer for structured
+rollback, monitoring, and validation plans. It preserves every legacy validator
+and output. See [`SEMANTIC_VALIDATION_V1.md`](SEMANTIC_VALIDATION_V1.md) for
+status precedence, confidence calibration, freshness, migration, and rollback.
 
 Policy signing, diff/simulation, waiver verification, expiry and rollback are
 defined in [`POLICY_GOVERNANCE_V2.md`](POLICY_GOVERNANCE_V2.md).

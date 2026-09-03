@@ -170,3 +170,19 @@ validation_plan:
   - Confirm p95 latency remains below 500ms
   - Confirm no new critical alerts fired
 ```
+
+---
+
+## Structured semantic controls v1
+
+The legacy fields above remain accepted unchanged. Consumers that need
+deterministic semantic sufficiency, evidence confidence, and expiry can adopt the
+strict additive schema
+[`semantic-change-controls-v1.schema.json`](../schemas/semantic-change-controls-v1.schema.json).
+It requires explicit applicability, owner, duration, success criteria,
+observable steps, and plan-specific action/trigger or dashboard/alert references.
+
+The content-free result follows
+[`semantic-validation-v1.schema.json`](../schemas/semantic-validation-v1.schema.json).
+See [`SEMANTIC_VALIDATION_V1.md`](SEMANTIC_VALIDATION_V1.md) for the status model,
+confidence formula, privacy boundary, migration, and rollback.

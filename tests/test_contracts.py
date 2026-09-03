@@ -44,6 +44,8 @@ def test_assessment_golden_contract_forces_lf_line_endings():
         "policy-bundle-v2.schema.json",
         "waiver-contract-v1.schema.json",
         "assessment-contract-v1.schema.json",
+        "semantic-change-controls-v1.schema.json",
+        "semantic-validation-v1.schema.json",
     ],
 )
 def test_schemas_are_valid_draft_2020_12(name):

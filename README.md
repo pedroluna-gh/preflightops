@@ -66,6 +66,8 @@ The goal is to help teams enter formal change approval with better context, clea
 - Bounded Terraform JSON 1.x resource/action evidence with sensitive-value masking, plus fail-closed multi-document Kubernetes parsing with per-object/field evidence and Secret sanitization
 - Versioned policy packs for SaaS, fintech, ecommerce, healthcare, critical platforms, and lightweight startup governance
 - Offline Datadog, Grafana, Prometheus, Zabbix, and GCP Cloud Monitoring inventory validation
+- Structured semantic validation of rollback, monitoring, and validation plans,
+  with explicit PASS/FAIL/UNKNOWN/ERROR/N/A, confidence components, and expiry
 
 ## Quick demo
 
@@ -164,6 +166,8 @@ Structured inputs, policy packs, and the secrets-free observability inventory
 are documented in [`docs/POLICY_AND_EVIDENCE.md`](docs/POLICY_AND_EVIDENCE.md).
 Kubernetes limits, evidence invariants, migration and rollback are detailed in
 [`docs/KUBERNETES_MANIFESTS.md`](docs/KUBERNETES_MANIFESTS.md).
+Semantic plan contracts, confidence calibration and freshness are documented in
+[`docs/SEMANTIC_VALIDATION_V1.md`](docs/SEMANTIC_VALIDATION_V1.md).
 
 ### Governed policy and verified exceptions
 
