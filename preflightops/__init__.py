@@ -47,6 +47,15 @@ from .risk_engine import (
     score_to_level,
 )
 from .scanners import scan_kubernetes, scan_terraform, scan_terraform_json
+from .terraform_plan import (
+    DEFAULT_TERRAFORM_PLAN_LIMITS,
+    TerraformPlan,
+    TerraformPlanError,
+    TerraformPlanLimits,
+    TerraformResourceChange,
+    parse_terraform_plan_json,
+    scan_terraform_plan,
+)
 from .ticket import generate_ticket_markdown
 from .validators import (
     is_bad_rollback_plan,
@@ -76,6 +85,13 @@ __all__ = [
     "is_validation_plan_valid",
     "scan_terraform",
     "scan_terraform_json",
+    "scan_terraform_plan",
+    "parse_terraform_plan_json",
+    "TerraformPlan",
+    "TerraformPlanError",
+    "TerraformPlanLimits",
+    "TerraformResourceChange",
+    "DEFAULT_TERRAFORM_PLAN_LIMITS",
     "scan_kubernetes",
     "load_policy_pack",
     "validate_monitoring_evidence",

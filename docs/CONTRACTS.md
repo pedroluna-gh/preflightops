@@ -76,7 +76,10 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 `assess_risk`, `find_service`, `RISK_LEVELS`, `RECOMMENDATIONS`,
 `score_to_level`, `is_bad_rollback_plan`, `is_monitoring_plan_incomplete`,
 `is_validation_plan_valid`, `scan_terraform`, `scan_kubernetes`,
-`scan_terraform_json`, `load_policy_pack`, `validate_monitoring_evidence`,
+`scan_terraform_json`, `scan_terraform_plan`, `parse_terraform_plan_json`,
+`TerraformPlan`, `TerraformResourceChange`, `TerraformPlanLimits`,
+`TerraformPlanError`, `DEFAULT_TERRAFORM_PLAN_LIMITS`, `load_policy_pack`,
+`validate_monitoring_evidence`,
 `generate_markdown_report`, `generate_json_report`,
 `generate_github_comment`, `generate_html_report`, `classify_changed_files`,
 `load_changed_files`,
@@ -124,6 +127,10 @@ semantics.
 
 Structured Terraform JSON, policy packs, and monitor inventories are optional
 Action inputs. They remain offline and add no credential requirements.
+
+Terraform JSON files follow the bounded and fail-closed contract in
+[`TERRAFORM_PLAN_JSON.md`](TERRAFORM_PLAN_JSON.md). The text scanner remains a
+deprecated compatibility API and is never an automatic fallback for JSON errors.
 
 Policy Bundle v2 adds `policy-public-key`, `waiver`, and `waiver-public-key` as
 optional public-file inputs. Private policy/waiver signing keys are never
@@ -182,4 +189,3 @@ identity, risk/confidence separation, privacy, migration, and rollback.
 
 Policy signing, diff/simulation, waiver verification, expiry and rollback are
 defined in [`POLICY_GOVERNANCE_V2.md`](POLICY_GOVERNANCE_V2.md).
-

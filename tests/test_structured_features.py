@@ -280,7 +280,7 @@ def test_cli_structured_inputs_end_to_end(tmp_path):
     change_doc = _change()
     change_doc["change"]["monitoring_plan"]["monitor_ids"] = ["api-errors"]
     change.write_text(yaml.safe_dump(change_doc), encoding="utf-8")
-    plan.write_text(json.dumps({"resource_changes": []}), encoding="utf-8")
+    plan.write_text(json.dumps({"format_version": "1.0", "resource_changes": []}), encoding="utf-8")
     monitors.write_text(
         yaml.safe_dump(
             {"monitors": [{"id": "api-errors", "provider": "grafana", "enabled": True}]}

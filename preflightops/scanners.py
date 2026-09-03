@@ -5,11 +5,12 @@ possible. The text scanners remain as a compatibility fallback for existing
 callers and for human-readable plan output.
 """
 
-import json
 from collections.abc import Iterable
 from typing import Any
 
 import yaml
+
+from .terraform_plan import scan_terraform_json as scan_terraform_json
 
 # (keyword, rule_id, score, severity, description)
 TERRAFORM_SIGNALS = [
@@ -118,127 +119,6 @@ def scan_terraform(text) -> list:
     for keyword, rule_id, score, severity, description in TERRAFORM_SIGNALS:
         if keyword in lowered:
             findings.append(_finding(rule_id, description, severity, score, SOURCE_TERRAFORM))
-    return findings
-
-
-_TF_RESOURCE_RULES = (
-    (("iam_policy",), "terraform-iam-policy-change", 30, "high", "IAM policy change detected"),
-    (("iam_role",), "terraform-iam-role-change", 30, "high", "IAM role change detected"),
-    (
-        ("iam_member", "iam_binding"),
-        "terraform-cloud-iam-change",
-        30,
-        "high",
-        "Cloud IAM membership change detected",
-    ),
-    (
-        ("security_group",),
-        "terraform-security-group-change",
-        25,
-        "high",
-        "Security group change detected",
-    ),
-    (("firewall",), "terraform-firewall-change", 25, "high", "Firewall rule change detected"),
-    (
-        ("db_instance", "database_instance", "sql_database"),
-        "terraform-db-instance-change",
-        25,
-        "high",
-        "Database instance change detected",
-    ),
-    (
-        ("public_ip", "eip", "external_address"),
-        "terraform-public-ip-exposure",
-        25,
-        "high",
-        "Public IP resource change detected",
-    ),
-    (("dns", "route53", "dns_record"), "terraform-dns-change", 25, "high", "DNS change detected"),
-    (
-        ("kms", "key_ring", "crypto_key"),
-        "terraform-kms-change",
-        25,
-        "high",
-        "Encryption key change detected",
-    ),
-)
-
-
-def _terraform_public_exposure(after: Any) -> bool:
-    if not isinstance(after, dict):
-        return False
-    encoded = json.dumps(after, sort_keys=True).lower()
-    return any(
-        token in encoded
-        for token in ("0.0.0.0/0", "::/0", '"public": true', '"publicly_accessible": true')
-    )
-
-
-def scan_terraform_json(plan: Any) -> list:
-    """Parse ``terraform show -json`` output into resource-level findings."""
-    if plan in (None, ""):
-        return []
-    if isinstance(plan, str):
-        try:
-            plan = json.loads(plan)
-        except json.JSONDecodeError as exc:
-            raise ValueError(f"Terraform JSON plan is invalid: {exc}") from exc
-    if not isinstance(plan, dict):
-        raise ValueError("Terraform JSON plan must be a JSON object.")
-    changes = plan.get("resource_changes", [])
-    if not isinstance(changes, list):
-        raise ValueError("Terraform JSON plan 'resource_changes' must be a list.")
-
-    findings: list[dict] = []
-    for resource in changes:
-        if not isinstance(resource, dict):
-            continue
-        address = str(resource.get("address") or resource.get("type") or "unknown")
-        resource_type = str(resource.get("type") or "").lower()
-        change = resource.get("change") or {}
-        actions = change.get("actions", []) if isinstance(change, dict) else []
-        if not isinstance(actions, list):
-            actions = []
-        action_text = "/".join(str(action) for action in actions)
-        if "delete" in actions:
-            replacement = "create" in actions
-            findings.append(
-                _finding(
-                    "terraform-replace-action" if replacement else "terraform-destroy-action",
-                    f"{'Replacement' if replacement else 'Destroy'} action for {address}",
-                    "high" if replacement else "critical",
-                    30 if replacement else 40,
-                    SOURCE_TERRAFORM,
-                    resource=address,
-                    action=action_text,
-                )
-            )
-        for tokens, rule_id, score, severity, description in _TF_RESOURCE_RULES:
-            if any(token in resource_type for token in tokens):
-                findings.append(
-                    _finding(
-                        rule_id,
-                        f"{description}: {address}",
-                        severity,
-                        score,
-                        SOURCE_TERRAFORM,
-                        resource=address,
-                        action=action_text,
-                    )
-                )
-        after = change.get("after") if isinstance(change, dict) else None
-        if _terraform_public_exposure(after):
-            findings.append(
-                _finding(
-                    "terraform-public-exposure",
-                    f"Public network exposure detected for {address}",
-                    "critical",
-                    35,
-                    SOURCE_TERRAFORM,
-                    resource=address,
-                    action=action_text,
-                )
-            )
     return findings
 
 

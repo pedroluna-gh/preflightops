@@ -74,10 +74,13 @@ Some change types carry higher risk by default:
 
 ## Terraform scanners
 
-The legacy scanner accepts human-readable plan/diff text. `--terraform-json`
-adds structured resource/action parsing for saved plans generated with
-`terraform show -json`, including replacement versus destroy semantics and
-resource-level evidence.
+The deprecated legacy scanner accepts human-readable plan/diff text.
+`--terraform-json` selects bounded, fail-closed resource/action parsing for saved
+plans generated with `terraform show -json`. The parser validates JSON format 1.x,
+distinguishes both ordered replacement variants from irreversible destroy, removes
+sensitive/unknown leaves before evaluation, and emits deterministic resource-level
+evidence. JSON failures never fall back silently to keyword scanning. See the
+[Terraform Plan JSON contract](TERRAFORM_PLAN_JSON.md).
 
 Examples:
 
@@ -136,8 +139,8 @@ It does not yet provide full ITSM workflow orchestration, advanced field mapping
 
 ## Suggested future improvements
 
-- Terraform JSON plan parser
-- Kubernetes object parser
+- Terraform provider-schema-aware semantic analysis
+- Kubernetes overlay and admission-state analysis
 - GitHub PR comment integration
 - Stronger ServiceNow / Jira workflow mapping and API hardening
 - PagerDuty / Opsgenie incident history lookup

@@ -1,0 +1,174 @@
+{
+  "schema_version": "1.0",
+  "cases": [
+    {
+      "name": "gcp-public-firewall",
+      "plan": {
+        "format_version": "1.0",
+        "terraform_version": "1.9.8",
+        "resource_changes": [
+          {
+            "address": "google_compute_firewall.public_web",
+            "type": "google_compute_firewall",
+            "provider_name": "registry.terraform.io/hashicorp/google",
+            "change": {
+              "actions": ["update"],
+              "before": {"source_ranges": ["10.0.0.0/8"]},
+              "after": {"source_ranges": ["0.0.0.0/0"]},
+              "before_sensitive": {},
+              "after_sensitive": {}
+            }
+          }
+        ]
+      },
+      "expected_ids": ["terraform-firewall-change", "terraform-public-exposure"]
+    },
+    {
+      "name": "aws-database-replace",
+      "plan": {
+        "format_version": "1.1",
+        "resource_changes": [
+          {
+            "address": "aws_db_instance.primary",
+            "type": "aws_db_instance",
+            "provider_name": "registry.terraform.io/hashicorp/aws",
+            "change": {
+              "actions": ["delete", "create"],
+              "before": {"engine": "postgres"},
+              "after": {"engine": "postgres"},
+              "before_sensitive": {},
+              "after_sensitive": {}
+            }
+          }
+        ]
+      },
+      "expected_ids": ["terraform-db-instance-change", "terraform-replace-action"]
+    },
+    {
+      "name": "gcp-iam-create",
+      "plan": {
+        "format_version": "1.0",
+        "resource_changes": [
+          {
+            "address": "google_project_iam_member.release",
+            "type": "google_project_iam_member",
+            "provider_name": "registry.terraform.io/hashicorp/google",
+            "change": {
+              "actions": ["create"],
+              "before": null,
+              "after": {"role": "roles/viewer"},
+              "before_sensitive": {},
+              "after_sensitive": {}
+            }
+          }
+        ]
+      },
+      "expected_ids": ["terraform-cloud-iam-change"]
+    },
+    {
+      "name": "azure-kms-update",
+      "plan": {
+        "format_version": "1.0",
+        "resource_changes": [
+          {
+            "address": "azurerm_key_vault_key.application",
+            "type": "azurerm_key_vault_key",
+            "provider_name": "registry.terraform.io/hashicorp/azurerm",
+            "change": {
+              "actions": ["update"],
+              "before": {},
+              "after": {},
+              "before_sensitive": {},
+              "after_sensitive": {}
+            }
+          }
+        ]
+      },
+      "expected_ids": ["terraform-kms-change"]
+    },
+    {
+      "name": "aws-dns-create-before-destroy",
+      "plan": {
+        "format_version": "1.0",
+        "resource_changes": [
+          {
+            "address": "aws_route53_record.api",
+            "type": "aws_route53_record",
+            "provider_name": "registry.terraform.io/hashicorp/aws",
+            "change": {
+              "actions": ["create", "delete"],
+              "before": {},
+              "after": {},
+              "before_sensitive": {},
+              "after_sensitive": {}
+            }
+          }
+        ]
+      },
+      "expected_ids": ["terraform-dns-change", "terraform-replace-action"]
+    },
+    {
+      "name": "generic-delete",
+      "plan": {
+        "format_version": "1.0",
+        "resource_changes": [
+          {
+            "address": "random_pet.example",
+            "type": "random_pet",
+            "provider_name": "registry.terraform.io/hashicorp/random",
+            "change": {
+              "actions": ["delete"],
+              "before": {},
+              "after": null,
+              "before_sensitive": {},
+              "after_sensitive": {}
+            }
+          }
+        ]
+      },
+      "expected_ids": ["terraform-destroy-action"]
+    },
+    {
+      "name": "risky-words-only-in-description",
+      "plan": {
+        "format_version": "1.0",
+        "resource_changes": [
+          {
+            "address": "aws_instance.safe",
+            "type": "aws_instance",
+            "provider_name": "registry.terraform.io/hashicorp/aws",
+            "change": {
+              "actions": ["update"],
+              "before": {},
+              "after": {"description": "do not destroy; kms and public_ip are words only"},
+              "before_sensitive": {},
+              "after_sensitive": {}
+            }
+          }
+        ]
+      },
+      "expected_ids": []
+    },
+    {
+      "name": "iam-no-op",
+      "plan": {
+        "format_version": "1.0",
+        "resource_changes": [
+          {
+            "address": "aws_iam_role.unchanged",
+            "type": "aws_iam_role",
+            "provider_name": "registry.terraform.io/hashicorp/aws",
+            "change": {
+              "actions": ["no-op"],
+              "before": {},
+              "after": {},
+              "before_sensitive": {},
+              "after_sensitive": {}
+            }
+          }
+        ]
+      },
+      "expected_ids": []
+    }
+  ]
+}
