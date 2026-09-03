@@ -1,0 +1,34 @@
+flowchart LR
+  subgraph Repo[Untrusted repository boundary]
+    AC[Assessment Contract v1]
+    AR[Assessment Report v1]
+  end
+
+  subgraph Runner[Trusted execution boundary]
+    VAL[Strict schema and policy validation]
+    PRE[Canonical offline preview]
+    GATE{External write enabled?}
+    AUTH[Secret provider: OAuth token and optional client certificate]
+    TX[Bounded transport: no redirects, TLS verify, allowlisted origin]
+    REC[Read-back and reconciliation]
+  end
+
+  subgraph SN[ServiceNow trust boundary]
+    CAP[Evidence Gateway capability endpoint]
+    CAS[Server allowlist, unique delivery key and CAS]
+    CHG[(Existing Change)]
+    MODEL[Allowlisted Change Model]
+    ATT[(Bounded evidence attachment)]
+    CAB[CAB and Change workflow]
+  end
+
+  AC --> AR --> VAL --> PRE --> GATE
+  GATE -- no / dry-run --> OUT[Local plan and DRY_RUN result]
+  GATE -- yes + authorization --> AUTH --> TX --> CAP --> CAS
+  CAS -- enrich-existing --> CHG
+  MODEL -- create-draft only --> CAS
+  CAS --> ATT
+  CAS --> REC
+  CHG -. remains authoritative .-> CAB
+  REC -- verified --> RESULT[Auditable adapter result v2]
+  REC -- conflict or unknown --> FAIL[Fail closed; no approval claim]
