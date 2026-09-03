@@ -63,7 +63,7 @@ The goal is to help teams enter formal change approval with better context, clea
 - Incomplete monitoring plans and missing post-deploy validation
 - Risky Terraform signals: IAM/role changes, security groups, firewalls, DNS, KMS, database instances, public IP exposure, and `destroy` / `delete` actions
 - Risky Kubernetes signals: Ingress, Secret, NetworkPolicy, StatefulSet, LoadBalancer exposure, `replicas: 0`, and Deployments missing readiness / liveness probes
-- Structured Terraform JSON resource/action evidence and multi-document Kubernetes object parsing
+- Bounded Terraform JSON 1.x resource/action evidence with sensitive-value masking, plus multi-document Kubernetes object parsing
 - Versioned policy packs for SaaS, fintech, ecommerce, healthcare, critical platforms, and lightweight startup governance
 - Offline Datadog, Grafana, Prometheus, Zabbix, and GCP Cloud Monitoring inventory validation
 
@@ -506,7 +506,8 @@ preflightops/
 ├── preflightops/               # Core package
 │   ├── risk_engine.py         # Rules, scoring, levels, recommendations
 │   ├── validators.py          # Rollback / monitoring / validation plan checks
-│   ├── scanners.py            # Terraform & Kubernetes keyword risk scanners
+│   ├── scanners.py            # Legacy Terraform and Kubernetes scanner entry points
+│   ├── terraform_plan.py      # Bounded structured Terraform Plan JSON parser
 │   ├── report.py              # Markdown & JSON report generators
 │   ├── sample_data.py         # Built-in low/high/critical scenarios
 │   └── cli.py                 # Command-line entry point (exit 1 on CRITICAL)

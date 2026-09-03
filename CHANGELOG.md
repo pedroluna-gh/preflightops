@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Bounded Terraform Plan JSON 1.x parser with typed fail-closed errors,
+  resource/action models, sensitive and unknown value masking, deterministic
+  multi-cloud findings, precision fixtures, migration guidance and rollback.
+
 - Deterministic Assessment Contract v1 and offline Trust Kernel with immutable
   models, strict validation, canonical serialization, reproducible IDs/hashes,
   independent risk/confidence scoring, and an explicit human-decision boundary.
@@ -211,4 +215,3 @@ Initial public release.
 [0.3.0]: https://github.com/pedroluna-gh/preflightops/compare/v0.1.2...v0.3.0
 [0.1.2]: https://github.com/pedroluna-gh/preflightops/compare/v0.1.1...v0.1.2
 [0.1.0]: https://github.com/pedroluna-gh/preflightops/releases/tag/v0.1.0
-
