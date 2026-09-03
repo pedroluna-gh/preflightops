@@ -95,7 +95,7 @@ and never becomes the CAB or ITSM workflow authority.
 - Attach structured evidence and verify both records and attachments.
 - Support a network-free preview and environment-protected live demo.
 
-## Designed next — ServiceNow enterprise adapter v2
+## v0.5 — ServiceNow enterprise adapter v2 (implemented, unreleased)
 
 - Default to enriching an existing Change by number/sys_id.
 - Use an instance-side Evidence Gateway with field allowlist, unique delivery
@@ -105,8 +105,11 @@ and never becomes the CAB or ITSM workflow authority.
 - Gate optional draft creation on an explicitly allowed change model and a
   separate enterprise policy decision.
 
-This is an approved architecture design, not yet a runtime capability. See the
-[enterprise golden path](SERVICENOW_ENTERPRISE_GOLDEN_PATH.md).
+The strict public Python API, schemas, deterministic preview, hardened network/auth
+layer and mocked execution/reconciliation tests are implemented. Instance-side Gateway,
+ACL/index deployment and authorized sandbox ATF/E2E remain customer environment gates,
+not repository runtime work. See the [enterprise golden path](SERVICENOW_ENTERPRISE_GOLDEN_PATH.md)
+and [runbook](SERVICENOW_ENTERPRISE_RUNBOOK.md).
 
 ## Next — Policy governance and verified exceptions (implemented, unreleased)
 
