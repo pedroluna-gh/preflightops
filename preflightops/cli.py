@@ -19,10 +19,20 @@ Exit codes
 import argparse
 import json
 import sys
+from pathlib import Path
 
 import yaml
 
 from ._version import __version__
+from .auditable_report import (
+    AuditableReportConfig,
+    AuditableReportError,
+    build_auditable_report_v1,
+    render_assessment_markdown_v1,
+    render_pr_summary_v1,
+    render_ticket_summary_v1,
+    serialize_auditable_report_v1,
+)
 from .changed_files import (
     classify_changed_files,
     load_auto_scanner_inputs,
@@ -120,6 +130,92 @@ def _load_terraform_json(path):
         return handle.read()
 
 
+def _render_assessment_report_cli(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(
+        prog="preflightops report render",
+        description="Render deterministic, offline outputs from Assessment Contract v1.",
+    )
+    parser.add_argument("--assessment", required=True, help="Assessment Contract v1 JSON path.")
+    parser.add_argument("--json-output", help="Explicit Assessment Report v1 JSON path.")
+    parser.add_argument("--markdown-output", help="Explicit full Markdown report path.")
+    parser.add_argument("--pr-summary-output", help="Explicit compact PR summary path.")
+    parser.add_argument("--ticket-summary-output", help="Explicit compact ticket summary path.")
+    parser.add_argument(
+        "--full-report-url",
+        help="Optional safe HTTPS artifact URL for compact summaries; never fetched.",
+    )
+    parser.add_argument(
+        "--without-automation-details",
+        action="store_true",
+        help="Omit the Automation Details block from human output.",
+    )
+    parser.add_argument("--max-text-length", type=int, default=320)
+    parser.add_argument("--top-blockers-limit", type=int, default=5)
+    parser.add_argument("--next-actions-limit", type=int, default=8)
+    parser.add_argument("--pr-summary-max-characters", type=int, default=3500)
+    parser.add_argument("--ticket-summary-max-characters", type=int, default=8000)
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Explicitly allow replacement of requested local output files.",
+    )
+    args = parser.parse_args(argv)
+
+    requested = {
+        "json": args.json_output,
+        "markdown": args.markdown_output,
+        "pr": args.pr_summary_output,
+        "ticket": args.ticket_summary_output,
+    }
+    destinations = {name: Path(value) for name, value in requested.items() if value}
+    if not destinations:
+        parser.error("at least one explicit output path is required")
+    resolved = [str(path.resolve()) for path in destinations.values()]
+    if len(resolved) != len(set(resolved)):
+        parser.error("output paths must be unique")
+    if not args.overwrite:
+        existing = [str(path) for path in destinations.values() if path.exists()]
+        if existing:
+            print(
+                "Report error: output already exists; pass --overwrite to replace it: "
+                + ", ".join(existing),
+                file=sys.stderr,
+            )
+            return 2
+
+    try:
+        with open(args.assessment, encoding="utf-8") as handle:
+            assessment = json.load(handle)
+        if not isinstance(assessment, dict):
+            raise AuditableReportError("Assessment Contract v1 must be a JSON object.")
+        config = AuditableReportConfig(
+            include_automation_details=not args.without_automation_details,
+            max_text_length=args.max_text_length,
+            top_blockers_limit=args.top_blockers_limit,
+            next_actions_limit=args.next_actions_limit,
+            pr_summary_max_characters=args.pr_summary_max_characters,
+            ticket_summary_max_characters=args.ticket_summary_max_characters,
+        )
+        report = build_auditable_report_v1(assessment, config)
+        documents = {
+            "json": serialize_auditable_report_v1(report).decode("utf-8"),
+            "markdown": render_assessment_markdown_v1(report),
+            "pr": render_pr_summary_v1(report, args.full_report_url),
+            "ticket": render_ticket_summary_v1(report, args.full_report_url),
+        }
+        mode = "w" if args.overwrite else "x"
+        for name, path in destinations.items():
+            with path.open(mode, encoding="utf-8", newline="\n") as handle:
+                handle.write(documents[name])
+    except (AuditableReportError, OSError, json.JSONDecodeError, ValueError) as exc:
+        print(f"Report error: {exc}", file=sys.stderr)
+        return 2
+
+    for name, path in destinations.items():
+        print(f"Assessment report {name} written to: {path}")
+    return 0
+
+
 def main(argv=None) -> int:
     effective_argv = list(sys.argv[1:] if argv is None else argv)
     if effective_argv[:1] == ["evidence"]:
@@ -128,6 +224,8 @@ def main(argv=None) -> int:
         return governance_cli(effective_argv[1:])
     if effective_argv[:1] == ["waiver"]:
         return waiver_cli(effective_argv[1:])
+    if effective_argv[:2] == ["report", "render"]:
+        return _render_assessment_report_cli(effective_argv[2:])
 
     parser = argparse.ArgumentParser(
         prog="preflightops",
