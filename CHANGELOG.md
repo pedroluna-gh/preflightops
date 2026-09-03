@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Semantic Validation Contract v1 for structured rollback, monitoring, and
+  validation plans, with explicit PASS/FAIL/UNKNOWN/ERROR/N/A states,
+  explainable confidence components, deterministic freshness/expiry, canonical
+  identities, strict schemas, privacy-safe evidence metadata, and an additive
+  Change Request v1 adapter.
+
 - Bounded Terraform Plan JSON 1.x parser with typed fail-closed errors,
   resource/action models, sensitive and unknown value masking, deterministic
   multi-cloud findings, precision fixtures, migration guidance and rollback.
