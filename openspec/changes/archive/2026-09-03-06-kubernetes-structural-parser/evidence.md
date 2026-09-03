@@ -21,11 +21,17 @@ de aprobación humana ni integraciones remotas.
 - OpenSpec `validate --strict` y `doctor`: exitosos antes de publicación.
 - Rama exclusiva: `stage-06-kubernetes-structural-parser`; PR
   [#43](https://github.com/pedroluna-gh/preflightops/pull/43).
-- Head validado: `a1078c3d4cff71461c88ddf3888665c44786639e`.
-- CI remoto del head: `CI` #124, `Security` #65 y `Fuzzing` #22 concluyeron
-  exitosamente. Esto incluye `Required`, cinco matrices OS/Python, tres
-  auditorías de dependencias, quality gates, contrato del Action, Dependency
-  Review, CodeQL y ClusterFuzzLite.
+- Head de implementación validado:
+  `a1078c3d4cff71461c88ddf3888665c44786639e`; `CI` #124, `Security` #65 y
+  `Fuzzing` #22 concluyeron exitosamente.
+- Head con OpenSpec archivado validado:
+  `5dbe9bf9310bd116e85c37af80b26c400ca366ca`; `CI` #133, `Security` #74 y
+  `Fuzzing` #31 concluyeron exitosamente. Esto incluye `Required`, cinco
+  matrices OS/Python, tres auditorías de dependencias, quality gates, contrato
+  del Action, Dependency Review, CodeQL y ClusterFuzzLite.
+- OpenSpec archivado como
+  `2026-09-03-06-kubernetes-structural-parser`; `validate --all --strict`
+  confirmó las dos specs fuente y `doctor` confirmó la raíz.
 - Hallazgo de CI resuelto: el contrato hermético del Action heredaba la
   autodetección de archivos del propio PR, por lo que el fixture LOW podía
   incorporar manifiestos adversariales. Los escenarios LOW/CRITICAL ahora fijan
@@ -59,8 +65,8 @@ de aprobación humana ni integraciones remotas.
   confidence, nunca como PASS implícito.
 - La cobertura de kinds/campos es deliberadamente acotada y toda ampliación debe
   agregar fixtures versionados y mantener compatibilidad.
-- La integración a `main` aún está pendiente; el CI completo del head del PR es
-  verde y deberá repetirse si el archivo OpenSpec genera un nuevo head.
+- La integración a `main` aún está pendiente; el CI completo del head de
+  implementación y del head archivado del PR es verde.
 
 ## Rollback
 
