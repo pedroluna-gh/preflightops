@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pedroluna-gh/preflightops/schemas/semantic-change-controls-v1.schema.json",
+  "title": "PreflightOps Semantic Change Controls v1",
+  "type": "object",
+  "required": ["rollback_plan", "monitoring_plan", "validation_plan"],
+  "properties": {
+    "rollback_plan": {"$ref": "#/$defs/rollbackPlan"},
+    "monitoring_plan": {"$ref": "#/$defs/monitoringPlan"},
+    "validation_plan": {"$ref": "#/$defs/validationPlan"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "semanticText": {"type": "string", "minLength": 3, "maxLength": 2048},
+    "textList": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {"$ref": "#/$defs/semanticText"}
+    },
+    "step": {
+      "type": "object",
+      "required": ["action", "observable_signal", "expected_result"],
+      "properties": {
+        "action": {"$ref": "#/$defs/semanticText"},
+        "observable_signal": {"$ref": "#/$defs/semanticText"},
+        "expected_result": {"$ref": "#/$defs/semanticText"}
+      },
+      "additionalProperties": false
+    },
+    "reference": {
+      "type": "object",
+      "required": ["id", "url", "state"],
+      "properties": {
+        "id": {"$ref": "#/$defs/semanticText"},
+        "url": {"type": ["string", "null"], "format": "uri", "maxLength": 2048},
+        "state": {"enum": ["ACTIVE", "BROKEN", "UNKNOWN"]}
+      },
+      "additionalProperties": false
+    },
+    "rollbackPlan": {
+      "type": "object",
+      "required": [
+        "applicable", "not_applicable_reason", "owner", "duration_minutes",
+        "success_criteria", "steps", "contradictions", "action", "trigger"
+      ],
+      "properties": {
+        "applicable": {"type": "boolean"},
+        "not_applicable_reason": {"type": ["string", "null"], "maxLength": 2048},
+        "owner": {"type": ["string", "null"], "maxLength": 2048},
+        "duration_minutes": {"type": ["integer", "null"], "minimum": 1, "maximum": 10080},
+        "success_criteria": {"type": "array", "maxItems": 100},
+        "steps": {"type": "array", "maxItems": 100, "items": {"$ref": "#/$defs/step"}},
+        "contradictions": {"type": "array", "maxItems": 100},
+        "action": {"type": ["string", "null"], "maxLength": 2048},
+        "trigger": {"type": ["string", "null"], "maxLength": 2048}
+      },
+      "additionalProperties": false
+    },
+    "monitoringPlan": {
+      "type": "object",
+      "required": [
+        "applicable", "not_applicable_reason", "owner", "duration_minutes",
+        "success_criteria", "steps", "contradictions", "dashboards", "alerts"
+      ],
+      "properties": {
+        "applicable": {"type": "boolean"},
+        "not_applicable_reason": {"type": ["string", "null"], "maxLength": 2048},
+        "owner": {"type": ["string", "null"], "maxLength": 2048},
+        "duration_minutes": {"type": ["integer", "null"], "minimum": 1, "maximum": 10080},
+        "success_criteria": {"type": "array", "maxItems": 100},
+        "steps": {"type": "array", "maxItems": 100, "items": {"$ref": "#/$defs/step"}},
+        "contradictions": {"type": "array", "maxItems": 100},
+        "dashboards": {"type": "array", "maxItems": 100, "items": {"$ref": "#/$defs/reference"}},
+        "alerts": {"type": "array", "maxItems": 100, "items": {"$ref": "#/$defs/reference"}}
+      },
+      "additionalProperties": false
+    },
+    "validationPlan": {
+      "type": "object",
+      "required": [
+        "applicable", "not_applicable_reason", "owner", "duration_minutes",
+        "success_criteria", "steps", "contradictions"
+      ],
+      "properties": {
+        "applicable": {"type": "boolean"},
+        "not_applicable_reason": {"type": ["string", "null"], "maxLength": 2048},
+        "owner": {"type": ["string", "null"], "maxLength": 2048},
+        "duration_minutes": {"type": ["integer", "null"], "minimum": 1, "maximum": 10080},
+        "success_criteria": {"type": "array", "maxItems": 100},
+        "steps": {"type": "array", "maxItems": 100, "items": {"$ref": "#/$defs/step"}},
+        "contradictions": {"type": "array", "maxItems": 100}
+      },
+      "additionalProperties": false
+    }
+  }
+}
