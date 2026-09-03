@@ -1,2 +1,3 @@
 # Deterministic assessment golden contracts must remain byte-identical on every OS.
 tests/fixtures/assessment/*.golden.json text eol=lf
+tests/fixtures/semantic/*.golden.json text eol=lf
