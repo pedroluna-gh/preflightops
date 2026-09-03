@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pedroluna-gh/preflightops/schemas/servicenow-adapter-request-v2.schema.json",
+  "title": "PreflightOps ServiceNow adapter request v2",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "request_id",
+    "operation",
+    "dry_run",
+    "write_enabled",
+    "transport_profile",
+    "instance",
+    "assessment",
+    "delivery",
+    "preconditions"
+  ],
+  "properties": {
+    "schema_version": {"const": "servicenow-adapter-request-v2"},
+    "request_id": {"type": "string", "pattern": "^snreq-[0-9a-f]{32}$"},
+    "operation": {"enum": ["enrich_existing", "create_draft"]},
+    "dry_run": {"type": "boolean", "default": true},
+    "write_enabled": {"type": "boolean", "default": false},
+    "transport_profile": {"enum": ["evidence_gateway_v1", "change_management_v1"]},
+    "instance": {
+      "type": "object",
+      "required": ["alias", "origin"],
+      "properties": {
+        "alias": {"type": "string", "pattern": "^[a-z][a-z0-9._-]{2,63}$"},
+        "origin": {"type": "string", "format": "uri", "pattern": "^https://[^/?#]+$"}
+      },
+      "additionalProperties": false
+    },
+    "target": {
+      "type": "object",
+      "properties": {
+        "number": {"type": "string", "pattern": "^CHG[0-9]{7,12}$"},
+        "sys_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"}
+      },
+      "oneOf": [
+        {"required": ["number"], "not": {"required": ["sys_id"]}},
+        {"required": ["sys_id"], "not": {"required": ["number"]}}
+      ],
+      "additionalProperties": false
+    },
+    "creation": {
+      "type": "object",
+      "required": ["model_sys_id", "external_authorization_id"],
+      "properties": {
+        "model_sys_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+        "external_authorization_id": {"type": "string", "pattern": "^[A-Za-z0-9._:-]{1,128}$"}
+      },
+      "additionalProperties": false
+    },
+    "assessment": {
+      "type": "object",
+      "required": [
+        "assessment_id",
+        "report_id",
+        "report_sha256",
+        "verdict",
+        "risk_level",
+        "confidence_level",
+        "policy_name",
+        "policy_version",
+        "commit",
+        "assessed_at"
+      ],
+      "properties": {
+        "assessment_id": {"type": "string", "pattern": "^urn:preflightops:assessment:sha256:[0-9a-f]{64}$"},
+        "report_id": {"type": "string", "pattern": "^urn:preflightops:assessment-report:sha256:[0-9a-f]{64}$"},
+        "report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "verdict": {"enum": ["PASS", "FAIL", "INDETERMINATE"]},
+        "risk_level": {"enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL", "UNKNOWN"]},
+        "confidence_level": {"enum": ["HIGH", "MEDIUM", "LOW", "UNKNOWN"]},
+        "policy_name": {"type": "string", "minLength": 1, "maxLength": 128},
+        "policy_version": {"type": "string", "minLength": 1, "maxLength": 64},
+        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "assessed_at": {"type": "string", "format": "date-time"}
+      },
+      "additionalProperties": false
+    },
+    "delivery": {
+      "type": "object",
+      "required": ["mapping_profile_id", "mapping_sha256", "idempotency_key", "payload_sha256", "evidence_mode"],
+      "properties": {
+        "mapping_profile_id": {"type": "string", "pattern": "^[a-z][a-z0-9._-]{2,63}$"},
+        "mapping_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "idempotency_key": {"type": "string", "pattern": "^snv2-[0-9a-f]{64}$"},
+        "payload_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "evidence_mode": {"enum": ["attachment", "https_link"]},
+        "evidence_url": {"type": "string", "format": "uri", "pattern": "^https://[^?#]+$"}
+      },
+      "additionalProperties": false
+    },
+    "preconditions": {
+      "type": "object",
+      "required": ["capability_attestation_sha256"],
+      "properties": {
+        "expected_sys_mod_count": {"type": "integer", "minimum": 0},
+        "capability_attestation_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"operation": {"const": "enrich_existing"}}},
+      "then": {
+        "required": ["target"],
+        "not": {"required": ["creation"]},
+        "properties": {"preconditions": {"required": ["expected_sys_mod_count"]}}
+      }
+    },
+    {
+      "if": {"properties": {"operation": {"const": "create_draft"}}},
+      "then": {"required": ["creation"], "not": {"required": ["target"]}}
+    },
+    {
+      "if": {"properties": {"write_enabled": {"const": true}}},
+      "then": {"properties": {"dry_run": {"const": false}, "transport_profile": {"const": "evidence_gateway_v1"}}}
+    }
+  ],
+  "additionalProperties": false
+}
