@@ -63,7 +63,7 @@ The goal is to help teams enter formal change approval with better context, clea
 - Incomplete monitoring plans and missing post-deploy validation
 - Risky Terraform signals: IAM/role changes, security groups, firewalls, DNS, KMS, database instances, public IP exposure, and `destroy` / `delete` actions
 - Risky Kubernetes signals: Ingress, Secret, NetworkPolicy, StatefulSet, LoadBalancer exposure, `replicas: 0`, and Deployments missing readiness / liveness probes
-- Bounded Terraform JSON 1.x resource/action evidence with sensitive-value masking, plus multi-document Kubernetes object parsing
+- Bounded Terraform JSON 1.x resource/action evidence with sensitive-value masking, plus fail-closed multi-document Kubernetes parsing with per-object/field evidence and Secret sanitization
 - Versioned policy packs for SaaS, fintech, ecommerce, healthcare, critical platforms, and lightweight startup governance
 - Offline Datadog, Grafana, Prometheus, Zabbix, and GCP Cloud Monitoring inventory validation
 
@@ -162,6 +162,8 @@ auto-loads unambiguous structured Terraform plans and Kubernetes manifests.
 
 Structured inputs, policy packs, and the secrets-free observability inventory
 are documented in [`docs/POLICY_AND_EVIDENCE.md`](docs/POLICY_AND_EVIDENCE.md).
+Kubernetes limits, evidence invariants, migration and rollback are detailed in
+[`docs/KUBERNETES_MANIFESTS.md`](docs/KUBERNETES_MANIFESTS.md).
 
 ### Governed policy and verified exceptions
 

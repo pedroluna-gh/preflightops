@@ -76,6 +76,9 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 `assess_risk`, `find_service`, `RISK_LEVELS`, `RECOMMENDATIONS`,
 `score_to_level`, `is_bad_rollback_plan`, `is_monitoring_plan_incomplete`,
 `is_validation_plan_valid`, `scan_terraform`, `scan_kubernetes`,
+`scan_kubernetes_legacy`, `parse_kubernetes_manifests`, `KubernetesObject`,
+`KubernetesManifestLimits`, `KubernetesManifestError`,
+`DEFAULT_KUBERNETES_MANIFEST_LIMITS`,
 `scan_terraform_json`, `scan_terraform_plan`, `parse_terraform_plan_json`,
 `TerraformPlan`, `TerraformResourceChange`, `TerraformPlanLimits`,
 `TerraformPlanError`, `DEFAULT_TERRAFORM_PLAN_LIMITS`, `load_policy_pack`,
@@ -127,6 +130,12 @@ semantics.
 
 Structured Terraform JSON, policy packs, and monitor inventories are optional
 Action inputs. They remain offline and add no credential requirements.
+
+The `k8s` input uses the bounded structural contract documented in
+[`KUBERNETES_MANIFESTS.md`](KUBERNETES_MANIFESTS.md). Invalid or incomplete
+manifests exit `2`; keyword matching is available only from the Python
+`scan_kubernetes_legacy` compatibility adapter and is never a CLI or Action
+fallback.
 
 Terraform JSON files follow the bounded and fail-closed contract in
 [`TERRAFORM_PLAN_JSON.md`](TERRAFORM_PLAN_JSON.md). The text scanner remains a

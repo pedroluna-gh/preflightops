@@ -30,8 +30,13 @@ and evidence fields are documented in
 `--k8s` parses multi-document Kubernetes YAML and `List` objects. Each workload
 and each container is evaluated independently for probes and resource
 requests/limits. Service LoadBalancers, Ingress, Secrets, NetworkPolicies,
-StatefulSets, and zero replicas produce explainable resource-level findings.
-Unstructured historical snippets retain the legacy keyword fallback.
+StatefulSets, DaemonSets, Jobs/CronJobs, PodDisruptionBudgets, dangerous pod
+settings, and zero replicas produce explainable object/field-level findings.
+Invalid or incomplete YAML fails closed with exit code 2 and never activates
+text matching. Secret payloads are removed before rules execute. Limits,
+invariants, migration, the explicit `scan_kubernetes_legacy` adapter and
+rollback are documented in
+[`KUBERNETES_MANIFESTS.md`](KUBERNETES_MANIFESTS.md).
 
 ## Policy packs
 

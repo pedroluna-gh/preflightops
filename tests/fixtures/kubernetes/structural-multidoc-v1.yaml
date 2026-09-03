@@ -1,0 +1,56 @@
+# Risk words in comments are not evidence: kind: Secret, type: LoadBalancer, replicas: 0
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: payments
+  name: complete-api
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: api
+          readinessProbe:
+            httpGet: {path: /ready, port: 8080}
+          livenessProbe:
+            httpGet: {path: /health, port: 8080}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: 500m, memory: 512Mi}
+---
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: payments
+  name: incomplete-worker
+spec:
+  replicas: 0
+  strategy:
+    type: Recreate
+  template:
+    spec:
+      hostNetwork: true
+      containers:
+        - name: worker
+          securityContext:
+            privileged: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: payments
+  name: public-api
+spec:
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: payments
+  name: deployment-credential
+type: Opaque
+data:
+  password: U0VDUkVUX01BUktFUl9NVVNUX05PVF9MRUFL
+stringData:
+  token: SECRET_MARKER_MUST_NOT_LEAK

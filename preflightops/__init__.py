@@ -31,6 +31,14 @@ from .integrations import (
     push_to_servicenow,
     validate_servicenow_instance_url,
 )
+from .kubernetes_manifest import (
+    DEFAULT_KUBERNETES_MANIFEST_LIMITS,
+    KubernetesManifestError,
+    KubernetesManifestLimits,
+    KubernetesObject,
+    parse_kubernetes_manifests,
+    scan_kubernetes_legacy,
+)
 from .monitoring import validate_monitoring_evidence
 from .policy import load_policy_pack
 from .report import (
@@ -93,6 +101,12 @@ __all__ = [
     "TerraformResourceChange",
     "DEFAULT_TERRAFORM_PLAN_LIMITS",
     "scan_kubernetes",
+    "scan_kubernetes_legacy",
+    "parse_kubernetes_manifests",
+    "KubernetesManifestError",
+    "KubernetesManifestLimits",
+    "KubernetesObject",
+    "DEFAULT_KUBERNETES_MANIFEST_LIMITS",
     "load_policy_pack",
     "validate_monitoring_evidence",
     "generate_markdown_report",

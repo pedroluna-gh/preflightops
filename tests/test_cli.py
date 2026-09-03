@@ -245,6 +245,38 @@ class TestErrorCodes:
         assert "TF_PLAN_FORMAT_VERSION" in capsys.readouterr().err
         assert not (tmp_path / "report.md").exists()
 
+    def test_invalid_kubernetes_manifest_fails_without_report_or_secret_data(
+        self, tmp_path, capsys
+    ):
+        services = _write_yaml(tmp_path / "services.yaml", sample_data.LOW_RISK_SERVICES)
+        change = _write_yaml(tmp_path / "change.yaml", sample_data.LOW_RISK_CHANGE)
+        manifest = tmp_path / "k8s.yaml"
+        manifest.write_text(
+            "apiVersion: v1\nkind: Secret\nmetadata: [\n"
+            "stringData: {token: SECRET_MARKER_MUST_NOT_LEAK}\n",
+            encoding="utf-8",
+        )
+        output = tmp_path / "report.md"
+
+        code = cli.main(
+            [
+                "--services",
+                services,
+                "--change",
+                change,
+                "--k8s",
+                str(manifest),
+                "--output",
+                str(output),
+            ]
+        )
+
+        error = capsys.readouterr().err
+        assert code == 2
+        assert "invalid_yaml" in error
+        assert "SECRET_MARKER_MUST_NOT_LEAK" not in error
+        assert not output.exists()
+
     def test_missing_required_arg_exits(self, capsys):
         # argparse exits with code 2 when a required argument is absent.
         with pytest.raises(SystemExit) as excinfo:

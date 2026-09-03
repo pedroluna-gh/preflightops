@@ -12,7 +12,8 @@ suggest or upvote an item.
 ## Recently completed for v0.4
 
 - Bounded Terraform JSON 1.x parsing with sensitive-safe resource/action evidence.
-- Structured multi-document Kubernetes object and container validation.
+- Bounded, fail-closed multi-document Kubernetes object and container
+  validation with Secret-safe field evidence and an explicit legacy adapter.
 - Versioned, customizable policy packs and risk weights.
 - Secrets-free observability inventory validation for major providers.
 - GitHub PR changed-file detection and scanner-scope inference.

@@ -219,7 +219,7 @@ def test_scanner_findings_merged():
         baseline_services(),
         baseline_change(),
         terraform_text="aws_iam_policy.admin will be created",
-        k8s_text="kind: Secret",
+        k8s_text="apiVersion: v1\nkind: Secret\nmetadata: {name: credential}",
     )
     ids = triggered_ids(result)
     assert "terraform-iam-policy-change" in ids
@@ -264,7 +264,12 @@ def test_score_is_capped_at_100():
         services,
         change,
         terraform_text="aws_iam_policy destroy aws_db_instance",
-        k8s_text="kind: Deployment",
+        k8s_text=(
+            "apiVersion: apps/v1\n"
+            "kind: Deployment\n"
+            "metadata: {name: api}\n"
+            "spec:\n  template:\n    spec:\n      containers: [{name: api}]"
+        ),
     )
     assert result["risk_score"] == 100
     assert result["risk_level"] == "CRITICAL"

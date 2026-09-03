@@ -57,10 +57,15 @@ def test_ci_audits_every_supported_python_version():
 def test_ci_distinguishes_product_risk_from_pipeline_failure():
     workflow = _load(CI_PATH)
     steps = workflow["jobs"]["action-contract"]["steps"]
+    low = next(step for step in steps if step["name"] == "LOW risk must pass")
     critical = next(
         step for step in steps if step["name"] == "CRITICAL risk must fail the risk gate"
     )
     assertion = next(step for step in steps if step["name"] == "Assert CRITICAL contract")
+    # These are hermetic fixture contracts. PR changed-file discovery is tested
+    # separately and must not make the LOW fixture depend on the PR's contents.
+    assert low["with"]["auto-detect-changes"] == "false"
+    assert critical["with"]["auto-detect-changes"] == "false"
     assert critical["continue-on-error"] == "true"
     assert "steps.critical.outcome" in assertion["run"]
     assert "CRITICAL" in assertion["run"]

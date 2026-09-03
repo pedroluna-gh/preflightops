@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bounded Terraform Plan JSON 1.x parser with typed fail-closed errors,
   resource/action models, sensitive and unknown value masking, deterministic
   multi-cloud findings, precision fixtures, migration guidance and rollback.
+- Bounded, deterministic Kubernetes multi-document parser with strict object
+  identity, per-container and per-field evidence, Secret payload sanitization,
+  defensive YAML limits and no parse-error keyword fallback.
+- Structural workload, exposure, strategy and PodDisruptionBudget rules plus an
+  explicit `scan_kubernetes_legacy` migration adapter that preserves historical
+  ids, scores, severities and result shape.
 
 - Deterministic Assessment Contract v1 and offline Trust Kernel with immutable
   models, strict validation, canonical serialization, reproducible IDs/hashes,
