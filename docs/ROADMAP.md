@@ -11,7 +11,7 @@ suggest or upvote an item.
 
 ## Recently completed for v0.4
 
-- Structured Terraform JSON plan parsing with resource/action evidence.
+- Bounded Terraform JSON 1.x parsing with sensitive-safe resource/action evidence.
 - Structured multi-document Kubernetes object and container validation.
 - Versioned, customizable policy packs and risk weights.
 - Secrets-free observability inventory validation for major providers.
@@ -69,7 +69,7 @@ and never becomes the CAB or ITSM workflow authority.
 
 ## v0.2 — Structured change evidence
 
-- Parse `terraform show -json` plan output instead of keyword matching.
+- Parse `terraform show -json` plan output explicitly; retain keyword matching only as deprecated legacy input.
 - Distinguish create / update / delete / replace per resource.
 - Map provider resource types to risk weights.
 - Parse Kubernetes manifests as objects (multi-document YAML).

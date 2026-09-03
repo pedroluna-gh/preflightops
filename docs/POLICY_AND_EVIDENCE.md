@@ -14,11 +14,16 @@ preflightops --services services.yaml --change change.yaml \
   --terraform-json tfplan.json --output report.md
 ```
 
-The parser evaluates each `resource_changes` entry, its address/type, lifecycle
-actions, and post-change attributes. It distinguishes replacement from an
-irreversible destroy and reports resource-level evidence for IAM, firewall,
-database, public exposure, DNS, and encryption-key changes. Invalid JSON fails
-the assessment with exit code 2.
+The parser validates Terraform JSON format 1.x and evaluates each
+`resource_changes` entry, its address/type/provider, ordered lifecycle actions,
+and allowlisted post-change predicates. It distinguishes both replacement orders
+from an irreversible destroy and reports deterministic resource-level evidence
+for IAM, firewall, database, public exposure, DNS, and encryption-key changes.
+Sensitive and unknown leaves are removed before rule evaluation. Invalid,
+oversized, excessively deep, errored or semantically unknown plans fail the
+assessment with exit code 2 and never fall back to text. Full limits, migration
+and evidence fields are documented in
+[`TERRAFORM_PLAN_JSON.md`](TERRAFORM_PLAN_JSON.md).
 
 ## Kubernetes objects
 
