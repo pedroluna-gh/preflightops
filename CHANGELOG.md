@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Assessment Report v1 with canonical identity/integrity, complete audit metadata,
+  explicit PASS/FAIL/UNKNOWN/ERROR categories, freshness/provenance, bounded
+  next actions, versioned redaction and configurable Automation Details.
+- Deterministic full Markdown, compact PR and ticket summaries plus an offline
+  `report render` CLI and additive Action inputs that require explicit output paths;
+  all legacy reports remain available.
+
 - Semantic Validation Contract v1 for structured rollback, monitoring, and
   validation plans, with explicit PASS/FAIL/UNKNOWN/ERROR/N/A states,
   explainable confidence components, deterministic freshness/expiry, canonical
