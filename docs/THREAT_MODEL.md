@@ -37,7 +37,8 @@ and all parsed manifests are untrusted.
 
 ## ServiceNow enterprise adapter v2
 
-The design-only v2 delta adds an instance-side Evidence Gateway for production.
+The implemented additive v2 Python API requires an instance-side Evidence Gateway for
+production writes.
 It applies a server-side evidence-field allowlist, a unique delivery key and an
 atomic `sys_mod_count` compare-and-set. Direct Change Management API access is
 limited to sandbox/pilot, while Table API remains legacy read-only during
@@ -51,6 +52,12 @@ updates, privilege escalation, replay and partial failure:
 
 The gateway, custom role/ACL, unique field and allowed change models remain
 customer-controlled ServiceNow configuration and require independent review.
+
+The runtime validates exact HTTPS origins, DNS answers and evidence-link hosts before
+credential acquisition and before protected requests; automatic redirects and ambient
+proxies are disabled. A deployment must still prevent DNS rebinding by pinning the
+validated connection through an approved resolver/proxy. This cannot be proven by an
+application-level preflight alone.
 
 ## Assumptions and residual risks
 
