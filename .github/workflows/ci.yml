@@ -162,6 +162,7 @@ jobs:
         with:
           services: examples/services-low-risk.yaml
           change: examples/change-low-risk.yaml
+          auto-detect-changes: "false"
           output: low-report.md
           json-output: low-report.json
           fail-on: critical
@@ -182,6 +183,7 @@ jobs:
           services: examples/services-critical-risk.yaml
           change: examples/change-critical-risk.yaml
           terraform: examples/terraform-critical.txt
+          auto-detect-changes: "false"
           output: critical-report.md
           json-output: critical-report.json
           fail-on: critical
