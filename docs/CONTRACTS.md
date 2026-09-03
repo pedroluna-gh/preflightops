@@ -117,6 +117,9 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 - [`monitor-inventory-v1.schema.json`](../schemas/monitor-inventory-v1.schema.json)
 - [`servicenow-mapping-v1.schema.json`](../schemas/servicenow-mapping-v1.schema.json)
 - [`servicenow-evidence-v1.schema.json`](../schemas/servicenow-evidence-v1.schema.json)
+- [`servicenow-mapping-v2.schema.json`](../schemas/servicenow-mapping-v2.schema.json)
+- [`servicenow-adapter-request-v2.schema.json`](../schemas/servicenow-adapter-request-v2.schema.json)
+- [`servicenow-adapter-result-v2.schema.json`](../schemas/servicenow-adapter-result-v2.schema.json)
 - [`evidence-statement-v2.schema.json`](../schemas/evidence-statement-v2.schema.json)
 - [`evidence-dsse-v1.schema.json`](../schemas/evidence-dsse-v1.schema.json)
 - [`policy-bundle-v2.schema.json`](../schemas/policy-bundle-v2.schema.json)
@@ -131,6 +134,10 @@ organization-specific metadata remains valid. Assessment Contract v1 is strict
 and rejects unknown fields because its integrity digest and audit semantics must
 not vary by consumer. Fields documented as recommended rather than required are
 not promoted to requirements in legacy v1 input schemas.
+
+The ServiceNow v2 schemas are strict design contracts for the enterprise golden
+path. They are not yet wired into the CLI, Python API or Action. Adoption is
+explicit and has no implicit fallback to the v1 Table API connector.
 
 ## GitHub Action
 
