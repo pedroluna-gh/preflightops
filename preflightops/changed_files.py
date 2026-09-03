@@ -13,6 +13,8 @@ from urllib.request import Request, urlopen
 
 import yaml
 
+from .terraform_plan import parse_terraform_plan_json
+
 KUBERNETES_KINDS = {
     "ConfigMap",
     "CronJob",
@@ -202,7 +204,9 @@ def load_auto_scanner_inputs(scope: dict, repository_root: str | Path) -> dict:
         if (path := _safe_workspace_file(root, name)) is not None
     ]
     if len(terraform_candidates) == 1:
-        terraform_json = json.loads(terraform_candidates[0].read_text(encoding="utf-8"))
+        raw_plan = terraform_candidates[0].read_text(encoding="utf-8")
+        parse_terraform_plan_json(raw_plan)
+        terraform_json = json.loads(raw_plan)
     elif len(terraform_candidates) > 1:
         scope.setdefault("warnings", []).append(
             "Multiple Terraform JSON plans changed; pass --terraform-json explicitly."

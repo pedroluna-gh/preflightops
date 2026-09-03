@@ -111,11 +111,13 @@ def _load_text(path):
         return handle.read()
 
 
-def _load_json(path):
+def _load_terraform_json(path):
     if not path:
         return None
     with open(path, encoding="utf-8") as handle:
-        return json.load(handle)
+        # Keep the raw representation so the Terraform parser can require the
+        # explicit format version and enforce its byte budget before decoding.
+        return handle.read()
 
 
 def main(argv=None) -> int:
@@ -332,7 +334,7 @@ def main(argv=None) -> int:
             auto_inputs = load_auto_scanner_inputs(changed_scope, args.repository_root)
 
         terraform_text = _load_text(args.terraform)
-        terraform_json = _load_json(args.terraform_json)
+        terraform_json = _load_terraform_json(args.terraform_json)
         if terraform_json is None:
             terraform_json = auto_inputs["terraform_json"]
         k8s_text = _load_text(args.k8s)
