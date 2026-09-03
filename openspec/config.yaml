@@ -1,0 +1,37 @@
+schema: spec-driven
+
+context: |
+  Language: es
+  All artifacts must be written in es.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+  Proyecto brownfield Python 3.11+ para evaluación determinística de riesgo pre-CAB.
+  Los contratos públicos son JSON versionado y los outputs legacy se preservan.
+  Las funciones core deben ser offline, determinísticas y fail-closed.
+  Nunca incluir secretos, valores sensibles completos ni payloads de proveedores en evidencia.
+  Separar riesgo, confidence, recomendación técnica y decisión humana.
+  La secuencia de madurez se ejecuta en cambios independientes y ordenados.
+  Herramientas de calidad: pytest, coverage >= 85%, Ruff, mypy, build y twine check.
+  No usar sistemas productivos ni realizar escrituras externas sin autorización explícita.
+
+rules:
+  proposal:
+    - Define alcance exclusivo, no objetivos, compatibilidad, privacidad y rollback.
+    - Comparar brevemente diseños conservador, balanceado y enterprise cuando haya una decisión relevante.
+  specs:
+    - Escribir requisitos observables con escenarios WHEN/THEN positivos, negativos y adversariales.
+    - Incluir invariantes fail-closed y de no exposición de secretos.
+  design:
+    - Documentar límites, contratos, determinismo, migración y riesgos residuales.
+  tasks:
+    - Asociar cada bloque con pruebas y evidencia verificable.
+    - No marcar una tarea completa si su verificación fue omitida.
+
+operations:
+  apply:
+    guidance:
+      - Preservar cambios existentes y editar archivos manualmente con parches trazables.
+      - Ejecutar primero pruebas focalizadas y luego la suite completa y quality gates.
+      - No avanzar al siguiente cambio si falla un criterio de salida.
+  archive:
+    guidance:
+      - Registrar evidencia, riesgos residuales y rollback antes de archivar.
