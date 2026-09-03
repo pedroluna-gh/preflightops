@@ -59,6 +59,7 @@ Authenticated evidence uses a non-breaking subcommand namespace:
 | `preflightops policy sign` | Sign the reviewed bundle from `PREFLIGHTOPS_POLICY_PRIVATE_KEY` |
 | `preflightops waiver sign` | Sign a complete scoped waiver from `PREFLIGHTOPS_WAIVER_PRIVATE_KEY` |
 | `preflightops waiver verify` | Verify scope, policy digest, dates, separation of duties and signature |
+| `preflightops report render` | Render a valid Assessment Contract v1 to one or more explicit, offline auditable output paths |
 
 Evidence verification exits `0` when verified, `3` when cryptographic or trust
 checks reject the envelope, and `2` for invalid arguments, files or keys.
@@ -96,8 +97,12 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 `adapt_legacy_assessment`, `serialize_assessment_v1`, and
 `validate_assessment_v1`, `SemanticEvidenceReference`,
 `SemanticValidationError`, `SemanticValidationPolicy`, `SemanticValidator`,
-`adapt_legacy_change_request`, `serialize_semantic_validation_v1`, and
-`validate_semantic_validation_v1`.
+`adapt_legacy_change_request`, `serialize_semantic_validation_v1`,
+`validate_semantic_validation_v1`, `AuditableReportConfig`,
+`AuditableReportError`, `build_auditable_report_v1`,
+`render_assessment_markdown_v1`, `render_pr_summary_v1`,
+`render_ticket_summary_v1`, `serialize_auditable_report_v1`, and
+`validate_auditable_report_v1`.
 
 `preflightops.__version__` is also public. It is sourced from
 `preflightops._version` and drives package metadata, CLI output, and reports.
@@ -119,6 +124,7 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 - [`assessment-contract-v1.schema.json`](../schemas/assessment-contract-v1.schema.json)
 - [`semantic-change-controls-v1.schema.json`](../schemas/semantic-change-controls-v1.schema.json)
 - [`semantic-validation-v1.schema.json`](../schemas/semantic-validation-v1.schema.json)
+- [`assessment-report-v1.schema.json`](../schemas/assessment-report-v1.schema.json)
 
 Legacy schemas intentionally allow additional properties so existing
 organization-specific metadata remains valid. Assessment Contract v1 is strict
@@ -165,6 +171,12 @@ Optional authenticated-evidence outputs are `evidence-v2-path` and
 explicit v2 output requires `PREFLIGHTOPS_EVIDENCE_PRIVATE_KEY` in the protected
 step environment.
 
+Optional Assessment Contract inputs/outputs are `assessment-contract`,
+`assessment-report-json-output`, `assessment-report-markdown-output`,
+`assessment-pr-summary-output`, `assessment-ticket-summary-output`, and their
+corresponding path outputs. They are additive, require explicit paths, remain
+offline, and do not publish comments or tickets.
+
 The workflow in `.github/workflows/preflightops.yml` belongs to this source
 repository and is a manually dispatched smoke/demo workflow. A consuming
 repository can configure the composite action as a pull-request gate after it
@@ -205,6 +217,11 @@ Semantic Validation Contract v1 is an additive offline layer for structured
 rollback, monitoring, and validation plans. It preserves every legacy validator
 and output. See [`SEMANTIC_VALIDATION_V1.md`](SEMANTIC_VALIDATION_V1.md) for
 status precedence, confidence calibration, freshness, migration, and rollback.
+
+Assessment Report v1 is the additive canonical and human-readable output surface
+for Assessment Contract v1. See
+[`AUDITABLE_REPORTS_V1.md`](AUDITABLE_REPORTS_V1.md) for determinism, redaction,
+length limits, CLI/Action migration and rollback.
 
 Policy signing, diff/simulation, waiver verification, expiry and rollback are
 defined in [`POLICY_GOVERNANCE_V2.md`](POLICY_GOVERNANCE_V2.md).
