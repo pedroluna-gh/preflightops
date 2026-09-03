@@ -55,6 +55,15 @@ from .risk_engine import (
     score_to_level,
 )
 from .scanners import scan_kubernetes, scan_terraform, scan_terraform_json
+from .semantic_validation import (
+    SemanticEvidenceReference,
+    SemanticValidationError,
+    SemanticValidationPolicy,
+    SemanticValidator,
+    adapt_legacy_change_request,
+    serialize_semantic_validation_v1,
+    validate_semantic_validation_v1,
+)
 from .terraform_plan import (
     DEFAULT_TERRAFORM_PLAN_LIMITS,
     TerraformPlan,
@@ -128,4 +137,11 @@ __all__ = [
     "build_statement_v2",
     "generate_evidence_v2",
     "verify_evidence_v2",
+    "SemanticEvidenceReference",
+    "SemanticValidationError",
+    "SemanticValidationPolicy",
+    "SemanticValidator",
+    "adapt_legacy_change_request",
+    "serialize_semantic_validation_v1",
+    "validate_semantic_validation_v1",
 ]
