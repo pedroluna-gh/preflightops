@@ -102,7 +102,13 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 `AuditableReportError`, `build_auditable_report_v1`,
 `render_assessment_markdown_v1`, `render_pr_summary_v1`,
 `render_ticket_summary_v1`, `serialize_auditable_report_v1`, and
-`validate_auditable_report_v1`.
+`validate_auditable_report_v1`, `CredentialProvider`, `HttpRequest`,
+`HttpResponse`, `HttpTransport`, `NetworkPolicy`,
+`OAuthClientCredentialsProvider`, `RetryPolicy`,
+`ServiceNowEnterpriseAdapter`, `ServiceNowPlanV2`, `ServiceNowV2Error`,
+`UrllibTransport`, `build_servicenow_plan_v2`,
+`compare_servicenow_previews_v1_v2`, `load_servicenow_mapping_v2`,
+`system_resolver`, and `validate_servicenow_plan_v2`.
 
 `preflightops.__version__` is also public. It is sourced from
 `preflightops._version` and drives package metadata, CLI output, and reports.
@@ -119,7 +125,9 @@ The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 - [`servicenow-evidence-v1.schema.json`](../schemas/servicenow-evidence-v1.schema.json)
 - [`servicenow-mapping-v2.schema.json`](../schemas/servicenow-mapping-v2.schema.json)
 - [`servicenow-adapter-request-v2.schema.json`](../schemas/servicenow-adapter-request-v2.schema.json)
+- [`servicenow-adapter-plan-v2.schema.json`](../schemas/servicenow-adapter-plan-v2.schema.json)
 - [`servicenow-adapter-result-v2.schema.json`](../schemas/servicenow-adapter-result-v2.schema.json)
+- [`servicenow-gateway-capability-v1.schema.json`](../schemas/servicenow-gateway-capability-v1.schema.json)
 - [`evidence-statement-v2.schema.json`](../schemas/evidence-statement-v2.schema.json)
 - [`evidence-dsse-v1.schema.json`](../schemas/evidence-dsse-v1.schema.json)
 - [`policy-bundle-v2.schema.json`](../schemas/policy-bundle-v2.schema.json)
@@ -135,9 +143,11 @@ and rejects unknown fields because its integrity digest and audit semantics must
 not vary by consumer. Fields documented as recommended rather than required are
 not promoted to requirements in legacy v1 input schemas.
 
-The ServiceNow v2 schemas are strict design contracts for the enterprise golden
-path. They are not yet wired into the CLI, Python API or Action. Adoption is
-explicit and has no implicit fallback to the v1 Table API connector.
+The ServiceNow v2 schemas and public Python API implement the enterprise golden
+path. Adoption remains explicit and has no implicit fallback to the v1 Table
+API connector. The CLI and Action retain their compatible v1 surface while v2
+is introduced as an additive API; live v2 writes are possible only through the
+Evidence Gateway profile.
 
 ## GitHub Action
 
