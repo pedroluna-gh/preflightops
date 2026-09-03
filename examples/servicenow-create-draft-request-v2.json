@@ -17,7 +17,7 @@
     "assessment_id": "urn:preflightops:assessment:sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "report_id": "urn:preflightops:assessment-report:sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     "report_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-    "verdict": "PASS",
+    "verdict": "READY_FOR_HUMAN_REVIEW",
     "risk_level": "LOW",
     "confidence_level": "HIGH",
     "policy_name": "production",
