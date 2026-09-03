@@ -26,6 +26,14 @@ adapter has its own version and records `legacy_output_preserved: true`.
 Consumers may migrate independently and roll back by disabling only the new
 contract path.
 
+Kubernetes structural analysis intentionally hardens the default
+`scan_kubernetes`, CLI and Action path: only complete objects are evidence, and
+invalid YAML fails closed. The historical keyword result shape, ids, scores and
+severities remain available through `scan_kubernetes_legacy` for a documented
+migration window. That adapter is explicit and is never invoked automatically
+after a structural error. See
+[`KUBERNETES_MANIFESTS.md`](KUBERNETES_MANIFESTS.md) for migration and rollback.
+
 ## Compatible changes
 
 Patch or minor releases may:
@@ -64,4 +72,3 @@ A vulnerable interface may be disabled sooner when continued compatibility
 would expose credentials, sensitive evidence, or unsafe remote writes. The
 release must document the security reason, affected versions, mitigation, and
 rollback limitations.
-
