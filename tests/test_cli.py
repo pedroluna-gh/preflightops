@@ -222,6 +222,29 @@ class TestErrorCodes:
         assert code == 2
         assert "Error:" in capsys.readouterr().err
 
+    def test_terraform_json_without_format_version_fails_closed(self, tmp_path, capsys):
+        services = _write_yaml(tmp_path / "services.yaml", sample_data.LOW_RISK_SERVICES)
+        change = _write_yaml(tmp_path / "change.yaml", sample_data.LOW_RISK_CHANGE)
+        plan = tmp_path / "tfplan.json"
+        plan.write_text(json.dumps({"resource_changes": []}), encoding="utf-8")
+
+        code = cli.main(
+            [
+                "--services",
+                services,
+                "--change",
+                change,
+                "--terraform-json",
+                str(plan),
+                "--output",
+                str(tmp_path / "report.md"),
+            ]
+        )
+
+        assert code == 2
+        assert "TF_PLAN_FORMAT_VERSION" in capsys.readouterr().err
+        assert not (tmp_path / "report.md").exists()
+
     def test_missing_required_arg_exits(self, capsys):
         # argparse exits with code 2 when a required argument is absent.
         with pytest.raises(SystemExit) as excinfo:

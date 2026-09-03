@@ -74,6 +74,15 @@ def test_auto_loads_one_json_plan_and_multiple_kubernetes_files(tmp_path):
     assert "\n---\n" in loaded["kubernetes_text"]
 
 
+def test_auto_loaded_plan_requires_explicit_format_version(tmp_path):
+    plan = tmp_path / "tfplan.json"
+    plan.write_text(json.dumps({"resource_changes": []}), encoding="utf-8")
+    scope = changed_files.classify_changed_files(["tfplan.json"], tmp_path)
+
+    with pytest.raises(ValueError, match="format_version"):
+        changed_files.load_auto_scanner_inputs(scope, tmp_path)
+
+
 def test_path_traversal_is_never_loaded(tmp_path):
     scope = changed_files.classify_changed_files(["../secret.tfplan.json"], tmp_path)
     loaded = changed_files.load_auto_scanner_inputs(scope, tmp_path)
