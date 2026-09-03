@@ -6,6 +6,7 @@ from preflightops.scanners import (
     KUBERNETES_SIGNALS,
     TERRAFORM_SIGNALS,
     scan_kubernetes,
+    scan_kubernetes_legacy,
     scan_terraform,
 )
 
@@ -67,54 +68,93 @@ class TestScanKubernetes:
         assert scan_kubernetes(None) == []
 
     @pytest.mark.parametrize("keyword, rule_id, score, severity, description", KUBERNETES_SIGNALS)
-    def test_each_signal_triggers(self, keyword, rule_id, score, severity, description):
-        # Avoid the special Deployment probe checks by not using a Deployment
-        # for non-deployment signals; for the deployment signal include probes.
-        text = keyword
-        if keyword == "kind: deployment":
-            text += "\nreadinessProbe: {}\nlivenessProbe: {}"
-        findings = scan_kubernetes(text)
+    def test_legacy_signal_contract(self, keyword, rule_id, score, severity, description):
+        findings = scan_kubernetes_legacy(keyword)
         finding = _by_id(findings, rule_id)
         assert finding is not None
         assert finding["score"] == score
         assert finding["severity"] == severity
         assert finding["description"] == description
 
-    def test_case_insensitive_match(self):
-        findings = scan_kubernetes("KIND: Secret\nmetadata: {}")
+    def test_legacy_case_insensitive_match(self):
+        findings = scan_kubernetes_legacy("KIND: Secret\nmetadata: {}")
         assert "kubernetes-secret-change" in _ids(findings)
 
     def test_deployment_without_probes_flags_both(self):
-        text = "kind: Deployment\nspec:\n  replicas: 3"
+        text = """
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: api}
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+        - name: api
+          resources:
+            requests: {cpu: 100m}
+            limits: {cpu: 500m}
+"""
         ids = _ids(scan_kubernetes(text))
         assert "kubernetes-missing-readiness-probe" in ids
         assert "kubernetes-missing-liveness-probe" in ids
 
     def test_missing_probe_scores(self):
-        findings = scan_kubernetes("kind: Deployment")
+        findings = scan_kubernetes(
+            """
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: api}
+spec:
+  template:
+    spec:
+      containers: [{name: api}]
+"""
+        )
         readiness = _by_id(findings, "kubernetes-missing-readiness-probe")
         liveness = _by_id(findings, "kubernetes-missing-liveness-probe")
         assert readiness["score"] == 15
         assert liveness["score"] == 15
 
     def test_deployment_with_both_probes_not_flagged(self):
-        text = (
-            "kind: Deployment\n"
-            "        readinessProbe:\n          httpGet: {}\n"
-            "        livenessProbe:\n          httpGet: {}\n"
-        )
+        text = """
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: api}
+spec:
+  template:
+    spec:
+      containers:
+        - name: api
+          readinessProbe: {httpGet: {path: /ready, port: 8080}}
+          livenessProbe: {httpGet: {path: /health, port: 8080}}
+"""
         ids = _ids(scan_kubernetes(text))
         assert "kubernetes-missing-readiness-probe" not in ids
         assert "kubernetes-missing-liveness-probe" not in ids
 
     def test_deployment_missing_only_liveness(self):
-        text = "kind: Deployment\nreadinessProbe: {}"
+        text = """
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: api}
+spec:
+  template:
+    spec:
+      containers:
+        - name: api
+          readinessProbe: {httpGet: {path: /ready, port: 8080}}
+"""
         ids = _ids(scan_kubernetes(text))
         assert "kubernetes-missing-readiness-probe" not in ids
         assert "kubernetes-missing-liveness-probe" in ids
 
-    def test_probe_checks_only_apply_to_deployments(self):
-        # A Secret manifest should not trigger probe findings.
-        ids = _ids(scan_kubernetes("kind: Secret"))
+    def test_probe_checks_only_apply_to_long_running_workloads(self):
+        ids = _ids(scan_kubernetes("apiVersion: v1\nkind: Secret\nmetadata: {name: credential}"))
         assert "kubernetes-missing-readiness-probe" not in ids
         assert "kubernetes-missing-liveness-probe" not in ids
+
+    def test_legacy_probe_contract_is_preserved(self):
+        ids = _ids(scan_kubernetes_legacy("kind: Deployment"))
+        assert "kubernetes-missing-readiness-probe" in ids
+        assert "kubernetes-missing-liveness-probe" in ids

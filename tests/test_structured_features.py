@@ -149,10 +149,13 @@ spec:
         ],
     )
     def test_supported_kinds(self, kind, rule):
-        assert rule in _ids(scan_kubernetes(f"kind: {kind}\nmetadata:\n  name: example"))
+        manifest = f"apiVersion: v1\nkind: {kind}\nmetadata:\n  name: example"
+        assert rule in _ids(scan_kubernetes(manifest))
 
     def test_load_balancer_service(self):
-        manifest = "kind: Service\nmetadata: {name: public}\nspec: {type: LoadBalancer}"
+        manifest = (
+            "apiVersion: v1\nkind: Service\nmetadata: {name: public}\nspec: {type: LoadBalancer}"
+        )
         assert "kubernetes-loadbalancer-exposure" in _ids(scan_kubernetes(manifest))
 
 
