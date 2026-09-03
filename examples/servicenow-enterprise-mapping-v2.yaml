@@ -1,0 +1,85 @@
+schema_version: servicenow-mapping-v2
+profile_id: enterprise-evidence-default
+
+api:
+  production_profile: evidence_gateway_v1
+  sandbox_profile: change_management_v1
+  version: v1
+  table_api_legacy_mode: read_only
+
+operations:
+  enrich_existing: true
+  create_draft: false
+
+# All assessment semantics use dedicated evidence fields. ServiceNow workflow
+# state, approval, assignment, schedule and closure fields are never writable.
+fields:
+  assessment_status:
+    source: decision.verdict
+    destination: u_preflightops_status
+    max_length: 32
+  risk:
+    source: scores.risk
+    destination: u_preflightops_risk
+    max_length: 128
+  confidence:
+    source: scores.confidence
+    destination: u_preflightops_confidence
+    max_length: 128
+  assessment_id:
+    source: audit.assessment_id
+    destination: u_preflightops_assessment_id
+    max_length: 255
+  policy:
+    source: audit.policy
+    destination: u_preflightops_policy
+    max_length: 255
+  blockers:
+    source: controls.top_blockers
+    destination: u_preflightops_blockers
+    max_length: 4000
+  risk_impact:
+    source: decision.technical_recommendation.summary
+    destination: u_preflightops_risk_impact
+    max_length: 1000
+  automation_details:
+    source: automation_details
+    destination: u_preflightops_automation
+    max_length: 1000
+  evidence_url:
+    source: delivery.evidence_url
+    destination: u_preflightops_evidence_url
+    max_length: 1000
+  commit:
+    source: audit.commit
+    destination: u_preflightops_commit
+    max_length: 40
+  timestamp:
+    source: audit.assessment_timestamp
+    destination: u_preflightops_assessed_at
+    max_length: 40
+
+creation:
+  allowed_model_sys_ids:
+    - "11111111111111111111111111111111"
+  require_external_confirmation: true
+  require_capability_attestation: true
+
+concurrency:
+  strategy: server_compare_and_set
+  version_field: sys_mod_count
+  delivery_field: u_preflightops_delivery_id
+  require_unique_delivery: true
+
+evidence:
+  mode: attachment_or_link
+  attachment_max_bytes: 1048576
+  allowed_link_hosts:
+    - artifacts.example.test
+  deduplicate_by_digest: true
+
+limits:
+  summary_characters: 4000
+  blocker_count: 10
+  attempts: 3
+  elapsed_seconds: 90
