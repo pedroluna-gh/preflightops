@@ -42,6 +42,9 @@ Documentation = "https://github.com/pedroluna-gh/preflightops#readme"
 Issues = "https://github.com/pedroluna-gh/preflightops/issues"
 
 [project.optional-dependencies]
+gcp = [
+    "google-auth[requests]>=2.38,<3",
+]
 # Extras needed only to run the Streamlit web UI (`streamlit run app.py`).
 app = [
     "streamlit>=1.40,<2",
