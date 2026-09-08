@@ -7,6 +7,18 @@ the current file inputs and JSON report.
 
 ## Compatibility promise
 
+### Evidence Providers v1 (additive Python API)
+
+`ProviderEvidence`, `ProviderContractError`, and `parse_provider_evidence` define
+strict immutable observations. `ProviderAggregate` and
+`aggregate_provider_evidence` combine them deterministically.
+`EvidenceProvider`, `ProviderCapabilities`, `ProviderRequest`, `ProviderContext`,
+`ProviderExecutionError`, `ProviderRunner`, and `FakeProvider` define the explicit
+read-only lifecycle. `assess_risk_with_provider_evidence` returns both the unchanged
+legacy result and an additive assessment; it does not invoke external providers.
+See [provider contract and migration](EVIDENCE_PROVIDERS_V1.md) for freshness,
+credentials, conservative failure handling, cache scope and rollback boundaries.
+
 PreflightOps follows the rules in [`COMPATIBILITY.md`](COMPATIBILITY.md). In
 short: patch and minor releases may add optional fields, flags, inputs, outputs,
 or rules, but must not remove or reinterpret an existing public contract without

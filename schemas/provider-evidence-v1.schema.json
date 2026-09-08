@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pedroluna-gh/preflightops/schemas/provider-evidence-v1.schema.json",
+  "title": "Evidence Provider Contract v1",
+  "description": "Structural validation; the Python decoder additionally enforces canonical timestamps, positive validity intervals and safe approved summaries.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "provider",
+    "provider_version",
+    "control_id",
+    "status",
+    "summary",
+    "source_reference",
+    "collected_at",
+    "valid_until",
+    "confidence",
+    "error_code",
+    "raw_evidence_reference",
+    "sensitivity",
+    "redaction",
+    "not_applicable_reason"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "provider": {
+      "$ref": "#/$defs/id"
+    },
+    "provider_version": {
+      "$ref": "#/$defs/id"
+    },
+    "control_id": {
+      "$ref": "#/$defs/id"
+    },
+    "status": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "UNKNOWN",
+        "ERROR",
+        "NOT_APPLICABLE"
+      ]
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "source_reference": {
+      "$ref": "#/$defs/id"
+    },
+    "collected_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "valid_until": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "confidence": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "error_code": {
+      "enum": [
+        null,
+        "TIMEOUT",
+        "CANCELLED",
+        "AUTH",
+        "RATE_LIMIT",
+        "UNAVAILABLE",
+        "INVALID_RESPONSE",
+        "INTERNAL",
+        "MISSING",
+        "STALE",
+        "FUTURE"
+      ]
+    },
+    "raw_evidence_reference": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/id"
+        }
+      ]
+    },
+    "sensitivity": {
+      "enum": [
+        "public",
+        "internal",
+        "confidential"
+      ]
+    },
+    "redaction": {
+      "const": "summary_only"
+    },
+    "not_applicable_reason": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/summary"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "ERROR",
+              "UNKNOWN"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "confidence": {
+            "const": 0
+          },
+          "error_code": {
+            "type": "string"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "error_code": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "NOT_APPLICABLE"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "confidence": {
+            "const": 0
+          },
+          "not_applicable_reason": {
+            "$ref": "#/$defs/summary"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "not_applicable_reason": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ]
+}

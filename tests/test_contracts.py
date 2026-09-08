@@ -53,6 +53,7 @@ def test_assessment_golden_contract_forces_lf_line_endings():
         "semantic-change-controls-v1.schema.json",
         "semantic-validation-v1.schema.json",
         "assessment-report-v1.schema.json",
+        "provider-evidence-v1.schema.json",
     ],
 )
 def test_schemas_are_valid_draft_2020_12(name):

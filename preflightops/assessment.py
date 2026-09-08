@@ -646,11 +646,15 @@ def adapt_legacy_assessment(
     policy: PolicyIdentity | None = None,
     evidence_links: Sequence[str] = (),
     human_decision: HumanDecision | None = None,
+    additional_controls: Sequence[ControlObservation] = (),
+    confidence_cap: int = 80,
 ) -> dict[str, Any]:
     """Adapt risk-report-v1 without mutating or removing the legacy output."""
 
     if not isinstance(legacy_result, Mapping):
         raise AssessmentContractError("legacy_result must be an object.")
+    if type(confidence_cap) is not int or not 0 <= confidence_cap <= 100:
+        raise AssessmentContractError("confidence_cap must be an integer from 0 to 100.")
     if valid_for <= dt.timedelta(0):
         raise AssessmentContractError("valid_for must be greater than zero.")
     evaluated_at = _parse_timestamp(timestamp, "timestamp")
@@ -800,7 +804,7 @@ def adapt_legacy_assessment(
         context=context,
         policy=active_policy,
         inputs=inputs,
-        controls=tuple(observations),
+        controls=tuple(observations) + tuple(additional_controls),
         risk_score=risk_score,
         risk_level=risk_level,  # type: ignore[arg-type]
         recommendation_summary=recommendation,
@@ -808,7 +812,7 @@ def adapt_legacy_assessment(
         evidence_links=evidence_links,
         human_decision=human_decision,
         source_contract="risk-report-v1",
-        confidence_cap=80,
+        confidence_cap=min(80, confidence_cap),
     )
 
 

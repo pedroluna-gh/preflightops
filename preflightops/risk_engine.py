@@ -7,8 +7,10 @@ into a single 0-100 risk score with a level, recommendation, triggered rules,
 and a list of missing operational controls.
 """
 
+from .assessment import AssessmentContext, adapt_legacy_assessment
 from .monitoring import validate_monitoring_evidence
 from .policy import load_policy_pack, resolve_policy
+from .provider_aggregation import ProviderAggregate
 from .scanners import scan_kubernetes, scan_terraform, scan_terraform_json
 from .validators import (
     is_bad_rollback_plan,
@@ -17,6 +19,50 @@ from .validators import (
 )
 
 MAX_SCORE = 100
+
+
+def assess_risk_with_provider_evidence(
+    services: dict,
+    change_doc: dict,
+    *,
+    provider_evidence: ProviderAggregate,
+    context: AssessmentContext,
+    input_digests: dict[str, str],
+    change_id: str,
+    terraform_text: str = "",
+    k8s_text: str = "",
+    terraform_json=None,
+    policy=None,
+    monitor_inventory=None,
+) -> dict:
+    """Return legacy risk plus an additive assessment bound to provider evidence.
+
+    No provider is invoked here. The engine consumes only validated contracts;
+    callers collect them separately. Provider confidence never changes risk points.
+    """
+    provider_evidence.__post_init__()
+    if "provider-evidence" in input_digests:
+        raise ValueError("provider-evidence input digest is reserved.")
+    legacy = assess_risk(
+        services,
+        change_doc,
+        terraform_text,
+        k8s_text,
+        terraform_json=terraform_json,
+        policy=policy,
+        monitor_inventory=monitor_inventory,
+    )
+    assessment = adapt_legacy_assessment(
+        legacy,
+        change_id=change_id,
+        timestamp=provider_evidence.evaluated_at,
+        context=context,
+        input_digests={**input_digests, "provider-evidence": provider_evidence.digest},
+        additional_controls=provider_evidence.controls(),
+        confidence_cap=provider_evidence.confidence_cap,
+    )
+    return {"legacy": legacy, "assessment": assessment}
+
 
 # Categories used to group triggered findings by where they came from.
 SOURCE_SERVICE_CONTROLS = "Service Controls"
