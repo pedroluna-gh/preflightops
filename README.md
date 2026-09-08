@@ -572,6 +572,18 @@ engine remains unchanged. See the [Zabbix runbook](docs/ZABBIX_PROVIDER_V1.md) a
 [architecture decision](docs/ADR_ZABBIX_PROVIDER_V1.md) for token roles, pinned HTTPS,
 supported versions, redaction, limits, sandbox validation and rollback.
 
+## Read-only GCP evidence provider
+
+The opt-in Python `GcpProvider` uses injected official ADC and bounded read-only
+APIs for an explicitly selected project, Monitoring resources, metric freshness
+and selected Asset Inventory metadata. It emits Provider Contract v1 facts,
+not CAB approvals. Missing permissions and incomplete responses cannot become
+PASS; resource existence does not establish coverage. Identity that cannot be
+independently attested remains UNKNOWN. Legacy CLI/Action outputs stay unchanged.
+See the [GCP runbook](docs/GCP_PROVIDER_V1.md) and
+[architecture decision](docs/ADR_GCP_PROVIDER_V1.md) for IAM, optional dependencies,
+authentication restrictions, cooperative deadlines, privacy and rollback.
+
 ## Public contracts and compatibility
 
 Machine-readable schemas live under [`schemas/`](schemas/). The CLI, Python API,
