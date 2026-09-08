@@ -13,6 +13,7 @@ import binascii
 import hashlib
 import json
 import os
+import re
 import sys
 from copy import deepcopy
 from datetime import UTC, datetime
@@ -27,6 +28,8 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PublicKey,
 )
 
+from .governance_input import load_document, validate_json_tree
+
 POLICY_API_VERSION = "preflightops.dev/policy/v2"
 WAIVER_API_VERSION = "preflightops.dev/waiver/v1"
 MAX_GOVERNANCE_DOCUMENT_BYTES = 1024 * 1024
@@ -34,11 +37,64 @@ _CLOSED_FAILURES = {"policy_validation", "signature", "context_conflict"}
 _MATCH_FIELDS = {"environment", "tier", "change_class", "change_type"}
 
 
+def _fields(value: dict, allowed: set[str], required: set[str] | None = None) -> None:
+    if set(value) - allowed or (required or set()) - set(value):
+        raise ValueError("Governance object contains unsupported or missing fields.")
+
+
+def _is_active(document: dict) -> bool:
+    metadata = document.get("metadata")
+    return isinstance(metadata, dict) and metadata.get("status") == "active"
+
+
+def _policy_shape(document: dict) -> None:
+    """Enforce the closed public shape after semantic validation."""
+    _fields(document, {"api_version", "kind", "metadata", "spec", "signature"})
+    _fields(
+        document["metadata"],
+        {"name", "version", "owner", "effective_from", "expires_at", "status"},
+        {"name", "version", "owner", "effective_from", "status"},
+    )
+    if "expires_at" in document["metadata"]:
+        _parse_time(document["metadata"]["expires_at"], "metadata.expires_at")
+    spec = document["spec"]
+    _fields(
+        spec,
+        {"failure_modes", "mandatory_controls", "base", "overlays"},
+        {"failure_modes", "mandatory_controls", "base", "overlays"},
+    )
+    _fields(spec["failure_modes"], _CLOSED_FAILURES | {"evidence_unavailable"})
+    policies = [spec["base"]]
+    for overlay in spec["overlays"]:
+        _fields(overlay, {"id", "priority", "match", "apply"}, {"id", "priority", "match", "apply"})
+        policies.append(overlay["apply"])
+    for policy in policies:
+        _fields(policy, {"risk_weights", "risk_level_thresholds", "monitoring"})
+        if "risk_level_thresholds" in policy:
+            _fields(policy["risk_level_thresholds"], {"low", "medium", "high"})
+        if "monitoring" in policy:
+            _fields(policy["monitoring"], {"minimum_enabled_monitors", "required_providers"})
+    if "signature" in document:
+        signature = document["signature"]
+        if not isinstance(signature, dict):
+            raise ValueError("Invalid governance signature structure.")
+        _fields(signature, {"algorithm", "key_id", "value"}, {"algorithm", "key_id", "value"})
+        if signature["algorithm"] != "ed25519" or any(
+            not isinstance(signature[field], str) or not signature[field].strip()
+            for field in ("key_id", "value")
+        ):
+            raise ValueError("Invalid governance signature structure.")
+
+
 def _canonical_json(value: Any) -> bytes:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
+    validate_json_tree(value)
+    return json.dumps(
+        value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode()
 
 
 def _unsigned_document(document: dict) -> dict:
+    validate_json_tree(document)
     unsigned = deepcopy(document)
     unsigned.pop("signature", None)
     return unsigned
@@ -53,11 +109,15 @@ def _parse_time(value: Any, field: str) -> datetime:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{field} must be an RFC 3339 timestamp.")
     try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00").replace("z", "+00:00"))
     except ValueError as exc:
         raise ValueError(f"{field} must be an RFC 3339 timestamp.") from exc
     if parsed.tzinfo is None:
         raise ValueError(f"{field} must include a timezone.")
+    if not re.fullmatch(
+        r"\d{4}-\d{2}-\d{2}[Tt]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:[Zz]|[+-]\d{2}:\d{2})", value
+    ):
+        raise ValueError(f"{field} must be an RFC 3339 timestamp.")
     return parsed.astimezone(UTC)
 
 
@@ -68,19 +128,13 @@ def _now(value: datetime | None = None) -> datetime:
     return current.astimezone(UTC)
 
 
+def governance_time(value: str | None = None) -> datetime:
+    """Capture one UTC instant or parse an explicit historical evaluation time."""
+    return _parse_time(value, "governance time") if value is not None else _now()
+
+
 def _load_document(path: str | Path) -> dict:
-    source = Path(path)
-    if not source.is_file():
-        raise ValueError(f"Governance document does not exist: {source}")
-    if source.stat().st_size > MAX_GOVERNANCE_DOCUMENT_BYTES:
-        raise ValueError("Governance document exceeds the 1 MiB limit.")
-    try:
-        value = yaml.safe_load(source.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, yaml.YAMLError) as exc:
-        raise ValueError(f"Could not load governance document: {exc}") from exc
-    if not isinstance(value, dict):
-        raise ValueError("Governance document must be a YAML/JSON mapping.")
-    return value
+    return load_document(path)
 
 
 def load_governance_document(path: str | Path) -> dict:
@@ -152,6 +206,9 @@ def verify_governance_signature(document: dict, public_key: str) -> str:
         raise ValueError("Only Ed25519 governance signatures are supported.")
     if not isinstance(signature.get("key_id"), str) or not signature["key_id"].strip():
         raise ValueError("signature.key_id is required.")
+    _fields(signature, {"algorithm", "key_id", "value"}, {"algorithm", "key_id", "value"})
+    if not isinstance(signature.get("value"), str):
+        raise ValueError("Governance signature is not valid base64.")
     try:
         raw = base64.b64decode(signature.get("value", ""), validate=True)
     except (ValueError, binascii.Error) as exc:
@@ -199,6 +256,8 @@ def _validate_monitoring(value: Any) -> dict:
         isinstance(provider, str) and provider.strip() for provider in providers
     ):
         raise ValueError("required_providers must be a list of provider names.")
+    if len(set(providers)) != len(providers):
+        raise ValueError("Required providers must be unique.")
     return {
         "minimum_enabled_monitors": minimum,
         "required_providers": sorted({provider.strip().lower() for provider in providers}),
@@ -267,6 +326,8 @@ def validate_policy_bundle(
     ):
         raise ValueError("spec.mandatory_controls must be a list of rule ids.")
     mandatory_set = set(mandatory)
+    if len(mandatory_set) != len(mandatory):
+        raise ValueError("Mandatory controls must be unique.")
     missing_mandatory = mandatory_set - set(normalized_base["risk_weights"])
     if missing_mandatory:
         raise ValueError(
@@ -296,6 +357,8 @@ def validate_policy_bundle(
             values = expected if isinstance(expected, list) else [expected]
             if not values or not all(isinstance(item, str) and item.strip() for item in values):
                 raise ValueError(f"Overlay '{overlay_id}' match.{field} is invalid.")
+            if len(set(values)) != len(values):
+                raise ValueError("Overlay match values must be unique.")
             normalized_match[field] = sorted({item.strip().lower() for item in values})
         changes = overlay.get("apply", {})
         if not isinstance(changes, dict) or not changes:
@@ -330,12 +393,15 @@ def validate_policy_bundle(
             }
         )
 
+    _policy_shape(document)
     normalized = deepcopy(document)
     normalized["metadata"]["status"] = status
     normalized["spec"]["base"] = normalized_base
     normalized["spec"]["mandatory_controls"] = sorted(mandatory_set)
     normalized["spec"]["overlays"] = normalized_overlays
     normalized["digest"] = governance_digest(document)
+    if for_assessment:
+        normalized["evaluated_at"] = current.isoformat().replace("+00:00", "Z")
     if status == "active":
         if not public_key:
             raise ValueError("Active Policy Bundle v2 requires a trusted public key.")
@@ -393,6 +459,16 @@ def resolve_policy_bundle(bundle: dict, context: dict[str, str]) -> dict:
 
 def policy_diff(base: dict, candidate: dict, context: dict[str, str]) -> dict:
     """Return a deterministic field diff and flag candidate weakening."""
+    if (
+        base["metadata"]["name"] == candidate["metadata"]["name"]
+        and base["metadata"]["version"] == candidate["metadata"]["version"]
+    ):
+        before_content = {"spec": base["spec"], "metadata": dict(base["metadata"])}
+        after_content = {"spec": candidate["spec"], "metadata": dict(candidate["metadata"])}
+        for value in (before_content, after_content):
+            value["metadata"].pop("status", None)
+        if before_content != after_content:
+            raise ValueError("Changed policy content requires a different version.")
     before = resolve_policy_bundle(base, context)
     after = resolve_policy_bundle(candidate, context)
     changes = []
@@ -484,6 +560,7 @@ def policy_diff(base: dict, candidate: dict, context: dict[str, str]) -> dict:
         "weakening": any(change["direction"] in {"weakened", "removed"} for change in changes),
         "base_lineage": before["lineage"],
         "candidate_lineage": after["lineage"],
+        "automatic_approval": False,
     }
 
 
@@ -534,8 +611,15 @@ def validate_waiver(
             raise ValueError(f"Waiver {field} must be a non-empty list.")
     if scope.get("policy_digest") != policy_digest:
         raise ValueError("Waiver policy digest does not match the active policy.")
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}", policy_digest):
+        raise ValueError("Waiver policy digest must be a SHA-256 reference.")
     rules = scope.get("rules")
-    if not isinstance(rules, list) or not rules or not all(isinstance(item, str) for item in rules):
+    if (
+        not isinstance(rules, list)
+        or not rules
+        or not all(isinstance(item, str) and item.strip() for item in rules)
+        or len(set(rules)) != len(rules)
+    ):
         raise ValueError("Waiver scope.rules must be a non-empty list.")
     for field in ("service", "environment", "change_class", "change_type"):
         if not isinstance(scope.get(field), str) or not scope[field].strip():
@@ -547,6 +631,28 @@ def validate_waiver(
             and str(expected).lower() != str(context.get(field, "")).lower()
         ):
             raise ValueError(f"Waiver scope does not match {field}.")
+    _fields(
+        document,
+        {
+            "api_version",
+            "kind",
+            "metadata",
+            "scope",
+            "requester",
+            "approver",
+            "reason_code",
+            "justification",
+            "evidence_references",
+            "compensating_controls",
+            "signature",
+        },
+    )
+    _fields(metadata, {"id", "issued_at", "expires_at"})
+    _fields(
+        scope, {"policy_digest", "rules", "service", "environment", "change_class", "change_type"}
+    )
+    if scope["change_class"] not in {"normal", "standard", "emergency", "*"}:
+        raise ValueError("Invalid waiver change class.")
     key_id = verify_governance_signature(document, public_key)
     return {
         "id": metadata["id"],
@@ -590,6 +696,12 @@ def apply_verified_waivers(result: dict, waivers: list[dict]) -> dict:
         },
         "automatic_approval": False,
     }
+    if "failure_handling" in result.get("decision_record", {}):
+        enriched["decision_record"]["failure_handling"] = deepcopy(
+            result["decision_record"]["failure_handling"]
+        )
+    if "evaluated_at" in result.get("decision_record", {}):
+        enriched["decision_record"]["evaluated_at"] = result["decision_record"]["evaluated_at"]
     return enriched
 
 
@@ -620,6 +732,11 @@ def governance_cli(argv: list[str]) -> int:
     simulate.add_argument("--candidate", required=True)
     simulate.add_argument("--services", required=True)
     simulate.add_argument("--change", required=True)
+    simulate.add_argument("--base-public-key")
+    simulate.add_argument("--candidate-public-key")
+    simulate.add_argument(
+        "--at", help="Explicit RFC 3339 validation time for reproducible simulation."
+    )
     simulate.add_argument("--output", default="policy-simulation.json")
     args = parser.parse_args(argv)
     try:
@@ -678,9 +795,28 @@ def governance_cli(argv: list[str]) -> int:
                 ),
                 "change_type": str(change_body.get("change_type", "")),
             }
-            base_bundle = validate_policy_bundle(_load_document(args.base), for_assessment=False)
+            base_document = _load_document(args.base)
+            candidate_document = _load_document(args.candidate)
+            validation_time = _parse_time(args.at, "at") if args.at else None
+            base_bundle = validate_policy_bundle(
+                base_document,
+                public_key=(
+                    _read_key(args.base_public_key, "PREFLIGHTOPS_POLICY_PUBLIC_KEY")
+                    if _is_active(base_document)
+                    else None
+                ),
+                at=validation_time,
+                for_assessment=False,
+            )
             candidate_bundle = validate_policy_bundle(
-                _load_document(args.candidate), for_assessment=False
+                candidate_document,
+                public_key=(
+                    _read_key(args.candidate_public_key, "PREFLIGHTOPS_POLICY_PUBLIC_KEY")
+                    if _is_active(candidate_document)
+                    else None
+                ),
+                at=validation_time,
+                for_assessment=False,
             )
             before = assess_risk(
                 services, change, policy=resolve_policy_bundle(base_bundle, context)
@@ -690,6 +826,7 @@ def governance_cli(argv: list[str]) -> int:
             )
             output = {
                 "mode": "non_authoritative_simulation",
+                "policy_diff": policy_diff(base_bundle, candidate_bundle, context),
                 "context": context,
                 "base": {
                     "policy_digest": base_bundle["digest"],
@@ -705,6 +842,8 @@ def governance_cli(argv: list[str]) -> int:
                 "human_decision": "not_recorded",
                 "automatic_approval": False,
             }
+            if validation_time is not None:
+                output["evaluated_at"] = validation_time.isoformat().replace("+00:00", "Z")
             Path(args.output).write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
             print(f"Policy simulation written to: {args.output}")
             return 0
@@ -717,7 +856,7 @@ def governance_cli(argv: list[str]) -> int:
             base_document,
             public_key=(
                 _read_key(args.base_public_key, "PREFLIGHTOPS_POLICY_PUBLIC_KEY")
-                if base_document.get("metadata", {}).get("status") == "active"
+                if _is_active(base_document)
                 else None
             ),
             for_assessment=False,
@@ -726,7 +865,7 @@ def governance_cli(argv: list[str]) -> int:
             candidate_document,
             public_key=(
                 _read_key(args.candidate_public_key, "PREFLIGHTOPS_POLICY_PUBLIC_KEY")
-                if candidate_document.get("metadata", {}).get("status") == "active"
+                if _is_active(candidate_document)
                 else None
             ),
             for_assessment=False,
