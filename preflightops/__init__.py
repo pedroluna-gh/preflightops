@@ -51,6 +51,17 @@ from .kubernetes_manifest import (
 )
 from .monitoring import validate_monitoring_evidence
 from .policy import load_policy_pack
+from .provider_aggregation import ProviderAggregate, aggregate_provider_evidence
+from .provider_contract import ProviderContractError, ProviderEvidence, parse_provider_evidence
+from .provider_runtime import (
+    EvidenceProvider,
+    FakeProvider,
+    ProviderCapabilities,
+    ProviderContext,
+    ProviderExecutionError,
+    ProviderRequest,
+    ProviderRunner,
+)
 from .report import (
     generate_github_comment,
     generate_html_report,
@@ -61,6 +72,7 @@ from .risk_engine import (
     RECOMMENDATIONS,
     RISK_LEVELS,
     assess_risk,
+    assess_risk_with_provider_evidence,
     find_service,
     score_to_level,
 )
@@ -109,6 +121,19 @@ from .validators import (
 )
 
 __all__ = [
+    "ProviderContractError",
+    "ProviderEvidence",
+    "parse_provider_evidence",
+    "ProviderAggregate",
+    "aggregate_provider_evidence",
+    "EvidenceProvider",
+    "FakeProvider",
+    "ProviderCapabilities",
+    "ProviderContext",
+    "ProviderExecutionError",
+    "ProviderRequest",
+    "ProviderRunner",
+    "assess_risk_with_provider_evidence",
     "AssessmentContext",
     "AssessmentContractError",
     "ControlObservation",
