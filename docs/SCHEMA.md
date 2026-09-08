@@ -1,5 +1,11 @@
 # PreflightOps Input Schema
 
+The additive Evidence Providers v1 Python API uses
+[`provider-evidence-v1.schema.json`](../schemas/provider-evidence-v1.schema.json).
+JSON Schema validation is structural; callers must also use
+`parse_provider_evidence` for semantic timestamp, privacy and status invariants.
+See [Evidence Providers v1](EVIDENCE_PROVIDERS_V1.md). Existing CLI inputs are unchanged.
+
 PreflightOps uses two required YAML files:
 
 1. `services.yaml` — describes the service catalog.
