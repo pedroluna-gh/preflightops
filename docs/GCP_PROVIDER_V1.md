@@ -1,6 +1,6 @@
 # GCP Evidence Provider v1
 
-Estado: implementación local de etapa 13; publicación y CI pendientes.
+Estado: implementación de etapa 13 validada en PR #50; cierre de fusión pendiente.
 Es una API Python aditiva. No cambia los outputs legacy ni activa consultas
 GCP desde CLI/Action automáticamente. El proveedor produce ProviderEvidence v1,
 no puntuaciones de riesgo ni aprobaciones de cambios.
