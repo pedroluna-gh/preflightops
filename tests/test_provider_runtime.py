@@ -46,22 +46,38 @@ def provider(*items):
     )
 
 
-def assert_provider_contract(factory):
-    """Future provider factories can reuse this offline lifecycle contract."""
+def assert_provider_contract(factory, provider_request=None, expected_status="PASS"):
+    """Use an offline adapter factory and an explicit deterministic request."""
+    provider_request = provider_request or request()
     first = factory()
     runner = ProviderRunner()
-    result = runner.run(first, request())
-    assert len(result) == 1
-    assert result[0].status == "PASS"
-    assert result[0].canonical_bytes() == runner.run(factory(), request())[0].canonical_bytes()
+    result = runner.run(first, provider_request)
+    assert len(result) == len(provider_request.controls)
+    assert all(e.status == expected_status for e in result)
+    assert all(e.provider == first.capabilities.provider for e in result)
+    assert all(e.provider_version == first.capabilities.version for e in result)
+    assert tuple(e.control_id for e in result) == tuple(sorted(provider_request.controls))
+    replay = ProviderRunner(cache_capacity=0).run(factory(), provider_request)
+    assert tuple(e.canonical_bytes() for e in result) == tuple(e.canonical_bytes() for e in replay)
+    assert result == runner.run(factory(), provider_request)
     cancelled = threading.Event()
     cancelled.set()
-    errors = runner.run(factory(), request(), cancellation=cancelled)
+    errors = runner.run(factory(), provider_request, cancellation=cancelled)
     assert all(e.status == "ERROR" and e.error_code == "CANCELLED" for e in errors)
 
 
 def test_fake_provider_contract():
     assert_provider_contract(provider)
+
+
+def test_contract_suite_accepts_other_provider_identities_and_controls():
+    def factory():
+        return FakeProvider(
+            ProviderCapabilities("reference-two", "2", ("rollback",)),
+            (replace(evidence("rollback"), provider="reference-two", provider_version="2"),),
+        )
+
+    assert_provider_contract(factory, request(controls=("rollback",)))
 
 
 def test_cache_is_context_scoped_and_expiry_aware():
