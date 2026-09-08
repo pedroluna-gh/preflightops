@@ -1,6 +1,6 @@
 # Zabbix Evidence Provider v1 — operación y límites
 
-Estado: implementación local de etapa 12, pendiente de gates de publicación.
+Estado: implementación de etapa 12 validada en CI del PR #49; fusión pendiente.
 API Python aditiva; no activa consultas desde CLI, Action ni importaciones.
 Contrato de salida: ProviderEvidence v1, adapter `zabbix` versión `1.0.0`.
 

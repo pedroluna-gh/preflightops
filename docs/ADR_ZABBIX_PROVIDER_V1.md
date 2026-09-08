@@ -1,6 +1,6 @@
 # ADR — Evidence Provider Zabbix v1
 
-Estado: decisión implementada localmente, pendiente de CI y revisión del PR.
+Estado: implementada y validada en CI del PR #49; archivo y fusión en curso.
 Alcance: etapa 12; no proveedor GCP ni cambios en decisiones humanas.
 
 ## Opciones
@@ -42,7 +42,8 @@ Una definición recurrente superpuesta no se interpreta como ocurrencia efectiva
 
 Suite reusable del Provider Contract v1 y fixtures 6.0/7.0/7.4 en
 tests/test_zabbix_provider.py. Protocolo y transporte tienen suites separadas.
-Resultados vigentes de gates en openspec/changes/12-zabbix-readonly-provider/evidence.md.
+Resultados de gates en openspec/changes/archive/2026-09-08-12-zabbix-readonly-provider/evidence.md;
+el PR #49 registra la verificación del head final y de la fusión.
 Runbook, límites, permisos y procedimiento sandbox en ZABBIX_PROVIDER_V1.md.
 Retirar la selección del provider restaura el flujo anterior sin borrar artefactos;
 un operador revoca token/egress cuando corresponda. No se crean objetos remotos.
