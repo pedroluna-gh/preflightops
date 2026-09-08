@@ -46,20 +46,24 @@ def provider(*items):
     )
 
 
-def assert_provider_contract(factory, provider_request=None, expected_status="PASS"):
+def assert_provider_contract(
+    factory, provider_request=None, expected_status="PASS", credentials=lambda: None
+):
     """Use an offline adapter factory and an explicit deterministic request."""
     provider_request = provider_request or request()
     first = factory()
     runner = ProviderRunner()
-    result = runner.run(first, provider_request)
+    result = runner.run(first, provider_request, credentials=credentials)
     assert len(result) == len(provider_request.controls)
     assert all(e.status == expected_status for e in result)
     assert all(e.provider == first.capabilities.provider for e in result)
     assert all(e.provider_version == first.capabilities.version for e in result)
     assert tuple(e.control_id for e in result) == tuple(sorted(provider_request.controls))
-    replay = ProviderRunner(cache_capacity=0).run(factory(), provider_request)
+    replay = ProviderRunner(cache_capacity=0).run(
+        factory(), provider_request, credentials=credentials
+    )
     assert tuple(e.canonical_bytes() for e in result) == tuple(e.canonical_bytes() for e in replay)
-    assert result == runner.run(factory(), provider_request)
+    assert result == runner.run(factory(), provider_request, credentials=credentials)
     cancelled = threading.Event()
     cancelled.set()
     errors = runner.run(factory(), provider_request, cancellation=cancelled)
