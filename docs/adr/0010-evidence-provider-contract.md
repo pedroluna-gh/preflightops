@@ -2,7 +2,8 @@
 
 ## Estado
 
-Implementado localmente; cierre de etapa 11 pendiente de gates completos y CI.
+Aceptado e implementado en PR #48; CI de implementación aprobado.
+La fusión queda condicionada a CI verde del commit documental final.
 
 ## Opciones
 
