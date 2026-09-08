@@ -563,6 +563,15 @@ uv run pytest
 Run from the `preflightops/` directory. Tests live under `tests/`; all mandatory
 local commands are documented in [`docs/QUALITY_GATES.md`](docs/QUALITY_GATES.md).
 
+## Read-only Zabbix evidence provider
+
+The additive Python `ZabbixProvider` retrieves bounded host, trigger, maintenance,
+problem/event and sample-age evidence through Provider Contract v1. It is explicitly
+opt-in and does not enable network calls in the CLI or Action. The offline risk
+engine remains unchanged. See the [Zabbix runbook](docs/ZABBIX_PROVIDER_V1.md) and
+[architecture decision](docs/ADR_ZABBIX_PROVIDER_V1.md) for token roles, pinned HTTPS,
+supported versions, redaction, limits, sandbox validation and rollback.
+
 ## Public contracts and compatibility
 
 Machine-readable schemas live under [`schemas/`](schemas/). The CLI, Python API,
@@ -612,7 +621,8 @@ metadata from GitHub using the run-scoped token; disable it with
 - Configurable / custom ticket templates (`--ticket-template`) — **available now**
 - Compact GitHub PR comments and changed-file scanner inference — **available now**
 - Static HTML dashboard export (`--html-output`) — **available now**
-- Live provider adapters layered on the offline observability evidence contract
+- Read-only Zabbix Python provider layered on the common evidence contract;
+  real-environment sandbox validation remains separate from offline tests
 - PagerDuty / Opsgenie incident-history connector
 - Policy-as-code approval workflows
 
