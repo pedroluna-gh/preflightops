@@ -8,6 +8,7 @@ and a list of missing operational controls.
 """
 
 from .assessment import AssessmentContext, adapt_legacy_assessment
+from .governance_failure import evaluate_failure_modes
 from .monitoring import validate_monitoring_evidence
 from .policy import load_policy_pack, resolve_policy
 from .provider_aggregation import ProviderAggregate
@@ -365,7 +366,7 @@ def assess_risk(
 
     business_impact = service.get("business_impact") or ""
 
-    return {
+    result = {
         "service": service_name,
         "environment": environment,
         "change_type": change_type,
@@ -402,3 +403,20 @@ def assess_risk(
             "automatic_approval": False,
         },
     }
+    # V1 output and exit semantics remain unchanged. A governed V2 assessment
+    # explicitly distinguishes absent required inventory from evidence findings.
+    if policy and policy.get("api_version") == "preflightops.dev/policy/v2":
+        result["decision_record"]["evaluated_at"] = policy.get("evaluated_at")
+        monitoring = active_policy["monitoring"]
+        monitoring_plan = change.get("monitoring_plan")
+        referenced = (
+            monitoring_plan.get("monitor_ids", []) if isinstance(monitoring_plan, dict) else []
+        )
+        required = bool(
+            monitoring["minimum_enabled_monitors"] or monitoring["required_providers"] or referenced
+        )
+        failures = ["evidence_unavailable"] if required and monitor_inventory is None else []
+        result["decision_record"]["failure_handling"] = evaluate_failure_modes(
+            active_policy["failure_modes"], failures
+        )
+    return result
