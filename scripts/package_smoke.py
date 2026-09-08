@@ -69,6 +69,19 @@ def main() -> int:
         )
         if "preflightops" not in completed.stdout.lower():
             raise RuntimeError(f"unexpected CLI version output: {completed.stdout!r}")
+        subprocess.run(
+            [
+                str(python),
+                "-I",
+                "-c",
+                "from preflightops.gcp_provider import GcpProvider; "
+                "from preflightops.gcp_scope import GcpConfig; "
+                "p = GcpProvider(GcpConfig('example-project', ('example-project',), 'p1', 'u1')); "
+                "assert p.capabilities.read_only is True; "
+                "assert p.capabilities.controls == ('p1.identity',)",
+            ],
+            check=True,
+        )
 
     return 0
 
