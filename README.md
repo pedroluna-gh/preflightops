@@ -383,8 +383,13 @@ verified, while evidence attachments are deduplicated by semantic SHA-256.
 See [ServiceNow pre-change evidence integration](docs/SERVICENOW_INTEGRATION.md).
 The production target is documented separately in the
 [ServiceNow enterprise golden path](docs/SERVICENOW_ENTERPRISE_GOLDEN_PATH.md).
-Its v2 schemas are design contracts for the next implementation stage; they do
-not enable network access or replace the current v1 connector.
+Its v2 schemas and public Python adapter are implemented as an additive enterprise
+surface. V2 stays dry-run/offline by default and does not replace the current v1 CLI,
+Action or web connector. Production v2 writes require the Evidence Gateway, OAuth,
+unique delivery identity, atomic CAS, explicit confirmation and verified read-back;
+Basic Auth is excluded. See the
+[v2 runbook](docs/SERVICENOW_ENTERPRISE_RUNBOOK.md) and separate
+[sandbox procedure](docs/SERVICENOW_SANDBOX_VALIDATION.md).
 
 The protected reference workflow validates the request, renders a credential-free
 preview, and publishes only after the `servicenow-demo` GitHub Environment is

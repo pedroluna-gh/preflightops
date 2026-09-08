@@ -2,8 +2,10 @@
 
 ## Estado
 
-Contrato de diseño para la etapa 10. No está conectado al CLI, Action o runtime actual y
-no autoriza llamadas de red.
+Contrato implementado por la API Python pública de la etapa 10. Su construcción y
+validación de planes es offline; el runtime sólo autoriza llamadas cuando un caller
+inyecta explícitamente policy, transporte, credenciales y confirmación. CLI, Action y web
+conservan v1 y no activan v2 implícitamente.
 
 ## Separación de capas
 
@@ -41,6 +43,11 @@ es estricto. Campos principales:
 
 No contiene token, client secret, certificate key, proxy credentials, raw assessment ni
 payload remoto. `write_enabled=true` implica `dry_run=false` y Evidence Gateway.
+
+[`servicenow-adapter-plan-v2.schema.json`](../schemas/servicenow-adapter-plan-v2.schema.json)
+envuelve request, mapping, campos y evidencia y permite verificar de nuevo todas las
+identidades antes de adquirir credenciales. El digest de report es el valor SHA-256 de
+integridad definido por Assessment Report v1 y ligado por su `report_id`.
 
 ## Mapping v2
 
@@ -124,3 +131,15 @@ digests y campos escritos.
 V1 permanece sin cambios. No hay conversión implícita v1→v2 ni fallback silencioso de
 gateway a Table API. Un caller elige el contrato y recibe error si la capability no está
 disponible.
+
+## API pública
+
+- `build_servicenow_plan_v2`: preview determinística, credential-free y offline.
+- `validate_servicenow_plan_v2`: recomputa mapping, payload, report, delivery y request.
+- `ServiceNowEnterpriseAdapter.execute`: dry-run, read-only o write confirmado.
+- `NetworkPolicy` y `UrllibTransport`: policy exacta de URL/DNS y transporte no-redirect.
+- `OAuthClientCredentialsProvider`: token corto mediante dependencias inyectadas.
+- `compare_servicenow_previews_v1_v2`: dual preview sin fallback ni write.
+
+Consulte el [runbook](SERVICENOW_ENTERPRISE_RUNBOOK.md) y el procedimiento de
+[sandbox](SERVICENOW_SANDBOX_VALIDATION.md).

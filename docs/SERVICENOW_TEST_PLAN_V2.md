@@ -3,8 +3,9 @@
 ## Objetivo
 
 Demostrar antes de producción que el adapter entrega evidencia al Change correcto de
-forma idempotente, acotada, privada y fail-closed. Ninguna prueba de etapa 09 contacta una
-instancia. La etapa 10 deberá usar mocks y una sandbox dedicada; nunca producción.
+forma idempotente, acotada, privada y fail-closed. Las pruebas automatizadas de etapa 10
+usan transporte/resolver/clock inyectados y no contactan una instancia. La validación de
+sandbox es un gate posterior, separado y autorizado; nunca se prueba en producción.
 
 ## Pirámide
 
@@ -67,11 +68,13 @@ de approvals/tasks/transitions/delete es accesible. La sandbox debe:
 4. registrar auditoría y sys_mod_count;
 5. ejecutar cleanup manual aprobado, nunca desde el adapter.
 
-## Evidencia de salida para etapa 10
+## Evidencia de salida de implementación y gates externos
 
 - Tests positivos, negativos, adversariales y compatibilidad v1 verdes.
 - Cobertura branch-aware ≥85%, Ruff, mypy, packaging y CI multiplataforma verdes.
-- ATF/E2E con IDs de ejecución, mapping/capability digests y Change sandbox.
+- Antes del canary: ATF/E2E autorizados con IDs de ejecución,
+  mapping/capability digests y Change sandbox según
+  [`SERVICENOW_SANDBOX_VALIDATION.md`](SERVICENOW_SANDBOX_VALIDATION.md).
 - Cero secretos/canaries en logs/artifacts.
 - Race/replay/partial failure demostrados fail-closed.
 - Rollback drill documentado y aprobado por ServiceNow owner + Change owner.

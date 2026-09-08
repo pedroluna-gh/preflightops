@@ -1,0 +1,13 @@
+{
+  "result": {
+    "attestation_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+    "mapping_sha256": "887064bb8d061117500392e521375e0c1948707eaad0c8298b49b03e236292ec",
+    "server_compare_and_set": true,
+    "unique_delivery": true,
+    "delivery_field": "u_preflightops_delivery_id",
+    "allowed_operations": [
+      "enrich_existing"
+    ],
+    "allowed_model_sys_ids": []
+  }
+}

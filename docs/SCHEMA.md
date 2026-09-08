@@ -199,16 +199,20 @@ content-free provenance, next actions, rendering limits and integrity. See
 
 ---
 
-## ServiceNow enterprise adapter v2 design
+## ServiceNow enterprise adapter v2
 
 The strict design schemas
 [`servicenow-mapping-v2.schema.json`](../schemas/servicenow-mapping-v2.schema.json),
 [`servicenow-adapter-request-v2.schema.json`](../schemas/servicenow-adapter-request-v2.schema.json),
 and
-[`servicenow-adapter-result-v2.schema.json`](../schemas/servicenow-adapter-result-v2.schema.json)
-define the target enterprise boundary for stage 10. They keep enrich-existing
+[`servicenow-adapter-result-v2.schema.json`](../schemas/servicenow-adapter-result-v2.schema.json),
+plus the strict
+[`servicenow-adapter-plan-v2.schema.json`](../schemas/servicenow-adapter-plan-v2.schema.json)
+and
+[`servicenow-gateway-capability-v1.schema.json`](../schemas/servicenow-gateway-capability-v1.schema.json),
+define the implemented enterprise boundary. They keep enrich-existing
 separate from model-authorized draft creation and reject live writes without the
-production Evidence Gateway profile. They are documentation contracts only in
-stage 09; the current v1 runtime remains unchanged.
+production Evidence Gateway profile. The public Python API implements plan validation,
+execution and reconciliation; existing v1 runtime surfaces remain unchanged.
 
 See [`SERVICENOW_ENTERPRISE_GOLDEN_PATH.md`](SERVICENOW_ENTERPRISE_GOLDEN_PATH.md).

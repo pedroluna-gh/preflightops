@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pedroluna-gh/preflightops/schemas/servicenow-adapter-plan-v2.schema.json",
+  "title": "PreflightOps ServiceNow adapter plan v2",
+  "type": "object",
+  "required": ["schema_version", "request", "mapping", "mapped_fields", "evidence"],
+  "properties": {
+    "schema_version": {"const": "servicenow-adapter-plan-v2"},
+    "request": {"$ref": "servicenow-adapter-request-v2.schema.json"},
+    "mapping": {"$ref": "servicenow-mapping-v2.schema.json"},
+    "mapped_fields": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 11,
+      "patternProperties": {
+        "^(short_description|description|risk|impact|u_[a-z0-9_]{1,77})$": {
+          "type": "string",
+          "maxLength": 16000
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["mode", "sha256", "media_type"],
+      "properties": {
+        "mode": {"enum": ["attachment", "https_link"]},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "media_type": {
+          "const": "application/vnd.preflightops.assessment-report.v1+json"
+        },
+        "document": {"$ref": "assessment-report-v1.schema.json"},
+        "url": {"type": "string", "format": "uri", "pattern": "^https://[^?#]+$"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"mode": {"const": "attachment"}}},
+          "then": {"required": ["document"], "not": {"required": ["url"]}}
+        },
+        {
+          "if": {"properties": {"mode": {"const": "https_link"}}},
+          "then": {"required": ["url"], "not": {"required": ["document"]}}
+        }
+      ],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

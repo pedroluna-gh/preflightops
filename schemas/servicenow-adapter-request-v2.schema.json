@@ -70,9 +70,11 @@
         "assessment_id": {"type": "string", "pattern": "^urn:preflightops:assessment:sha256:[0-9a-f]{64}$"},
         "report_id": {"type": "string", "pattern": "^urn:preflightops:assessment-report:sha256:[0-9a-f]{64}$"},
         "report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "verdict": {"enum": ["PASS", "FAIL", "INDETERMINATE"]},
-        "risk_level": {"enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL", "UNKNOWN"]},
-        "confidence_level": {"enum": ["HIGH", "MEDIUM", "LOW", "UNKNOWN"]},
+        "verdict": {
+          "enum": ["BLOCK", "INDETERMINATE", "READY_FOR_HUMAN_REVIEW", "REVIEW_REQUIRED"]
+        },
+        "risk_level": {"enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"]},
+        "confidence_level": {"enum": ["HIGH", "MEDIUM", "LOW"]},
         "policy_name": {"type": "string", "minLength": 1, "maxLength": 128},
         "policy_version": {"type": "string", "minLength": 1, "maxLength": 64},
         "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},

@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pedroluna-gh/preflightops/schemas/servicenow-gateway-capability-v1.schema.json",
+  "title": "PreflightOps ServiceNow Evidence Gateway capability v1",
+  "type": "object",
+  "required": ["result"],
+  "properties": {
+    "result": {
+      "type": "object",
+      "required": [
+        "attestation_sha256",
+        "mapping_sha256",
+        "server_compare_and_set",
+        "unique_delivery",
+        "delivery_field",
+        "allowed_operations",
+        "allowed_model_sys_ids"
+      ],
+      "properties": {
+        "attestation_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "mapping_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "server_compare_and_set": {"const": true},
+        "unique_delivery": {"const": true},
+        "delivery_field": {"const": "u_preflightops_delivery_id"},
+        "allowed_operations": {
+          "type": "array",
+          "items": {"enum": ["enrich_existing", "create_draft"]},
+          "uniqueItems": true,
+          "minItems": 1,
+          "maxItems": 2
+        },
+        "allowed_model_sys_ids": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+          "uniqueItems": true,
+          "maxItems": 32
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
