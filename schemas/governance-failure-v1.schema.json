@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pedroluna-gh/preflightops/schemas/governance-failure-v1.schema.json",
+  "title": "PreflightOps governance failure disposition v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "failures", "disposition", "blocking", "automatic_approval", "human_decision"],
+  "properties": {
+    "schema_version": {"const": "governance-failure-v1"},
+    "failures": {
+      "type": "array",
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "mode"],
+        "properties": {
+          "type": {"enum": ["policy_validation", "signature", "context_conflict", "evidence_unavailable", "unclassified_error"]},
+          "mode": {"enum": ["open", "closed"]}
+        }
+      }
+    },
+    "disposition": {"enum": ["none", "stop", "continue_informative"]},
+    "blocking": {"type": "boolean"},
+    "automatic_approval": {"const": false},
+    "human_decision": {"const": "not_recorded"}
+  }
+}

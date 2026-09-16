@@ -52,6 +52,7 @@ from .policy import load_policy_pack
 from .policy_governance import (
     apply_verified_waivers,
     governance_cli,
+    governance_time,
     load_governance_document,
     read_governance_key,
     validate_waiver,
@@ -414,9 +415,16 @@ def main(argv=None) -> int:
         ),
     )
 
+    parser.add_argument(
+        "--governance-at",
+        help="Explicit RFC 3339 time for replaying policy and waiver validity offline.",
+    )
     args = parser.parse_args(effective_argv)
 
     try:
+        governance_at = governance_time(args.governance_at)
+        if args.governance_at and (args.jira or (args.servicenow and not args.servicenow_dry_run)):
+            raise ValueError("Historical governance replay cannot perform live integrations.")
         services = _load_yaml(args.services)
         change = _load_yaml(args.change)
         changed_scope = None
@@ -439,7 +447,7 @@ def main(argv=None) -> int:
         if not k8s_text:
             k8s_text = auto_inputs["kubernetes_text"]
         monitor_inventory = _load_yaml(args.monitors) if args.monitors else None
-        policy = load_policy_pack(args.policy, public_key=args.policy_public_key)
+        policy = load_policy_pack(args.policy, public_key=args.policy_public_key, at=governance_at)
     except (OSError, yaml.YAMLError, json.JSONDecodeError, ValueError) as exc:
         print(f"Error loading input files: {exc}", file=sys.stderr)
         return 2
@@ -474,6 +482,7 @@ def main(argv=None) -> int:
                     public_key=waiver_key,
                     policy_digest=str(result["policy_pack"]["digest"]),
                     context=waiver_context,
+                    at=governance_at,
                 )
                 for path in args.waiver
             ]
@@ -528,6 +537,12 @@ def main(argv=None) -> int:
         except OSError as exc:
             print(f"Error writing GitHub comment: {exc}", file=sys.stderr)
             return 2
+
+    if result.get("decision_record", {}).get("failure_handling", {}).get("blocking"):
+        print(
+            "Governed policy requires stopping: required evidence is unavailable.", file=sys.stderr
+        )
+        return 2
 
     # The same change summary backs the offline file and the opt-in API push.
     # A custom --ticket-template (when provided) shapes that summary everywhere.

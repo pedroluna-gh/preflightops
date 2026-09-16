@@ -1,6 +1,7 @@
 """Versioned policy-pack loading and validation."""
 
 from copy import deepcopy
+from datetime import datetime
 from pathlib import Path
 from typing import Any, cast
 
@@ -9,6 +10,7 @@ import yaml
 from .policy_governance import (
     POLICY_API_VERSION,
     governance_digest,
+    load_governance_document,
     read_governance_key,
     resolve_policy_bundle,
     validate_policy_bundle,
@@ -174,6 +176,7 @@ def load_policy_pack(
     *,
     public_key: str | None = None,
     for_assessment: bool = True,
+    at: datetime | None = None,
 ) -> dict:
     """Load a built-in policy by name or a versioned YAML file."""
     if not value:
@@ -188,8 +191,7 @@ def load_policy_pack(
             f"Unknown policy pack '{value}'. Built-ins: {available}; or provide a YAML file."
         )
     try:
-        with path.open(encoding="utf-8") as handle:
-            policy = yaml.safe_load(handle)
+        policy = load_governance_document(path)
     except (OSError, yaml.YAMLError) as exc:
         raise ValueError(f"Could not load policy pack: {exc}") from exc
     if isinstance(policy, dict) and policy.get("api_version") == POLICY_API_VERSION:
@@ -198,6 +200,7 @@ def load_policy_pack(
             policy,
             public_key=trusted_key,
             for_assessment=for_assessment,
+            at=at,
         )
     return _validate_policy(policy)
 
