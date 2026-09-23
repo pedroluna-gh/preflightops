@@ -46,7 +46,7 @@ def test_security_workflow_is_least_privilege_and_fail_closed():
     )
 
 
-def test_release_builds_once_and_attests_exact_bundle():
+def test_release_builds_reproducibly_and_attests_exact_bundle():
     workflow = _load("release.yml")
     job = workflow["jobs"]["build-attest-release"]
     assert job["needs"] == "dependency-audit"
@@ -57,11 +57,19 @@ def test_release_builds_once_and_attests_exact_bundle():
         "attestations": "write",
     }
     text = (WORKFLOWS / "release.yml").read_text(encoding="utf-8")
-    assert text.count("python -m build") == 1
+    assert text.count("scripts/release_build.py --output dist --epoch 1704067200") == 1
     assert "anchore/sbom-action@" in text
     assert "actions/attest@" in text
-    assert "sha256sum * > SHA256SUMS" in text
+    assert "scripts/release_bundle.py create dist" in text
+    assert "scripts/release_bundle.py verify dist" in text
     assert "gh release create" in text
+    steps = job["steps"]
+    names = [step["name"] for step in steps]
+    approval = names.index("Require current license approval before publishing")
+    publish = names.index("Publish GitHub release from the verified bundle")
+    assert approval < publish
+    assert "--publishing" in steps[approval]["run"]
+    assert "continue-on-error" not in steps[approval]
 
 
 def test_release_audits_every_supported_python_before_publish():
@@ -78,6 +86,21 @@ def test_release_audits_every_supported_python_before_publish():
         "run"
     ]
     assert audit_run.count("pip-audit") == 2
+
+
+def test_release_smokes_exact_wheel_before_attestation_and_publication():
+    steps = _load("release.yml")["jobs"]["build-attest-release"]["steps"]
+    names = [step["name"] for step in steps]
+    smoke_name = "Test clean release wheel and risk exit contracts"
+    assert names.index("Validate distributions") < names.index(smoke_name)
+    assert names.index(smoke_name) < names.index("Attest release artifacts")
+    assert names.index(smoke_name) < names.index("Publish GitHub release from the verified bundle")
+    smoke = steps[names.index(smoke_name)]
+    assert "scripts/package_smoke.py --requirements .runtime-requirements.txt dist" in smoke["run"]
+    assert "continue-on-error" not in smoke
+    assert names.index("Verify exact release bundle offline") < names.index(
+        "Attest release artifacts"
+    )
 
 
 def test_fuzzing_workflow_is_bounded_pinned_and_least_privilege():
