@@ -90,29 +90,48 @@ jobs:
 
       - name: Run release gates
         run: |
+          uv run python scripts/security_exceptions.py security/exceptions.json
           uv run pytest --cov=preflightops --cov-report=term-missing --cov-fail-under=85
           uv run ruff format --check .
           uv run ruff check .
           uv run mypy preflightops
 
-      - name: Build distributions once
-        run: uv run python -m build --no-isolation
+      - name: Verify reproducible distributions and promote one bundle
+        run: uv run python scripts/release_build.py --output dist --epoch 1704067200
 
       - name: Validate distributions
-        run: uv run twine check dist/*
+        run: uv run twine check dist/*.whl dist/*.tar.gz
+
+      - name: Export locked runtime dependencies
+        run: uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file .runtime-requirements.txt
+
+      - name: Test clean release wheel and risk exit contracts
+        run: uv run python scripts/package_smoke.py --requirements .runtime-requirements.txt dist
+
+      - name: Stage bounded SBOM inputs
+        run: uv run python scripts/sbom_input.py dist .sbom-input
 
       - name: Generate SPDX SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        env:
+          SYFT_CHECK_FOR_APP_UPDATE: "false"
         with:
-          path: .
+          syft-version: v1.52.0
+          path: .sbom-input
           format: spdx-json
           output-file: dist/preflightops.spdx.json
           artifact-name: preflightops-sbom
+          upload-artifact: false
           upload-release-assets: false
 
+      - name: Verify complete locked SBOM
+        run: uv run python scripts/lock_sbom.py dist/preflightops-lock.cdx.json
+
       - name: Create checksums
-        shell: bash
-        run: cd dist && sha256sum * > SHA256SUMS
+        run: uv run python scripts/release_bundle.py create dist
+
+      - name: Verify exact release bundle offline
+        run: uv run python scripts/release_bundle.py verify dist
 
       - name: Attest release artifacts
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
@@ -126,6 +145,9 @@ jobs:
           path: dist/*
           retention-days: 90
           if-no-files-found: error
+
+      - name: Require current license approval before publishing
+        run: uv run python scripts/license_review.py security/license-review.json --publishing
 
       - name: Publish GitHub release from the verified bundle
         env:
