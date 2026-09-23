@@ -92,6 +92,14 @@ enable prevention of self-review. No release is claimed independently approved
 under the single-maintainer arrangement. Tag rules retain a separate owner bypass;
 the environment setting does not remove that residual privilege.
 
+Inspection on 2026-09-23 also confirmed the active `main` ruleset has no bypass
+actors, requires a PR, signed commits, linear history, resolved conversations,
+an up-to-date branch and the `Required` check, plus CodeQL scanning (high-or-higher
+security alerts and error-level findings). It requires zero approving reviews
+and does not require Code Owner approval. The independent-review target above
+is therefore not achieved on main either; automated gates are not human review.
+No branch protections were changed during this inspection.
+
 ## Promotion
 
 1. Merge a compatible, green release PR.
