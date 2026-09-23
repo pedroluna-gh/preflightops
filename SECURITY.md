@@ -17,6 +17,44 @@ PreflightOps is currently in early development.
 | 0.2.x | Security fixes only |
 | 0.1.x | No |
 
+### Support and end-of-life process
+
+This matrix is the current maintenance commitment, not proof that every patch
+has been backported. A security release checklist must name each affected
+supported line and its patch, mitigation or explicitly unresolved status.
+Do not silently remove an older line from support to avoid a finding.
+
+The maintainer announces EOL at least 90 calendar days before withdrawing an
+existing support commitment, with the replacement line, migration notes and
+last available patch. Until that notice completes, the matrix remains binding.
+Unsupported versions receive upgrade guidance rather than a promise of fixes.
+Emergency mitigation and disclosure follow the response targets below.
+
+### Security and license exceptions
+
+`security/exceptions.json` starts with no exceptions. Any proposed exception
+requires a reviewed PR with finding identifier, exact affected component/version
+scope, responsible owner, independent approver, reason, compensating control,
+non-sensitive evidence reference, creation and expiry timestamps. Maximum life
+is 90 days; renewals require a new review, not a silent date extension.
+
+CI and release validate this registry at current UTC time. An expired,
+incomplete, future-dated or self-approved record fails validation. The optional
+`--at` argument is for historical audit, never current release eligibility.
+Names in a record do not prove reviewer identity: protected review and evidence
+must establish that separately. Registry validity does not suppress pip-audit,
+CodeQL, secret-scanning or dependency-review findings. Any narrowly scoped
+scanner exception would require a separate reviewed change; none is enabled.
+
+The current dependency-review policy rejects the listed AGPL variants in
+`.github/workflows/security.yml`. This is a project distribution policy, not
+legal advice about those licenses. New or changed dependencies require SPDX
+license identification and review of distribution obligations. Unknown or
+ambiguous licenses must be resolved or explicitly reviewed before release;
+dependency-review success alone does not prove the complete inventory is clear.
+Retain license notices and inventory with the release evidence. Optional and
+build dependencies are included in the review, not only default runtime packages.
+
 ---
 
 ## Reporting a vulnerability

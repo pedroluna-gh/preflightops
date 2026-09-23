@@ -1,0 +1,9 @@
+{
+  "schema_version": "license-review-v1",
+  "lock_sha256_lf": "30c9831f890a97eb1b36bab6418b552fab9b47403f71f86d37d5af1bac3f0e72",
+  "status": "pending",
+  "owner": "pedroluna-gh",
+  "reviewed_at": null,
+  "expires_at": null,
+  "evidence_ref": "docs/LICENSE_REVIEW.md"
+}

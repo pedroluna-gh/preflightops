@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Release engineering gates for independent reproducible builds, canonical
+  source archives, exact offline bundle checksums and clean installed-wheel
+  LOW/CRITICAL report contracts. Security exception lifecycle validation and
+  explicit support/EOL, approval and rollback guidance; no scanner bypasses.
+
 - Assessment Report v1 with canonical identity/integrity, complete audit metadata,
   explicit PASS/FAIL/UNKNOWN/ERROR categories, freshness/provenance, bounded
   next actions, versioned redaction and configurable Automation Details.
