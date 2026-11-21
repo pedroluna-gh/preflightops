@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools==83.0.0"]
+requires = ["setuptools==84.1.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -63,7 +63,7 @@ quality = [
     "pip-audit>=2.9,<3",
     "pytest-cov>=6,<8",
     "ruff>=0.11,<1",
-    "setuptools==83.0.0",
+    "setuptools==84.1.0",
     "twine>=6,<7",
     "types-pyyaml>=6,<7",
     "wheel>=0.45,<1",
