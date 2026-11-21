@@ -25,6 +25,19 @@ record is permitted during development, never for publishing a release.
   and GPL. Review its actual distributed notices and scope before deciding;
   the classifier list alone does not establish the license for every file.
 
+## Security maintenance on 2026-11-21
+
+PR #53 updates urllib3 from 2.7.0 to 2.8.0 and addresses additional advisory
+findings in certifi, filelock, msgpack, Pillow, pyasn1 and setuptools. Streamlit
+is updated to permit the patched Pillow version. The pending review record is
+bound to the updated lockfile; its status and null approval timestamps remain
+unchanged. This refresh tracks the dependency change and does not approve
+licenses or authorize release publication. The September inventory above is
+historical evidence and does not establish review of the new distribution.
+Review all changed distributions and notices before approval, including
+transitive additions/removals. See `SECURITY_MAINTENANCE_2026_11.md` for scope
+and verification evidence.
+
 ## Before approval
 
 1. Review exact locked distributions/notices, including missing-platform packages
