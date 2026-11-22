@@ -1,0 +1,489 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://preflightops.dev/schemas/operations-v1.schema.json",
+  "title": "PreflightOps local operations v1",
+  "description": "Local bounded telemetry. Operational IDs and clocks are not assessment evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "operations-v1"
+    },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "event_capacity": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 256
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "events_total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "events_dropped": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "retries_total": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "operations_cli_completed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "operations_cli_blocked": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "operations_cli_degraded": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "operations_cli_error": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "operations_provider_completed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "operations_provider_blocked": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "operations_provider_degraded": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "operations_provider_error": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "controls_ERROR": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "controls_FAIL": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "controls_NOT_APPLICABLE": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "controls_PASS": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "controls_UNKNOWN": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "provider_errors_AUTH": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "provider_errors_CANCELLED": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "provider_errors_FUTURE": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "provider_errors_INTERNAL": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "provider_errors_INVALID_RESPONSE": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "provider_errors_MISSING": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "provider_errors_RATE_LIMIT": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "provider_errors_STALE": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "provider_errors_TIMEOUT": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "provider_errors_UNAVAILABLE": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "cache_hit": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "cache_miss": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "cache_none": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "verdict_LOW": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "verdict_MEDIUM": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "verdict_HIGH": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "verdict_CRITICAL": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "verdict_UNKNOWN": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "latency_cli_le_10_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "latency_cli_le_100_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "latency_cli_le_1000_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "latency_cli_le_10000_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "latency_cli_le_120000_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "latency_provider_le_10_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "latency_provider_le_100_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "latency_provider_le_1000_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "latency_provider_le_10000_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "latency_provider_le_120000_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "latency_cli_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "latency_provider_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "latency_cli_sum_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "latency_provider_sum_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "events_total",
+        "events_dropped",
+        "retries_total",
+        "operations_cli_completed",
+        "operations_cli_blocked",
+        "operations_cli_degraded",
+        "operations_cli_error",
+        "operations_provider_completed",
+        "operations_provider_blocked",
+        "operations_provider_degraded",
+        "operations_provider_error",
+        "controls_ERROR",
+        "controls_FAIL",
+        "controls_NOT_APPLICABLE",
+        "controls_PASS",
+        "controls_UNKNOWN",
+        "provider_errors_AUTH",
+        "provider_errors_CANCELLED",
+        "provider_errors_FUTURE",
+        "provider_errors_INTERNAL",
+        "provider_errors_INVALID_RESPONSE",
+        "provider_errors_MISSING",
+        "provider_errors_RATE_LIMIT",
+        "provider_errors_STALE",
+        "provider_errors_TIMEOUT",
+        "provider_errors_UNAVAILABLE",
+        "cache_hit",
+        "cache_miss",
+        "cache_none",
+        "verdict_LOW",
+        "verdict_MEDIUM",
+        "verdict_HIGH",
+        "verdict_CRITICAL",
+        "verdict_UNKNOWN",
+        "latency_cli_le_10_ms",
+        "latency_cli_le_100_ms",
+        "latency_cli_le_1000_ms",
+        "latency_cli_le_10000_ms",
+        "latency_cli_le_120000_ms",
+        "latency_provider_le_10_ms",
+        "latency_provider_le_100_ms",
+        "latency_provider_le_1000_ms",
+        "latency_provider_le_10000_ms",
+        "latency_provider_le_120000_ms",
+        "latency_cli_count",
+        "latency_provider_count",
+        "latency_cli_sum_ms",
+        "latency_provider_sum_ms"
+      ]
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sequence": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "correlation_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{32}$"
+          },
+          "assessment_id": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "pattern": "^(urn:preflightops:assessment:sha256:)?[0-9a-f]{64}$"
+              }
+            ]
+          },
+          "kind": {
+            "enum": [
+              "cli",
+              "provider"
+            ]
+          },
+          "outcome": {
+            "enum": [
+              "completed",
+              "blocked",
+              "degraded",
+              "error"
+            ]
+          },
+          "duration_ms": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "risk": {
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH",
+              "CRITICAL",
+              "UNKNOWN"
+            ]
+          },
+          "cache": {
+            "enum": [
+              "hit",
+              "miss",
+              "none"
+            ]
+          },
+          "controls": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "ERROR": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "FAIL": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "NOT_APPLICABLE": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "PASS": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "UNKNOWN": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            }
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "AUTH": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "CANCELLED": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "FUTURE": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "INTERNAL": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "INVALID_RESPONSE": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "MISSING": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "RATE_LIMIT": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "STALE": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "TIMEOUT": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "UNAVAILABLE": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            }
+          }
+        },
+        "required": [
+          "sequence",
+          "correlation_id",
+          "assessment_id",
+          "kind",
+          "outcome",
+          "duration_ms",
+          "risk",
+          "cache",
+          "controls",
+          "errors"
+        ]
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "correlation_id",
+    "event_capacity",
+    "metrics",
+    "events"
+  ]
+}
