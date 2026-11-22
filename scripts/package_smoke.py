@@ -39,6 +39,8 @@ def _assessment_smoke(cli: Path, workspace: Path, examples: Path, risk: str) -> 
         "report.html",
         "--github-comment-output",
         "comment.md",
+        "--telemetry-output",
+        "operations.json",
     ]
     if risk == "CRITICAL":
         shutil.copy2(examples / "terraform-critical.txt", case / "terraform.txt")
@@ -50,6 +52,12 @@ def _assessment_smoke(cli: Path, workspace: Path, examples: Path, risk: str) -> 
     report = json.loads((case / "report.json").read_text(encoding="utf-8"))
     if report.get("risk_level") != risk:
         raise RuntimeError(f"installed {risk} assessment returned unexpected risk")
+    operations = json.loads((case / "operations.json").read_text(encoding="utf-8"))
+    if (
+        operations.get("schema_version") != "operations-v1"
+        or operations["events"][0]["risk"] != risk
+    ):
+        raise RuntimeError("installed assessment returned invalid operational telemetry")
     for name in ("report.md", "report.html", "comment.md"):
         if not (case / name).is_file() or (case / name).stat().st_size == 0:
             raise RuntimeError("installed assessment did not produce every report")
