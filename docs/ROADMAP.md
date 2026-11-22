@@ -133,6 +133,12 @@ and [runbook](SERVICENOW_ENTERPRISE_RUNBOOK.md).
 
 ## Future / under consideration
 
+Stage 16 operational resilience adds opt-in local telemetry, bounded provider queue
+waiting and CLI inputs, fault/concurrency testing, a measurable offline SLO probe,
+and operational recovery/retention runbooks. Closure evidence and remaining limits
+are tracked in [stage 16 verification](STAGE16_VERIFICATION.md). It does not establish
+production pilot readiness (stage 17) or independent maturity assessment (stage 18).
+
 - Policy-as-code approval workflows.
 - Additional cloud providers and IaC tools (Pulumi, CloudFormation).
 - Pre-commit hook packaging.

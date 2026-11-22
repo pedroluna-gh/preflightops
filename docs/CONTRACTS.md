@@ -58,6 +58,8 @@ Console command: `preflightops` (equivalent to `python -m preflightops.cli`).
 | `--jira` | no | none | Opt-in Jira base URL |
 | `--yes`, `--assume-yes` | no | false | Waive interactive live-push confirmation |
 | `--version` | no | — | Print the package version and exit |
+| `--telemetry-output` | no | disabled | New local operations-v1 JSON file, exclusive creation; never assessment evidence |
+| `--correlation-id` | no | random UUID hex | Approved non-sensitive 32-character lowercase hex ID; requires telemetry output |
 
 Authenticated evidence uses a non-breaking subcommand namespace:
 
@@ -83,6 +85,13 @@ Exit codes:
 - `2`: input, parsing, template, integration, or report-writing error.
 
 ## Python API
+
+The additive `preflightops.operations.OperationsRecorder` API exposes bounded local
+telemetry with fixed metric keys and no arbitrary messages/labels. Pass `recorder=`
+to `ProviderRunner`; `ProviderContext.record_retry()` measures existing additional
+transport attempts. The request timeout includes lock waiting. See
+[operations and migration](OPERATIONS_RUNBOOK.md) and the strict
+[`operations-v1` schema](../schemas/operations-v1.schema.json).
 
 The symbols exported by `preflightops.__all__` are public in Contract Set v1:
 
