@@ -13,7 +13,10 @@ from urllib.request import Request, urlopen
 
 import yaml
 
+from .bounded_input import MAX_TEXT_BYTES, MAX_YAML_BYTES, read_text, validate_yaml_structure
 from .terraform_plan import parse_terraform_plan_json
+
+MAX_CHANGED_FILES = 3000
 
 KUBERNETES_KINDS = {
     "ConfigMap",
@@ -33,11 +36,14 @@ SCANNER_ORDER = ["terraform", "kubernetes", "service-catalog", "change-request"]
 
 def load_changed_files(path: str | Path) -> list[str]:
     """Load filenames from newline text, a JSON list, or GitHub API JSON."""
-    raw = Path(path).read_text(encoding="utf-8")
+    raw = read_text(path, max_bytes=MAX_YAML_BYTES)
     try:
         payload = json.loads(raw)
     except json.JSONDecodeError:
-        return [line.strip() for line in raw.splitlines() if line.strip()]
+        filenames = [line.strip() for line in raw.splitlines() if line.strip()]
+        if len(filenames) > MAX_CHANGED_FILES:
+            raise ValueError("Changed-files input exceeds the 3000-file limit.") from None
+        return filenames
 
     if isinstance(payload, dict):
         payload = payload.get("files", [])
@@ -45,6 +51,8 @@ def load_changed_files(path: str | Path) -> list[str]:
         raise ValueError(
             "Changed-files input must be a JSON list/object or newline-delimited text."
         )
+    if len(payload) > MAX_CHANGED_FILES:
+        raise ValueError("Changed-files input exceeds the 3000-file limit.")
 
     filenames = []
     for item in payload:
@@ -80,7 +88,9 @@ def _looks_like_kubernetes_yaml(root: Path | None, filename: str) -> bool:
     if local is None:
         return path_hint
     try:
-        documents = yaml.safe_load_all(local.read_text(encoding="utf-8"))
+        text = read_text(local, max_bytes=MAX_YAML_BYTES)
+        validate_yaml_structure(text)
+        documents = yaml.safe_load_all(text)
         return any(
             isinstance(document, dict)
             and (
@@ -102,7 +112,7 @@ def _looks_like_terraform_json_plan(root: Path | None, filename: str) -> bool:
     if local is None or local.suffix.lower() != ".json":
         return name_hint
     try:
-        payload = json.loads(local.read_text(encoding="utf-8"))
+        payload = json.loads(read_text(local))
     except (OSError, UnicodeError, json.JSONDecodeError):
         return name_hint
     return isinstance(payload, dict) and any(
@@ -115,7 +125,22 @@ def classify_changed_files(
 ) -> dict:
     """Classify PR filenames and infer relevant scanners and usable inputs."""
     root = Path(repository_root).resolve() if repository_root is not None else None
-    normalized = list(dict.fromkeys(str(name).strip() for name in filenames if str(name).strip()))
+    normalized = []
+    inspected_bytes = 0
+    for index, name in enumerate(filenames):
+        if index >= MAX_CHANGED_FILES:
+            raise ValueError("Changed-files input exceeds the 3000-file limit.")
+        value = str(name).strip()
+        if len(value) > 4096:
+            raise ValueError("Changed filename exceeds the path budget.")
+        if value and value not in normalized:
+            normalized.append(value)
+        if root is not None and value:
+            local = _safe_workspace_file(root, value)
+            if local is not None and local.suffix.lower() in {".json", ".yaml", ".yml"}:
+                inspected_bytes += local.stat().st_size
+                if inspected_bytes > 2 * MAX_TEXT_BYTES:
+                    raise ValueError("Changed-file inspection exceeds the 32 MiB budget.")
     categories: dict[str, list[str]] = {
         "terraform": [],
         "kubernetes": [],
@@ -204,7 +229,7 @@ def load_auto_scanner_inputs(scope: dict, repository_root: str | Path) -> dict:
         if (path := _safe_workspace_file(root, name)) is not None
     ]
     if len(terraform_candidates) == 1:
-        raw_plan = terraform_candidates[0].read_text(encoding="utf-8")
+        raw_plan = read_text(terraform_candidates[0])
         parse_terraform_plan_json(raw_plan)
         terraform_json = json.loads(raw_plan)
     elif len(terraform_candidates) > 1:
@@ -217,7 +242,15 @@ def load_auto_scanner_inputs(scope: dict, repository_root: str | Path) -> dict:
         for name in auto_inputs.get("kubernetes_manifest_candidates", [])
         if (path := _safe_workspace_file(root, name)) is not None
     ]
-    kubernetes_text = "\n---\n".join(path.read_text(encoding="utf-8") for path in kubernetes_paths)
+    parts: list[str] = []
+    remaining_bytes = MAX_YAML_BYTES
+    for path in kubernetes_paths:
+        part = read_text(path, max_bytes=remaining_bytes)
+        remaining_bytes -= len(part.encode("utf-8")) + 5
+        if remaining_bytes < 0:
+            raise ValueError("Combined Kubernetes input exceeds the 4 MiB budget.")
+        parts.append(part)
+    kubernetes_text = "\n---\n".join(parts)
     return {
         "terraform_json": terraform_json,
         "kubernetes_text": kubernetes_text,
@@ -231,7 +264,7 @@ def load_auto_scanner_inputs(scope: dict, repository_root: str | Path) -> dict:
 
 
 def _event_pull_request_number(event_path: str | Path) -> int | None:
-    event = json.loads(Path(event_path).read_text(encoding="utf-8"))
+    event = json.loads(read_text(event_path))
     number = event.get("number")
     if not isinstance(number, int):
         pull_request = event.get("pull_request", {})

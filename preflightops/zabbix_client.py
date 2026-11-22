@@ -154,6 +154,8 @@ class ZabbixClient:
                     context.cancellation.wait(min(delay, context.remaining()))
                 context.remaining()
                 self._next_request = context.monotonic() + self._interval
+                if attempt:
+                    context.record_retry()
                 response = self._transport.post(
                     endpoint=self._endpoint,
                     body=body,

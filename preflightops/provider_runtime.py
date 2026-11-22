@@ -11,12 +11,13 @@ import hashlib
 import math
 import threading
 import time
-from collections import OrderedDict
+from collections import Counter, OrderedDict
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field, replace
 from typing import Protocol
 
 from .evidence import canonical_json
+from .operations import OperationsRecorder
 from .provider_contract import ProviderContractError, ProviderEvidence, _identifier, _timestamp
 
 
@@ -82,6 +83,7 @@ class ProviderContext:
     cancellation: threading.Event = field(repr=False)
     credential_supplier: Callable[[], object] = field(repr=False)
     monotonic: Callable[[], float] = field(repr=False, default=time.monotonic)
+    recorder: OperationsRecorder | None = field(repr=False, default=None)
 
     def remaining(self) -> float:
         if self.cancellation.is_set():
@@ -96,6 +98,11 @@ class ProviderContext:
         result = self.credential_supplier()
         self.remaining()
         return result
+
+    def record_retry(self) -> None:
+        self.remaining()
+        if self.recorder is not None:
+            self.recorder.record_retry()
 
 
 class EvidenceProvider(Protocol):
@@ -112,12 +119,17 @@ class ProviderRunner:
     """One execution at a time; bounded cache contains only immutable evidence."""
 
     def __init__(
-        self, *, cache_capacity: int = 32, monotonic: Callable[[], float] = time.monotonic
+        self,
+        *,
+        cache_capacity: int = 32,
+        monotonic: Callable[[], float] = time.monotonic,
+        recorder: OperationsRecorder | None = None,
     ):
         if type(cache_capacity) is not int or not 0 <= cache_capacity <= 1024:
             raise ProviderContractError("Invalid cache capacity.")
         self._capacity = cache_capacity
         self._clock = monotonic
+        self._recorder = recorder
         self._cache: OrderedDict[str, tuple[ProviderEvidence, ...]] = OrderedDict()
         self._lock = threading.Lock()
 
@@ -129,8 +141,59 @@ class ProviderRunner:
         credentials: Callable[[], object] = lambda: None,
         cancellation: threading.Event | None = None,
     ) -> tuple[ProviderEvidence, ...]:
-        with self._lock:
-            return self._run(provider, request, credentials, cancellation or threading.Event())
+        cap = provider.capabilities
+        cap.__post_init__()
+        request.__post_init__()
+        if not set(request.controls) <= set(cap.controls):
+            raise ProviderContractError("Requested control is not supported.")
+        started = self._clock()
+        deadline = started + request.timeout_seconds
+        cancelled = cancellation or threading.Event()
+        cache = "none"
+        if cancelled.is_set():
+            output = self._failure(cap, request, "CANCELLED")
+        elif not self._lock.acquire(timeout=request.timeout_seconds):
+            output = self._failure(cap, request, "TIMEOUT")
+        else:
+            try:
+                output, cache = self._run(provider, request, credentials, cancelled, deadline)
+            finally:
+                self._lock.release()
+        if self._recorder is not None:
+            self._recorder.record(
+                kind="provider",
+                outcome="degraded"
+                if any(e.status in {"UNKNOWN", "ERROR"} for e in output)
+                else "completed",
+                duration_seconds=max(0, self._clock() - started),
+                controls=Counter(e.status for e in output),
+                errors=Counter(e.error_code for e in output if e.error_code is not None),
+                cache=cache,
+            )
+        return output
+
+    @staticmethod
+    def _failure(
+        cap: ProviderCapabilities, request: ProviderRequest, code: str
+    ) -> tuple[ProviderEvidence, ...]:
+        until = (_timestamp(request.evaluated_at) + dt.timedelta(seconds=1)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+        return tuple(
+            ProviderEvidence(
+                cap.provider,
+                cap.version,
+                control,
+                "UNKNOWN" if code == "MISSING" else "ERROR",
+                "Provider evidence unavailable.",
+                "provider-runtime",
+                request.evaluated_at,
+                until,
+                0,
+                error_code=code,
+            )
+            for control in sorted(request.controls)
+        )
 
     def _run(
         self,
@@ -138,15 +201,14 @@ class ProviderRunner:
         request: ProviderRequest,
         credentials: Callable[[], object],
         cancellation: threading.Event,
-    ) -> tuple[ProviderEvidence, ...]:
+        deadline: float,
+    ) -> tuple[tuple[ProviderEvidence, ...], str]:
         cap = provider.capabilities
         cap.__post_init__()
         request.__post_init__()
         if not set(request.controls) <= set(cap.controls):
             raise ProviderContractError("Requested control is not supported.")
-        context = ProviderContext(
-            self._clock() + request.timeout_seconds, cancellation, credentials, self._clock
-        )
+        context = ProviderContext(deadline, cancellation, credentials, self._clock, self._recorder)
         key = hashlib.sha256(
             canonical_json(
                 {
@@ -179,7 +241,7 @@ class ProviderRunner:
         try:
             context.remaining()
         except ProviderExecutionError as exc:
-            return tuple(failure(c, exc.code) for c in sorted(request.controls))
+            return tuple(failure(c, exc.code) for c in sorted(request.controls)), "none"
         cached = self._cache.pop(key, None)
         if cached is not None and all(
             _timestamp(e.collected_at)
@@ -188,7 +250,7 @@ class ProviderRunner:
             for e in cached
         ):
             self._cache[key] = cached
-            return cached
+            return cached, "hit"
         result: dict[str, ProviderEvidence] = {}
         error: str | None = None
         try:
@@ -259,7 +321,7 @@ class ProviderRunner:
             self._cache[key] = output
             while len(self._cache) > self._capacity:
                 self._cache.popitem(last=False)
-        return output
+        return output, "miss"
 
 
 @dataclass

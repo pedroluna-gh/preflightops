@@ -19,6 +19,7 @@ Exit codes
 import argparse
 import json
 import sys
+import time
 from pathlib import Path
 
 import yaml
@@ -33,6 +34,7 @@ from .auditable_report import (
     render_ticket_summary_v1,
     serialize_auditable_report_v1,
 )
+from .bounded_input import MAX_YAML_BYTES, load_yaml, read_text
 from .changed_files import (
     classify_changed_files,
     load_auto_scanner_inputs,
@@ -48,6 +50,7 @@ from .integrations import (
     push_to_servicenow,
     validate_servicenow_instance_url,
 )
+from .operations import OperationsError, OperationsRecorder
 from .policy import load_policy_pack
 from .policy_governance import (
     apply_verified_waivers,
@@ -111,27 +114,22 @@ def _confirm_push(system, target, corr, assume_yes, change_reference=None):
 
 
 def _load_yaml(path):
-    with open(path, encoding="utf-8") as handle:
-        return yaml.safe_load(handle)
+    return load_yaml(path)
 
 
 def _load_text(path):
     if not path:
         return ""
-    with open(path, encoding="utf-8") as handle:
-        return handle.read()
+    return read_text(path)
 
 
 def _load_terraform_json(path):
     if not path:
         return None
-    with open(path, encoding="utf-8") as handle:
-        # Keep the raw representation so the Terraform parser can require the
-        # explicit format version and enforce its byte budget before decoding.
-        return handle.read()
+    return read_text(path)
 
 
-def _render_assessment_report_cli(argv: list[str]) -> int:
+def _render_assessment_report_cli(argv: list[str], observation: dict | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="preflightops report render",
         description="Render deterministic, offline outputs from Assessment Contract v1.",
@@ -185,8 +183,7 @@ def _render_assessment_report_cli(argv: list[str]) -> int:
             return 2
 
     try:
-        with open(args.assessment, encoding="utf-8") as handle:
-            assessment = json.load(handle)
+        assessment = json.loads(read_text(args.assessment))
         if not isinstance(assessment, dict):
             raise AuditableReportError("Assessment Contract v1 must be a JSON object.")
         config = AuditableReportConfig(
@@ -198,6 +195,9 @@ def _render_assessment_report_cli(argv: list[str]) -> int:
             ticket_summary_max_characters=args.ticket_summary_max_characters,
         )
         report = build_auditable_report_v1(assessment, config)
+        if observation is not None:
+            observation["assessment_id"] = assessment["assessment_id"]
+            observation["risk"] = assessment["scores"]["risk"]["level"]
         documents = {
             "json": serialize_auditable_report_v1(report).decode("utf-8"),
             "markdown": render_assessment_markdown_v1(report),
@@ -208,7 +208,7 @@ def _render_assessment_report_cli(argv: list[str]) -> int:
         for name, path in destinations.items():
             with path.open(mode, encoding="utf-8", newline="\n") as handle:
                 handle.write(documents[name])
-    except (AuditableReportError, OSError, json.JSONDecodeError, ValueError) as exc:
+    except (AuditableReportError, OSError, json.JSONDecodeError, ValueError, RecursionError) as exc:
         print(f"Report error: {exc}", file=sys.stderr)
         return 2
 
@@ -217,7 +217,7 @@ def _render_assessment_report_cli(argv: list[str]) -> int:
     return 0
 
 
-def main(argv=None) -> int:
+def _main(argv=None, *, observation: dict | None = None) -> int:
     effective_argv = list(sys.argv[1:] if argv is None else argv)
     if effective_argv[:1] == ["evidence"]:
         return evidence_cli(effective_argv[1:])
@@ -226,12 +226,14 @@ def main(argv=None) -> int:
     if effective_argv[:1] == ["waiver"]:
         return waiver_cli(effective_argv[1:])
     if effective_argv[:2] == ["report", "render"]:
-        return _render_assessment_report_cli(effective_argv[2:])
+        return _render_assessment_report_cli(effective_argv[2:], observation)
 
     parser = argparse.ArgumentParser(
         prog="preflightops",
         description="Pre-deployment risk assessment for SRE and Platform teams.",
     )
+    parser.add_argument("--telemetry-output", help="Opt-in new local operations-v1 JSON file.")
+    parser.add_argument("--correlation-id", help="Approved non-sensitive 32-character hex ID.")
     parser.add_argument(
         "--version",
         action="version",
@@ -443,12 +445,12 @@ def main(argv=None) -> int:
         terraform_json = _load_terraform_json(args.terraform_json)
         if terraform_json is None:
             terraform_json = auto_inputs["terraform_json"]
-        k8s_text = _load_text(args.k8s)
+        k8s_text = read_text(args.k8s, max_bytes=MAX_YAML_BYTES) if args.k8s else ""
         if not k8s_text:
             k8s_text = auto_inputs["kubernetes_text"]
         monitor_inventory = _load_yaml(args.monitors) if args.monitors else None
         policy = load_policy_pack(args.policy, public_key=args.policy_public_key, at=governance_at)
-    except (OSError, yaml.YAMLError, json.JSONDecodeError, ValueError) as exc:
+    except (OSError, yaml.YAMLError, json.JSONDecodeError, ValueError, RecursionError) as exc:
         print(f"Error loading input files: {exc}", file=sys.stderr)
         return 2
 
@@ -462,6 +464,8 @@ def main(argv=None) -> int:
             policy=policy,
             monitor_inventory=monitor_inventory,
         )
+        if observation is not None:
+            observation["risk"] = result["risk_level"]
         if args.waiver:
             waiver_key = read_governance_key(
                 args.waiver_public_key, "PREFLIGHTOPS_WAIVER_PUBLIC_KEY"
@@ -677,6 +681,65 @@ def main(argv=None) -> int:
         print(f"{system} change record {info['action']}: {reference} ({info['url']})")
 
     return 1 if result["risk_level"] == "CRITICAL" else 0
+
+
+def main(argv=None) -> int:
+    """Keep default CLI behavior; opt-in telemetry never becomes assessment evidence."""
+    effective = list(sys.argv[1:] if argv is None else argv)
+    if not any(
+        arg.split("=", 1)[0] in {"--telemetry-output", "--correlation-id"} for arg in effective
+    ):
+        return _main(effective)
+    parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+    parser.add_argument("--telemetry-output")
+    parser.add_argument("--correlation-id")
+    options, remaining = parser.parse_known_args(effective)
+    try:
+        if not options.telemetry_output:
+            raise OperationsError("Correlation requires an explicit telemetry destination.")
+        recorder = OperationsRecorder(options.correlation_id)
+        destination = Path(options.telemetry_output).resolve()
+        # Refuse output aliases, including --output=PATH and the implicit report.
+        output_paths = ["report.md", "servicenow-preview.json"]
+        for index, argument in enumerate(remaining):
+            flag, separator, value = argument.partition("=")
+            if flag == "--output" or flag.endswith("-output"):
+                if separator:
+                    output_paths.append(value)
+                elif index + 1 < len(remaining):
+                    output_paths.append(remaining[index + 1])
+        if destination in {Path(path).resolve() for path in output_paths}:
+            raise OperationsError("Telemetry must use a separate output destination.")
+        # Reserve before assessment: existing inputs/outputs are never replaced.
+        handle = destination.open("x", encoding="utf-8", newline="\n")
+    except (OSError, ValueError):
+        print("Telemetry error: invalid configuration or destination unavailable.", file=sys.stderr)
+        return 2
+    observation: dict = {}
+    started = time.monotonic()
+    code = 2
+    try:
+        try:
+            code = _main(remaining, observation=observation)
+        except SystemExit as exc:
+            code = exc.code if isinstance(exc.code, int) else 2
+            raise
+        finally:
+            recorder.record(
+                kind="cli",
+                outcome="completed" if code == 0 else "blocked" if code == 1 else "error",
+                duration_seconds=max(0, time.monotonic() - started),
+                risk=observation.get("risk", "UNKNOWN"),
+                assessment_id=observation.get("assessment_id"),
+            )
+            with handle:
+                handle.write(recorder.serialize())
+                handle.flush()
+    except (OSError, OperationsError):
+        handle.close()
+        print("Telemetry error: local evidence could not be persisted.", file=sys.stderr)
+        return 2
+    return code
 
 
 if __name__ == "__main__":
