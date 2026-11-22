@@ -21,16 +21,21 @@ def test_installed_assessment_contract(tmp_path, monkeypatch, risk):
         assert capture_output and text and timeout == 60
         assert (cwd / "services.yaml").is_file()
         assert ("--terraform" in command) == (risk == "CRITICAL")
+        assert "--telemetry-output" in command
         for name in ("report.md", "report.html", "comment.md"):
             (cwd / name).write_text("report", encoding="utf-8")
         (cwd / "report.json").write_text(json.dumps({"risk_level": risk}), encoding="utf-8")
+        (cwd / "operations.json").write_text(
+            json.dumps({"schema_version": "operations-v1", "events": [{"risk": risk}]}),
+            encoding="utf-8",
+        )
         return subprocess.CompletedProcess(command, int(risk == "CRITICAL"))
 
     monkeypatch.setattr(smoke.subprocess, "run", run)
     smoke._assessment_smoke(Path("installed-cli"), tmp_path, ROOT / "examples", risk)
 
 
-@pytest.mark.parametrize("failure", ["exit", "risk", "missing", "empty"])
+@pytest.mark.parametrize("failure", ["exit", "risk", "missing", "empty", "telemetry"])
 def test_installed_assessment_rejects_invalid_outputs(tmp_path, monkeypatch, failure):
     def run(command, **kwargs):
         cwd = kwargs["cwd"]
@@ -39,6 +44,15 @@ def test_installed_assessment_rejects_invalid_outputs(tmp_path, monkeypatch, fai
                 (cwd / name).write_text("" if failure == "empty" else "report", encoding="utf-8")
         (cwd / "report.json").write_text(
             json.dumps({"risk_level": "UNKNOWN" if failure == "risk" else "LOW"}),
+            encoding="utf-8",
+        )
+        (cwd / "operations.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": "operations-v1",
+                    "events": [{"risk": "UNKNOWN" if failure == "telemetry" else "LOW"}],
+                }
+            ),
             encoding="utf-8",
         )
         return subprocess.CompletedProcess(command, 2 if failure == "exit" else 0)
