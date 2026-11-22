@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Opt-in local operations-v1 telemetry, bounded events and fixed-cardinality metrics,
+  synthetic operational SLO probe, fault/concurrency tests and recovery runbook.
+  Provider deadlines now include queue waiting; CLI input reads and discovery are
+  bounded before parsing. Existing assessment bytes and risk exit codes are preserved.
+
 - Release engineering gates for independent reproducible builds, canonical
   source archives, exact offline bundle checksums and clean installed-wheel
   LOW/CRITICAL report contracts. Security exception lifecycle validation and

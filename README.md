@@ -586,6 +586,15 @@ authentication restrictions, cooperative deadlines, privacy and rollback.
 
 ## Public contracts and compatibility
 
+Optional local operational telemetry is available through `--telemetry-output`
+with a new output path. It contains bounded structured events and fixed-cardinality
+metrics, without input payloads or remote exception messages. Assessment hashes,
+legacy reports and risk exit codes remain unchanged. Run the offline synthetic
+probe with `python -m preflightops.operational_probe --iterations 100`; see the
+[operations runbook](docs/OPERATIONS_RUNBOOK.md) for limits, SLOs, privacy,
+failure handling and recovery. These are internal engineering objectives, not
+a service availability guarantee or human approval.
+
 Machine-readable schemas live under [`schemas/`](schemas/). The CLI, Python API,
 Action, exit codes, reports, and offline/integration behavior are inventoried in
 [`docs/CONTRACTS.md`](docs/CONTRACTS.md). Compatibility and deprecation rules are
