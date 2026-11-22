@@ -59,6 +59,17 @@ jobs:
       - name: Test with branch coverage
         run: uv run pytest --cov=preflightops --cov-report=term-missing --cov-fail-under=85
 
+      - name: Measure offline operational objectives
+        run: uv run python -m preflightops.operational_probe --iterations 100 --output operational-probe.json
+
+      - name: Preserve synthetic operational measurements
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: operational-probe
+          path: operational-probe.json
+          retention-days: 7
+          if-no-files-found: error
+
       - name: Export locked runtime dependencies
         run: uv export --locked --no-dev --no-emit-project --format requirements-txt --output-file .runtime-requirements.txt
 
